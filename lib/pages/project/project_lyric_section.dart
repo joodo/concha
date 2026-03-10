@@ -7,6 +7,7 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '../../models/models.dart';
+import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
 import '../../utils/utils.dart';
 import '../../play_controller.dart';
@@ -31,6 +32,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   String? _lrc, _tlrc;
 
   final _toolbarVisibleNotifier = ValueNotifier(false);
+
+  String? _searchKeyword;
 
   @override
   void initState() {
@@ -64,20 +67,37 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Widget _buildEmptyContent() {
+    return [
+          _buildBigButton(
+            onTap: _openLocalLyric,
+            title: '打开本地',
+            icon: Icons.folder_open,
+          ),
+          _buildBigButton(
+            onTap: _searchLyric,
+            title: '在线搜索',
+            icon: Icons.search,
+          ),
+        ]
+        .toRow(mainAxisSize: .min, separator: const SizedBox(width: 32.0))
+        .center();
+  }
+
+  Widget _buildBigButton({
+    VoidCallback? onTap,
+    required String title,
+    required IconData icon,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       clipBehavior: .hardEdge,
       color: colorScheme.primaryContainer,
       child: InkWell(
-        onTap: _openLocalLyric,
+        onTap: onTap,
         child:
             [
-                  Icon(
-                    Icons.folder_open,
-                    size: 48.0,
-                    color: colorScheme.secondary,
-                  ),
-                  Text('打开本地歌词', style: Theme.of(context).textTheme.bodyLarge),
+                  Icon(icon, size: 48.0, color: colorScheme.secondary),
+                  Text(title, style: Theme.of(context).textTheme.bodyLarge),
                 ]
                 .toColumn(
                   mainAxisSize: .min,
@@ -85,7 +105,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
                 )
                 .padding(all: 16.0),
       ),
-    ).center();
+    );
   }
 
   Widget _buildContent() {
@@ -105,6 +125,22 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
             ),
           ),
         ).positioned(top: 12.0, left: 12.0),
+        if (_searchKeyword != null)
+          _SearchPanel(
+            initKeyword: _searchKeyword!,
+            onLyricSelected: (value) {
+              _lyricController.loadLyric(value);
+            },
+            onConfirm: (lrc) async {
+              if (lrc != null) {
+                await File(widget.project.lyricPath).writeAsString(lrc);
+              }
+              setState(() {
+                _lrc = lrc;
+                _searchKeyword = null;
+              });
+            },
+          ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0),
       ].toStack(),
     );
   }
@@ -142,15 +178,16 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget _buildLyricToolbar() {
     return [
       _TranslateButton(onPressed: _createTranslate),
-      IconButton.filledTonal(
-        onPressed: () {
-          setState(() {
-            _lrc = null;
-            _tlrc = null;
-          });
-        },
-        icon: Icon(Icons.subtitles_off),
-      ),
+      if (_searchKeyword == null)
+        IconButton.filledTonal(
+          onPressed: () {
+            setState(() {
+              _lrc = null;
+              _tlrc = null;
+            });
+          },
+          icon: Icon(Icons.subtitles_off),
+        ),
     ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
   }
 
@@ -183,6 +220,14 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
     setState(() {
       _updateLyric();
+    });
+  }
+
+  void _searchLyric() {
+    setState(() {
+      _lrc = '';
+      final m = widget.project.metadata;
+      _searchKeyword = '${m.title} ${m.artist ?? ""}'.trim();
     });
   }
 
@@ -285,5 +330,103 @@ class _TranslateButtonState extends State<_TranslateButton> {
         ],
       ),
     );
+  }
+}
+
+class _SearchPanel extends StatefulWidget {
+  final String initKeyword;
+  final ValueSetter<String> onLyricSelected;
+  final ValueSetter<String?> onConfirm;
+
+  const _SearchPanel({
+    required this.initKeyword,
+    required this.onLyricSelected,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_SearchPanel> createState() => _SearchPanelState();
+}
+
+class _SearchPanelState extends State<_SearchPanel> {
+  final _textController = TextEditingController();
+  bool _isBusy = false;
+  List<LrcLibLyric> _data = [];
+
+  String? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _textController.text = widget.initKeyword;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _search();
+    });
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return [
+          SearchBar(
+            controller: _textController,
+            onSubmitted: (value) => _search(),
+            trailing: [
+              _isBusy
+                  ? const SizedBox.square(
+                      dimension: 16.0,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ).padding(right: 12.0)
+                  : IconButton(onPressed: _search, icon: Icon(Icons.search)),
+            ],
+          ),
+          Material(
+            color: Colors.transparent,
+            child: ListView(
+              children: _data
+                  .map(
+                    (e) => ListTile(
+                      title: Text('${e.trackName} - ${e.artistName}'),
+                      onTap: () {
+                        setState(() {
+                          _selected = e.syncedLyrics;
+                        });
+                        widget.onLyricSelected(e.syncedLyrics);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ).expanded(),
+          TextButton(
+            onPressed: () => widget.onConfirm(_selected),
+            child: Text(_selected == null ? '取消' : '确定'),
+          ).padding(vertical: 12.0),
+        ]
+        .toColumn()
+        .backgroundColor(
+          Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(220),
+        )
+        .clipRRect(all: 30.0);
+  }
+
+  Future<void> _search() async {
+    setState(() {
+      _isBusy = true;
+    });
+
+    try {
+      _data = await LrcLibService().search(_textController.text);
+    } finally {
+      setState(() {
+        _isBusy = false;
+      });
+    }
   }
 }

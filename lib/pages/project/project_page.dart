@@ -42,7 +42,10 @@ class _ProjectPageState extends State<ProjectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: _title.asText()),
+      appBar: AppBar(
+        title: _title.asText(),
+        notificationPredicate: (notification) => false,
+      ),
       body: _isPreparing
           ? CircularProgressIndicator().center()
           : _errorMessage != null

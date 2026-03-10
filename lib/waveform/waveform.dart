@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
@@ -169,57 +170,67 @@ class _WaveformState extends State<Waveform> {
                           );
                           unawaited(_seekTo(target));
                         },
-                        child: MouseRegion(
-                          onHover: (event) {
-                            _onContentHover(
-                              localDx: event.localPosition.dx,
+                        child: Listener(
+                          onPointerSignal: (event) {
+                            _onWaveformPointerSignal(
+                              event: event,
                               contentWidth: contentWidth,
-                              onTimeline: false,
                             );
                           },
-                          child: ListenableBuilder(
-                            listenable: Listenable.merge([
-                              widget.playController,
-                              _waveScrollController,
-                            ]),
-                            builder: (context, _) {
-                              final progressX =
-                                  contentWidth *
-                                  ratioFromDuration(
-                                    value: widget.playController.position,
-                                    totalMs: safeTotalMilliseconds(
-                                      widget.playController.duration,
-                                    ),
-                                  );
-                              final scrollOffset =
-                                  _waveScrollController.hasClients
-                                  ? _waveScrollController.offset
-                                  : 0.0;
-                              final visibleStartX = max(
-                                0.0,
-                                scrollOffset - 24.0,
-                              );
-                              final visibleEndX = min(
-                                contentWidth,
-                                scrollOffset + waveConstraints.maxWidth + 24.0,
-                              );
-
-                              return CustomPaint(
-                                painter: _WaveformPainter(
-                                  chunkSampleCache: _chunkCache.chunks,
-                                  sampleCacheRevision: _chunkCache.revision,
-                                  chunkSeconds: _chunkSeconds,
-                                  duration: widget.playController.duration,
-                                  pixelsPerSecond: _pixelsPerSecond,
-                                  progressX: progressX,
-                                  visibleStartX: visibleStartX,
-                                  visibleEndX: visibleEndX,
-                                  fixedColor: colorScheme.outline,
-                                  liveColor: colorScheme.primary,
-                                ),
-                                child: const SizedBox.expand(),
+                          child: MouseRegion(
+                            onHover: (event) {
+                              _onContentHover(
+                                localDx: event.localPosition.dx,
+                                contentWidth: contentWidth,
+                                onTimeline: false,
                               );
                             },
+                            child: ListenableBuilder(
+                              listenable: Listenable.merge([
+                                widget.playController,
+                                _waveScrollController,
+                              ]),
+                              builder: (context, _) {
+                                final progressX =
+                                    contentWidth *
+                                    ratioFromDuration(
+                                      value: widget.playController.position,
+                                      totalMs: safeTotalMilliseconds(
+                                        widget.playController.duration,
+                                      ),
+                                    );
+                                final scrollOffset =
+                                    _waveScrollController.hasClients
+                                    ? _waveScrollController.offset
+                                    : 0.0;
+                                final visibleStartX = max(
+                                  0.0,
+                                  scrollOffset - 24.0,
+                                );
+                                final visibleEndX = min(
+                                  contentWidth,
+                                  scrollOffset +
+                                      waveConstraints.maxWidth +
+                                      24.0,
+                                );
+
+                                return CustomPaint(
+                                  painter: _WaveformPainter(
+                                    chunkSampleCache: _chunkCache.chunks,
+                                    sampleCacheRevision: _chunkCache.revision,
+                                    chunkSeconds: _chunkSeconds,
+                                    duration: widget.playController.duration,
+                                    pixelsPerSecond: _pixelsPerSecond,
+                                    progressX: progressX,
+                                    visibleStartX: visibleStartX,
+                                    visibleEndX: visibleEndX,
+                                    fixedColor: colorScheme.outline,
+                                    liveColor: colorScheme.primary,
+                                  ),
+                                  child: const SizedBox.expand(),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ).expanded(),
@@ -368,6 +379,41 @@ class _WaveformState extends State<Waveform> {
     required double viewportWidth,
   }) {
     return (contentX - scrollOffset).clamp(0.0, viewportWidth).toDouble();
+  }
+
+  void _onWaveformPointerSignal({
+    required PointerSignalEvent event,
+    required double contentWidth,
+  }) {
+    if (event is! PointerScrollEvent) {
+      return;
+    }
+    if (!_waveScrollController.hasClients) {
+      return;
+    }
+
+    final maxOffset = max(0.0, contentWidth - _waveformViewportWidth);
+    if (maxOffset <= 0) {
+      return;
+    }
+
+    final scrollDelta = event.scrollDelta.dy.abs() >= event.scrollDelta.dx.abs()
+        ? event.scrollDelta.dy
+        : event.scrollDelta.dx;
+    if (scrollDelta == 0) {
+      return;
+    }
+
+    _playbackBinding.detach(widget.playController.isPlaying);
+    _progressLineLock.reset();
+
+    final currentOffset = _waveScrollController.offset;
+    final targetOffset = (currentOffset + scrollDelta).clamp(0.0, maxOffset);
+    if ((targetOffset - currentOffset).abs() < 0.5) {
+      return;
+    }
+
+    _waveScrollController.jumpTo(targetOffset);
   }
 
   Future<void> _seekTo(Duration target) async {

@@ -45,6 +45,7 @@ class Project {
   String get projectDirPath => '$savedDir/$id';
   String get audioPath => '$projectDirPath/audio';
   String get lyricPath => '$projectDirPath/lyric';
+  String get lyricTPath => '$projectDirPath/lyric.t';
 
   static Future<Project?> load(String id) async {
     try {

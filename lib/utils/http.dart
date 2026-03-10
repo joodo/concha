@@ -10,7 +10,7 @@ class Http {
     String? proxy,
   }) async {
     final uri = Uri.parse(url);
-    final client = _createClient(proxy: proxy);
+    final client = createClient(proxy: proxy);
 
     try {
       return await client.get(uri, headers: header);
@@ -26,7 +26,7 @@ class Http {
     String? proxy,
   }) async {
     final uri = Uri.parse(url);
-    final client = _createClient(proxy: proxy);
+    final client = createClient(proxy: proxy);
     final headers = <String, String>{
       'Content-Type': 'application/x-www-form-urlencoded',
       ...?header,
@@ -39,7 +39,7 @@ class Http {
     }
   }
 
-  static http.Client _createClient({String? proxy}) {
+  static http.Client createClient({String? proxy}) {
     final proxyValue = proxy?.trim() ?? '';
     if (proxyValue.isEmpty) {
       return http.Client();

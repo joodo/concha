@@ -33,6 +33,7 @@ class WaveformTimeline extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) => onTapLocalDx(details.localPosition.dx),
       child: MouseRegion(
+        cursor: SystemMouseCursors.precise,
         onHover: onHoverLocalDx == null
             ? null
             : (event) => onHoverLocalDx!(event.localPosition.dx),

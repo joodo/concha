@@ -4,7 +4,7 @@ import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:styled_widget/styled_widget.dart';
-import 'package:path/path.dart' as Path;
+import 'package:path/path.dart' as p;
 
 import '../../models/models.dart';
 import '../../services/media_match_service.dart';
@@ -241,7 +241,7 @@ class _NewDialogState extends State<NewDialog> {
       );
     } else {
       final m = readMetadata(File(audioPath), getImage: true);
-      final filename = Path.basenameWithoutExtension(audioPath);
+      final filename = p.basenameWithoutExtension(audioPath);
       metadata = Metadata(
         title: m.title ?? filename,
         artist: m.artist,

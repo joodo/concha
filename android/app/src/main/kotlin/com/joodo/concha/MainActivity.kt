@@ -1,4 +1,4 @@
-package com.example.concha
+package com.joodo.concha
 
 import io.flutter.embedding.android.FlutterActivity
 

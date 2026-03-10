@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "concha" "\0"
+            VALUE "CompanyName", "com.joodo" "\0"
+            VALUE "FileDescription", "Concha" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "concha" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "concha.exe" "\0"
-            VALUE "ProductName", "concha" "\0"
+            VALUE "InternalName", "Concha" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.joodo. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Concha.exe" "\0"
+            VALUE "ProductName", "Concha" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

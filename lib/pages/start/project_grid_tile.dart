@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../utils/utils.dart';
 
-class ProjectGridTile extends StatefulWidget {
+class ProjectGridTile extends StatelessWidget {
   const ProjectGridTile({
     required this.project,
     this.onSelect,
@@ -16,13 +16,8 @@ class ProjectGridTile extends StatefulWidget {
   final VoidCallback? onDelete;
 
   @override
-  State<ProjectGridTile> createState() => _ProjectGridTileState();
-}
-
-class _ProjectGridTileState extends State<ProjectGridTile> {
-  @override
   Widget build(BuildContext context) {
-    final data = widget.project.metadata;
+    final data = project.metadata;
 
     final tile = GridTile(
       footer: GridTileBar(
@@ -40,7 +35,7 @@ class _ProjectGridTileState extends State<ProjectGridTile> {
       borderRadius: BorderRadius.circular(12),
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: InkWell(
-        onTap: widget.onSelect,
+        onTap: onSelect,
         onSecondaryTapDown: (details) {
           final o = details.globalPosition;
           showMenu(
@@ -49,8 +44,8 @@ class _ProjectGridTileState extends State<ProjectGridTile> {
             items: [
               PopupMenuItem(
                 onTap: () async {
-                  await widget.project.delete();
-                  widget.onDelete?.call();
+                  await project.delete();
+                  onDelete?.call();
                 },
                 child: const Text('删除'),
               ),

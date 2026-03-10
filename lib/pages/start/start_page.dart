@@ -42,24 +42,19 @@ class _StartPageState extends State<StartPage> {
                   .map(
                     (project) => ProjectGridTile(
                       project: project,
-                      onSelect: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => ProjectPage(project: project),
-                          ),
-                        );
-                      },
+                      onSelect: () => _pushRoute(project),
                       onDelete: _loadProjects,
                     ),
                   )
                   .toList(),
             ),
-      floatingActionButton: OpenContainer<String?>(
+      floatingActionButton: OpenContainer<Project?>(
         openBuilder: (context, _) => const NewDialog(),
-        onClosed: (String? id) {
-          if (id != null) {
-            _projectCreated(id);
-          }
+        onClosed: (Project? project) {
+          if (project == null) return;
+
+          unawaited(_loadProjects());
+          _pushRoute(project);
         },
         closedShape: const CircleBorder(),
         closedElevation: 6,
@@ -75,8 +70,10 @@ class _StartPageState extends State<StartPage> {
     );
   }
 
-  void _projectCreated(String id) {
-    unawaited(_loadProjects());
+  void _pushRoute(Project project) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => ProjectPage(project: project)),
+    );
   }
 
   Future<void> _loadProjects() async {

@@ -202,7 +202,7 @@ class _NewDialogState extends State<NewDialog> {
       );
 
       _appendLog('[progress] All finished! Ready to leave.');
-      if (mounted) Navigator.of(context).pop(project.id);
+      if (mounted) Navigator.of(context).pop(project);
     } catch (e) {
       if (!mounted) return;
       setState(() {

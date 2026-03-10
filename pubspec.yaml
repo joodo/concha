@@ -10,16 +10,21 @@ dependencies:
   flutter:
     sdk: flutter
 
-  styled_widget: ^0.4.1
-  path_provider: ^2.1.5
-  file_selector: ^1.1.0
+  audio_metadata_reader: ^1.4.2
+  flutter_soloud: ^3.5.0
+
   animations: ^2.1.1
+  styled_widget: ^0.4.1
+  file_selector: ^1.1.0
+  nested: ^1.0.0
+
+  path_provider: ^2.1.5
+  path: ^1.9.1
   json_annotation: ^4.11.0
   uuid: ^4.5.1
   provider: ^6.1.5
-  nested: ^1.0.0
-  audio_metadata_reader: ^1.4.2
-  flutter_soloud: ^3.5.0
+  shared_preferences: ^2.5.4
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

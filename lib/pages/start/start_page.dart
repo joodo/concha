@@ -41,14 +41,15 @@ class _StartPageState extends State<StartPage> {
               children: _projects
                   .map(
                     (project) => ProjectGridTile(
-                      audioPath: project.audioPath,
-                      onTap: () {
+                      project: project,
+                      onSelect: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => ProjectPage(project: project),
                           ),
                         );
                       },
+                      onDelete: _loadProjects,
                     ),
                   )
                   .toList(),
@@ -79,11 +80,14 @@ class _StartPageState extends State<StartPage> {
   }
 
   Future<void> _loadProjects() async {
-    final savedDir = await Project.savedDir;
-    final directory = Directory(savedDir);
+    final directory = Directory(Project.savedDir);
     final entries = await directory
         .list()
-        .where((entity) => entity is File && entity.path.endsWith('.json'))
+        .map((entity) {
+          final infoPath = '${entity.path}${Platform.pathSeparator}info.json';
+          return File(infoPath);
+        })
+        .where((entity) => entity.existsSync())
         .cast<File>()
         .toList();
 

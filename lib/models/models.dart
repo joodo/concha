@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,22 +15,16 @@ class Project {
 
   Project({
     String? id,
-    required this.audioPath,
-    String? lyricPath,
     Duration position = Duration.zero,
+    required this.metadata,
   }) : id = id ?? _uuid.v4(),
-       _lyricPath = lyricPath,
        _position = position;
 
   final String id;
-
-  final String audioPath;
+  final Metadata metadata;
 
   @JsonKey(name: 'position')
   Duration _position;
-
-  @JsonKey(name: 'lyricPath')
-  String? _lyricPath;
 
   Duration get position => _position;
   set position(Duration value) {
@@ -37,41 +32,44 @@ class Project {
     unawaited(save());
   }
 
-  String? get lyricPath => _lyricPath;
-  set lyricPath(String? value) {
-    _lyricPath = value;
-    unawaited(save());
-  }
-
-  static Future<String> get savedDir async {
+  static late String savedDir;
+  static Future<void> initSavedDir() async {
     final appSupportDir = await getApplicationSupportDirectory();
-    final projectsDir = Directory('${appSupportDir.path}/projects');
+    final projectsDir = Directory('${appSupportDir.path}/projects/');
     if (!await projectsDir.exists()) {
       await projectsDir.create(recursive: true);
     }
-    return projectsDir.path;
+    savedDir = projectsDir.path;
   }
 
-  static Future<Project> load(String id) async {
-    final dirPath = await savedDir;
-    final file = File('$dirPath/$id.json');
-    final content = await file.readAsString();
-    final json = jsonDecode(content) as Map<String, dynamic>;
-    return Project.fromJson(json);
+  String get projectDirPath => '$savedDir/$id';
+  String get audioPath => '$projectDirPath/audio';
+  String get lyricPath => '$projectDirPath/lyric';
+
+  static Future<Project?> load(String id) async {
+    try {
+      final file = File('$savedDir/$id/info.json');
+      final content = await file.readAsString();
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      return Project.fromJson(json);
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> save() async {
-    final dirPath = await savedDir;
-    final file = File('$dirPath/$id.json');
+    final dir = Directory(projectDirPath);
+    if (!await dir.exists()) await dir.create(recursive: true);
+
+    final file = File('$projectDirPath/info.json');
     final data = jsonEncode(toJson());
     await file.writeAsString(data);
   }
 
   Future<void> delete() async {
-    final dirPath = await savedDir;
-    final file = File('$dirPath/$id.json');
-    if (await file.exists()) {
-      await file.delete();
+    final projectDir = Directory(projectDirPath);
+    if (await projectDir.exists()) {
+      await projectDir.delete(recursive: true);
     }
   }
 
@@ -79,4 +77,35 @@ class Project {
       _$ProjectFromJson(json);
 
   Map<String, dynamic> toJson() => _$ProjectToJson(this);
+}
+
+@JsonSerializable()
+class Metadata {
+  Metadata({required this.title, this.artist, this.album, this.coverBytes});
+
+  final String title;
+  final String? artist;
+  final String? album;
+
+  @JsonKey(fromJson: _coverBytesFromJson, toJson: _coverBytesToJson)
+  final Uint8List? coverBytes;
+
+  static Uint8List? _coverBytesFromJson(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return base64Decode(value);
+  }
+
+  static String? _coverBytesToJson(Uint8List? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return base64Encode(value);
+  }
+
+  factory Metadata.fromJson(Map<String, dynamic> json) =>
+      _$MetadataFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MetadataToJson(this);
 }

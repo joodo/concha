@@ -8,6 +8,7 @@ import 'package:path/path.dart' as Path;
 
 import '../../models/models.dart';
 import '../../services/media_match_service.dart';
+import '../../services/youtube_download_service.dart';
 import '../../utils/utils.dart';
 
 class NewDialog extends StatefulWidget {
@@ -19,6 +20,7 @@ class NewDialog extends StatefulWidget {
 
 class _NewDialogState extends State<NewDialog> {
   final _mediaMatchService = MediaMatchService();
+  final _youtubeDownloadService = YoutubeDownloadService();
   final _audioFieldController = TextEditingController();
 
   final _proxyFieldController = TextEditingController();
@@ -169,36 +171,6 @@ class _NewDialogState extends State<NewDialog> {
       return;
     }
 
-    if (isYoutubeLink) {
-      // TODO: 处理 YouTube 链接创建逻辑。
-      setState(() => _errorMessage = null);
-      return;
-    }
-
-    if (isLocalFile) {
-      setState(() => _errorMessage = null);
-
-      late final MediaMatchResult? mediaData;
-      if (_checkAcoustNotifier.value) {
-        _appendLog('[progress] Start matching metadata...');
-        mediaData = await _getMatchedMedia(path);
-      } else {
-        mediaData = null;
-      }
-
-      if (!mounted) return;
-      _appendLog('[progress] Start creating project...');
-      final project = await _createProject(
-        audioPath: path,
-        matchedMediaInfo: mediaData,
-      );
-
-      _appendLog('[progress] All finished! Ready to leave.');
-      //if (mounted) Navigator.of(context).pop(project.id);
-    }
-  }
-
-  Future<MediaMatchResult?> _getMatchedMedia(String path) async {
     setState(() {
       _isSubmitting = true;
       _shellOutput = '';
@@ -206,17 +178,36 @@ class _NewDialogState extends State<NewDialog> {
     });
 
     try {
-      return await _mediaMatchService.identifyByAudioPath(
-        audioPath: path,
-        acoustIdApiKey: _acoustIDKeyNotifier.value,
-        proxy: _proxyNotifier.value,
-        onLog: _appendLog,
+      String audioPath = path;
+      if (isYoutubeLink) {
+        _appendLog('[progress] Start downloading from YouTube...');
+        audioPath = await _youtubeDownloadService.downloadAudio(
+          url: path,
+          proxy: _proxyNotifier.value,
+          onLog: _appendLog,
+        );
+      }
+
+      MediaMatchResult? mediaData;
+      if (_checkAcoustNotifier.value) {
+        _appendLog('[progress] Start matching metadata...');
+        mediaData = await _getMatchedMedia(audioPath);
+      }
+
+      if (!mounted) return;
+      _appendLog('[progress] Start creating project...');
+      final project = await _createProject(
+        audioPath: audioPath,
+        matchedMediaInfo: mediaData,
       );
+
+      _appendLog('[progress] All finished! Ready to leave.');
+      if (mounted) Navigator.of(context).pop(project.id);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
-      return null;
     } finally {
       if (mounted) {
         setState(() {
@@ -224,6 +215,15 @@ class _NewDialogState extends State<NewDialog> {
         });
       }
     }
+  }
+
+  Future<MediaMatchResult?> _getMatchedMedia(String path) async {
+    return _mediaMatchService.identifyByAudioPath(
+      audioPath: path,
+      acoustIdApiKey: _acoustIDKeyNotifier.value,
+      proxy: _proxyNotifier.value,
+      onLog: _appendLog,
+    );
   }
 
   Future<Project> _createProject({

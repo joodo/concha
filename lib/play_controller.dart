@@ -38,6 +38,12 @@ class PlayController implements TickerProvider {
   Duration get startPosition => startPositionNotifier.value;
 
   void setStartPosition(Duration value) {
+    if (!hasSource) {
+      throw StateError(
+        'PlayController is not initialized. Call initialize() before setStartPosition().',
+      );
+    }
+
     final clamped = _clampToDuration(value);
     if (clamped == startPositionNotifier.value) {
       return;

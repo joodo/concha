@@ -24,7 +24,6 @@ class Project {
 
   @JsonKey(name: 'position')
   Duration _position;
-
   Duration get position => _position;
   set position(Duration value) {
     _position = value;

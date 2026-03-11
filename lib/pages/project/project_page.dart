@@ -76,6 +76,13 @@ class _ProjectPageState extends State<ProjectPage> {
     try {
       await _playController.initialize();
 
+      _playController.setStartPosition(widget.project.position);
+      _playController.startPositionNotifier.addListener(
+        () => widget.project.position = _playController.startPosition,
+      );
+
+      await _playController.seekTo(widget.project.position);
+
       if (!mounted) return;
       setState(() {
         _errorMessage = null;

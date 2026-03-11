@@ -184,6 +184,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     return [
       _TranslateButton(onPressed: _createTranslate),
       _OffsetButton(
+        project: widget.project,
         controller: _lyricController,
         onShow: () => _toolbarVisibleNotifier.lockUp('show offset'),
         onHide: () => _toolbarVisibleNotifier.unlock('show offset'),
@@ -251,6 +252,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     if (await tlrcFile.exists()) {
       _tlrc = await tlrcFile.readAsString();
     }
+
+    _lyricController.lyricOffset = widget.project.lyricOffset.inMilliseconds;
 
     setState(() {
       _updateLyric();
@@ -344,15 +347,15 @@ class _TranslateButtonState extends State<_TranslateButton> {
 }
 
 class _OffsetButton extends StatefulWidget {
+  final Project project;
   final LyricController controller;
   final VoidCallback? onShow, onHide;
-  final ValueSetter<int>? onChanged;
 
   const _OffsetButton({
     required this.controller,
+    required this.project,
     this.onShow,
     this.onHide,
-    this.onChanged,
   });
 
   @override
@@ -367,10 +370,10 @@ class _OffsetButtonState extends State<_OffsetButton> {
   @override
   void initState() {
     super.initState();
-    _offsetNotifier.value = widget.controller.lyricOffset;
     _offsetNotifier.addListener(
       () => widget.controller.lyricOffset = _offsetNotifier.value,
     );
+    _offsetNotifier.value = widget.project.lyricOffset.inMilliseconds;
   }
 
   @override
@@ -395,7 +398,9 @@ class _OffsetButtonState extends State<_OffsetButton> {
                   onChanged: (value) {
                     _offsetNotifier.value = value.round();
                   },
-                  onChangeEnd: (value) => widget.onChanged?.call(value.round()),
+                  onChangeEnd: (value) => widget.project.lyricOffset = Duration(
+                    milliseconds: value.round(),
+                  ),
                   value: _offsetNotifier.value.toDouble(),
                 ),
                 Text(

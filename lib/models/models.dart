@@ -15,9 +15,11 @@ class Project {
   Project({
     String? id,
     Duration position = Duration.zero,
+    Duration lyricOffset = Duration.zero,
     required this.metadata,
   }) : id = id ?? _uuid.v4(),
-       _position = position;
+       _position = position,
+       _lyricOffset = lyricOffset;
 
   final String id;
   final Metadata metadata;
@@ -27,6 +29,14 @@ class Project {
   Duration get position => _position;
   set position(Duration value) {
     _position = value;
+    unawaited(save());
+  }
+
+  @JsonKey(name: 'lyricOffset')
+  Duration _lyricOffset;
+  Duration get lyricOffset => _lyricOffset;
+  set lyricOffset(Duration value) {
+    _lyricOffset = value;
     unawaited(save());
   }
 

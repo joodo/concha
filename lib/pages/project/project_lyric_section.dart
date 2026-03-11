@@ -31,7 +31,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   final _lyricController = LyricController();
   String? _lrc, _tlrc;
 
-  final _toolbarVisibleNotifier = AutoResetNotifier(const Duration(seconds: 1));
+  final _toolbarVisibleNotifier = AutoResetNotifier(const Duration(seconds: 5));
 
   String? _searchKeyword;
 
@@ -114,39 +114,40 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Widget _buildContent() {
+    final content = [
+      _buildLyricView(),
+      ValueListenableBuilder(
+        valueListenable: _toolbarVisibleNotifier,
+        builder: (context, visible, child) => Visibility(
+          visible: visible,
+          maintainState: true,
+          child: IgnorePointer(ignoring: !visible, child: _buildLyricToolbar()),
+        ),
+      ).positioned(top: 12.0, left: 12.0),
+      if (_searchKeyword != null)
+        _SearchPanel(
+          initKeyword: _searchKeyword!,
+          onLyricSelected: (value) {
+            _lyricController.loadLyric(value);
+          },
+          onConfirm: (lrc) async {
+            if (lrc != null) {
+              await File(widget.project.path.lyric).writeAsString(lrc);
+            }
+            setState(() {
+              _lrc = lrc;
+              _searchKeyword = null;
+            });
+          },
+        ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0),
+    ].toStack();
     return MouseRegion(
       onEnter: (event) => _toolbarVisibleNotifier.lockUp('mouse in'),
       onExit: (event) => _toolbarVisibleNotifier.unlock('mouse in'),
-      child: [
-        _buildLyricView(),
-        ValueListenableBuilder(
-          valueListenable: _toolbarVisibleNotifier,
-          builder: (context, visible, child) => Visibility(
-            visible: visible,
-            maintainState: true,
-            child: IgnorePointer(
-              ignoring: !visible,
-              child: _buildLyricToolbar(),
-            ),
-          ),
-        ).positioned(top: 12.0, left: 12.0),
-        if (_searchKeyword != null)
-          _SearchPanel(
-            initKeyword: _searchKeyword!,
-            onLyricSelected: (value) {
-              _lyricController.loadLyric(value);
-            },
-            onConfirm: (lrc) async {
-              if (lrc != null) {
-                await File(widget.project.path.lyric).writeAsString(lrc);
-              }
-              setState(() {
-                _lrc = lrc;
-                _searchKeyword = null;
-              });
-            },
-          ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0),
-      ].toStack(),
+      child: GestureDetector(
+        onTap: _toolbarVisibleNotifier.mark,
+        child: content,
+      ),
     );
   }
 

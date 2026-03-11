@@ -1,11 +1,12 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
-import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../utils/http.dart' as app_http;
 import '../utils/preferences.dart';
 
 class LyricTranslationService {
-  const LyricTranslationService({this.modelName = 'gemini-3-flash-preview'});
+  const LyricTranslationService({this.modelName = 'gemini-2.5-flash'});
 
   final String modelName;
 
@@ -32,26 +33,71 @@ class LyricTranslationService {
     final http.Client? proxyClient = proxy == null
         ? null
         : app_http.Http.createClient(proxy: proxy);
+    final client = proxyClient ?? http.Client();
+    final shouldCloseClient = proxyClient == null;
 
     try {
-      final generativeModel = GenerativeModel(
-        model: modelName,
-        apiKey: normalizedApiKey,
-        httpClient: proxyClient,
+      final uri = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$normalizedApiKey',
       );
 
-      final response = await generativeModel.generateContent([
-        Content.text('$_prompt$lrc'),
-      ]);
+      final response = await client.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': '$_prompt$lrc'},
+              ],
+            },
+          ],
+        }),
+      );
 
-      final translatedLrc = response.text?.trim();
-      if (translatedLrc == null || translatedLrc.isEmpty) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final body = response.body.trim();
+        final message = body.isEmpty ? 'HTTP ${response.statusCode}' : body;
+        throw Exception('歌词翻译失败：$message');
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final candidates = decoded['candidates'];
+      if (candidates is! List || candidates.isEmpty) {
+        throw Exception('歌词翻译失败：Gemini 未返回候选内容');
+      }
+
+      final first = candidates.first;
+      if (first is! Map<String, dynamic>) {
+        throw Exception('歌词翻译失败：Gemini 返回格式异常');
+      }
+
+      final content = first['content'];
+      if (content is! Map<String, dynamic>) {
+        throw Exception('歌词翻译失败：Gemini 返回内容缺失');
+      }
+
+      final parts = content['parts'];
+      if (parts is! List || parts.isEmpty) {
+        throw Exception('歌词翻译失败：Gemini 返回文本为空');
+      }
+
+      final translatedLrc = parts
+          .whereType<Map<String, dynamic>>()
+          .map((part) => part['text'])
+          .whereType<String>()
+          .join()
+          .trim();
+      if (translatedLrc.isEmpty) {
         throw Exception('歌词翻译失败：Gemini 未返回有效内容');
       }
 
       return translatedLrc;
     } finally {
       proxyClient?.close();
+      if (shouldCloseClient) {
+        client.close();
+      }
     }
   }
 }

@@ -1,26 +1,65 @@
 # Concha
 
-Concha is a singing practice app built with Flutter.
-
-The idea is simple: load a song, inspect its waveform, set a start point, and
-repeat difficult phrases until they feel natural.
+Concha is a Flutter-based singing practice app.
 
 `Concha - hear it again. sing it better.`
 
-## What Concha Does
+## Implemented Features
 
-- Creates practice projects from local audio files.
-- Saves project data locally so your practice list persists across launches.
-- Shows music metadata (title + cover art when available).
-- Provides a waveform overview and a detailed timeline view.
-- Lets you set a custom start point from the timeline.
-- Supports play, pause, stop, seek, and "play from start point" actions.
-- Supports quick play/pause with the `Space` key.
-- Supports timeline zooming with mouse wheel in the overview panel.
+### 1) Project Creation and Management
+
+- Project list view with cover/title, sorted by latest modified time.
+- Create project from:
+  - Local audio file.
+  - YouTube URL (audio extracted via `yt-dlp`).
+- Optional settings in create dialog:
+  - HTTP proxy.
+  - AcoustID metadata completion toggle + API key.
+- Delete project from the start page context menu.
+
+### 2) Audio Playback and Waveform
+
+- Playback engine based on `flutter_soloud`.
+- Supports `play`, `pause`, `stop`, `seek`, and `play from start point`.
+- Independent controls:
+  - Volume: `0%` to `100%`.
+  - Speed: `0.25x` to `2.0x`.
+  - Pitch: `-7` to `+7` semitones.
+- Speed/pitch compensation is implemented to keep musical pitch stable when
+  speed changes.
+- Dual waveform UI:
+  - Overview waveform (tap/drag to jump).
+  - Detailed timeline waveform (tap to seek).
+- Timeline click sets start point for phrase replay.
+
+### 3) Lyric Workflow
+
+- Open local `.lrc` lyric file.
+- Online lyric search via `lrclib.net`.
+- Lyric translation via Gemini (`google_generative_ai`).
+- Adjustable lyric offset (`-10s` to `+10s`) with persistent save.
+- Lyric progress follows playback position in real time.
+
+### 4) Metadata Matching Pipeline
+
+- Local tag read (`audio_metadata_reader`) for title/artist/album/cover.
+- Multi-source matching pipeline:
+  - AcoustID fingerprint recognition.
+  - MusicBrainz recording search.
+  - Candidate ranking and best match selection.
+- Cover fallback includes Cover Art Archive download when IDs are available.
+
+### 5) Persistence
+
+- Project files are stored under app support directory (`projects/<id>/`).
+- Persisted per project:
+  - Audio file.
+  - Cover image.
+  - Lyric and translated lyric.
+  - Playback position.
+  - Lyric offset.
 
 ## Supported Audio Import Types
-
-When creating a project, the file picker accepts:
 
 - `mp3`
 - `m4a`
@@ -29,70 +68,52 @@ When creating a project, the file picker accepts:
 - `aac`
 - `ogg`
 
-## Tech Stack
+## Keyboard Shortcuts
 
-- Flutter + Dart
-- `flutter_soloud` for audio playback and sample reading
-- `audio_metadata_reader` for title/cover extraction
-- `provider` / `ChangeNotifier` style state updates
-- `json_serializable` for project model persistence
+- `Space`: toggle play/pause.
+- `Arrow Left` / `Arrow Right`: seek backward/forward 10s.
+- `Arrow Up` / `Arrow Down`: volume +10% / -10%.
+- `,` / `.`: speed -0.25x / +0.25x.
+- `[` / `]`: pitch -1 / +1 semitone.
+
+## Environment and Dependencies
+
+### Required
+
+- Flutter SDK (latest stable recommended).
+- Dart SDK compatible with `sdk: ^3.10.8`.
+
+### Runtime Tooling (auto-handled when possible)
+
+- `yt-dlp`: required for YouTube import.
+- `fpcalc` (Chromaprint): required for AcoustID recognition.
+
+Concha will try to use system tools first, then auto-download binaries into
+app support directory when missing.
+
+### Optional API Keys
+
+- AcoustID API key: improves metadata matching quality.
+- Gemini API key: enables lyric translation.
 
 ## Quick Start
 
-### Prerequisites
-
-- Flutter SDK (latest stable recommended)
-- Dart SDK compatible with `sdk: ^3.10.8`
-- A desktop or mobile Flutter target device
-
-### Install Dependencies
-
 ```bash
 flutter pub get
-```
-
-### Run (macOS example)
-
-```bash
 flutter run -d macos
 ```
 
-Use `flutter devices` to list all available targets.
-
-## Practice Workflow
-
-1. Open Concha.
-2. Tap `+` to create a new project.
-3. Pick a local song file.
-4. Open the project from the grid.
-5. Click the timeline to set your phrase start point.
-6. Press the main play button to start from that point.
-7. Repeat, adjust, and practice.
+Use `flutter devices` to list available targets.
 
 ## Project Structure
 
-- `lib/pages/start/`: project list and "new project" dialog
-- `lib/pages/project/`: playback page and toolbar
-- `lib/waveform/`: waveform rendering, timeline, overview, chunk loading
-- `lib/play_controller.dart`: audio playback, seek, position tracking
-- `lib/models/`: persistent `Project` model and JSON serialization
-
-## Current Status
-
-Concha is in active prototype stage.
-
-Core loop for audio-based singing practice is available, while advanced
-training features (for example lyric alignment, pitch analysis, and scoring)
-are not fully implemented yet.
-
-## Roadmap Ideas
-
-- Lyric import and synchronized lyric display
-- A/B loop range practice (start + end markers)
-- Speed control without pitch shift
-- Pitch tracking and visual feedback
-- Session history and progress metrics
+- `lib/pages/start/`: project list and new project flow.
+- `lib/pages/project/`: playback screen, lyric section, toolbar.
+- `lib/waveform/`: waveform rendering, loading, zoom/scroll bindings.
+- `lib/services/`: metadata/lyric/matching/download integrations.
+- `lib/play_controller.dart`: playback state + audio control.
+- `lib/models/`: persistent project model (`json_serializable`).
 
 ## License
 
-No license file is included yet. Add a `LICENSE` file before public release.
+This project includes `LICENSE` and is licensed under **GNU GPL v3.0**.

@@ -11,6 +11,7 @@ import '../../models/models.dart';
 import '../../services/media_match_service.dart';
 import '../../services/youtube_download_service.dart';
 import '../../utils/utils.dart';
+import '../../widgets/setting_button.dart';
 
 class NewDialog extends StatefulWidget {
   const NewDialog({super.key});
@@ -24,18 +25,10 @@ class _NewDialogState extends State<NewDialog> {
   final _youtubeDownloadService = YoutubeDownloadService();
   final _audioFieldController = TextEditingController();
 
-  final _proxyFieldController = TextEditingController();
-  final _proxyNotifier = PreferenceValueNotifier<String>('', key: 'proxy');
-
-  final _checkAcoustNotifier = PreferenceValueNotifier<bool>(
+  final _fillDataNotifier = PreferenceValueNotifier<bool>(
     true,
-    key: 'check_acoust',
+    key: PrefKeys.autoFillMetadata.value,
   );
-  final _acoustIDKeyNotifier = PreferenceValueNotifier<String>(
-    '',
-    key: 'acoust_key',
-  );
-  final _acoustIDKeyFieldController = TextEditingController();
 
   bool _isSubmitting = false;
   String? _errorMessage;
@@ -44,18 +37,12 @@ class _NewDialogState extends State<NewDialog> {
   @override
   void initState() {
     super.initState();
-    _proxyFieldController.text = _proxyNotifier.value;
-    _acoustIDKeyFieldController.text = _acoustIDKeyNotifier.value;
   }
 
   @override
   void dispose() {
     _audioFieldController.dispose();
-    _proxyFieldController.dispose();
-    _checkAcoustNotifier.dispose();
-    _acoustIDKeyNotifier.dispose();
-    _acoustIDKeyFieldController.dispose();
-    _proxyNotifier.dispose();
+    _fillDataNotifier.dispose();
     super.dispose();
   }
 
@@ -75,63 +62,26 @@ class _NewDialogState extends State<NewDialog> {
       onSubmitted: (_) => _submit(),
     );
 
-    final acoustField = ListenableBuilder(
-      listenable: _checkAcoustNotifier,
-      builder: (context, _) => [
-        Checkbox(
-          value: _checkAcoustNotifier.value,
-          onChanged: (value) => _checkAcoustNotifier.value = value!,
-        ),
-        const Text('补全音乐信息'),
-        TextField(
-          controller: _acoustIDKeyFieldController,
-          decoration: InputDecoration(hintText: 'AcoustID API Key'),
-          onChanged: (value) => _acoustIDKeyNotifier.value = value.trim(),
-          enabled: _checkAcoustNotifier.value,
-        ).padding(left: 12.0).constrained(width: 150.0),
-        const Spacer(),
-      ].toRow(mainAxisSize: .min),
-    );
-    final proxyField = TextField(
-      controller: _proxyFieldController,
-      decoration: const InputDecoration(
-        labelText: '网络代理（可选）',
-        prefixText: 'http://',
-      ),
-      onChanged: (value) => _proxyNotifier.value = value.trim(),
-    );
-    final settingTile = Card.outlined(
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        leading: const Icon(Icons.tune, size: 18),
-        title: Text('可选设置', style: Theme.of(context).textTheme.titleSmall),
-        subtitle: ListenableBuilder(
-          listenable: Listenable.merge([_proxyNotifier, _checkAcoustNotifier]),
-          builder: (context, _) {
-            final acoustText = _checkAcoustNotifier.value
-                ? '开启音乐信息补全'
-                : '关闭音乐信息补全';
-            final proxyText = _proxyNotifier.value.trim().isEmpty
-                ? '代理未设置'
-                : '代理已设置';
-            return Text(
-              '$acoustText · $proxyText',
-              style: Theme.of(context).textTheme.bodySmall,
-            );
-          },
-        ),
-        children: [acoustField, proxyField.padding(left: 8.0)],
+    final fillDataTile = ListenableBuilder(
+      listenable: _fillDataNotifier,
+      builder: (context, _) => CheckboxListTile(
+        title: const Text('补全音乐信息'),
+        controlAffinity: ListTileControlAffinity.leading,
+        value: _fillDataNotifier.value,
+        onChanged: (value) => _fillDataNotifier.value = value!,
       ),
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('新建项目')),
+      appBar: AppBar(
+        title: const Text('新建项目'),
+        actions: [const SettingButton()],
+        actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
+      ),
       body:
           [
                 audioField,
-                settingTile,
+                fillDataTile,
                 FilledButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: Text(_isSubmitting ? '处理中...' : '添加'),
@@ -184,13 +134,12 @@ class _NewDialogState extends State<NewDialog> {
         _appendLog('[progress] Start downloading from YouTube...');
         audioPath = await _youtubeDownloadService.downloadAudio(
           url: path,
-          proxy: _proxyNotifier.value,
           onLog: _appendLog,
         );
       }
 
       MediaMatchResult? mediaData;
-      if (_checkAcoustNotifier.value) {
+      if (_fillDataNotifier.value) {
         _appendLog('[progress] Start matching metadata...');
         mediaData = await _getMatchedMedia(audioPath);
       }
@@ -221,8 +170,6 @@ class _NewDialogState extends State<NewDialog> {
   Future<MediaMatchResult?> _getMatchedMedia(String path) async {
     return _mediaMatchService.identifyByAudioPath(
       audioPath: path,
-      acoustIdApiKey: _acoustIDKeyNotifier.value,
-      proxy: _proxyNotifier.value,
       onLog: _appendLog,
     );
   }

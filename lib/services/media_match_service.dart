@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 
+import '../utils/utils.dart';
 import 'acoustid_service.dart';
 import 'musicbrainz_service.dart';
-import '../utils/http.dart';
 
 typedef MediaMatchLogHandler = void Function(String line);
 
@@ -76,8 +76,6 @@ class MediaMatchService {
 
   Future<MediaMatchResult> identifyByAudioPath({
     required String audioPath,
-    required String acoustIdApiKey,
-    String? proxy,
     MediaMatchLogHandler? onLog,
   }) async {
     final localHint = _readLocalHint(audioPath);
@@ -103,8 +101,11 @@ class MediaMatchService {
     }
 
     AcoustIdResult? acoustResult;
+    final proxy = Pref.normalizedProxy;
     try {
       onLog?.call('[pipeline] channel=acoustid start');
+
+      final acoustIdApiKey = Pref.i.get(PrefKeys.acoustKey.value) as String;
       acoustResult = await _acoustIdService.recognizeLocalFile(
         audioFilePath: audioPath,
         apiKey: acoustIdApiKey,

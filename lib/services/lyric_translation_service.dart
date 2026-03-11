@@ -9,13 +9,16 @@ class LyricTranslationService {
 
   final String modelName;
 
-  static const String _prompt =
-      "你是一个专业的音乐翻译家。请将以下 LRC 歌词翻译成中文。\n"
-      "要求：1. 严禁修改或删除 [mm:ss.xx] 格式的时间戳。\n"
-      "2. 保持歌词意境优雅。\n"
-      "3. 只输出翻译后的 LRC 内容，不要任何解释。\n\n";
+  static String get _prompt {
+    final targetLang = Pref.i.get(PrefKeys.translateLang.value) as String;
+    return "你是一个专业的音乐翻译家。请将以下 LRC 歌词翻译成$targetLang。\n"
+        "要求：1. 严禁修改或删除 [mm:ss.xx] 格式的时间戳。\n"
+        "2. 保持歌词意境优雅。\n"
+        "3. 只输出翻译后的 LRC 内容，不要任何解释。\n\n";
+  }
 
-  Future<String> translate(String lrc, {required String apiKey}) async {
+  Future<String> translate(String lrc) async {
+    final apiKey = Pref.i.get(PrefKeys.geminiKey.value) as String;
     final normalizedApiKey = apiKey.trim();
     if (normalizedApiKey.isEmpty) {
       throw ArgumentError.value(apiKey, 'apiKey', '不能为空');
@@ -25,7 +28,7 @@ class LyricTranslationService {
       return '';
     }
 
-    final proxy = _readProxyFromPreferences();
+    final proxy = Pref.normalizedProxy;
     final http.Client? proxyClient = proxy == null
         ? null
         : app_http.Http.createClient(proxy: proxy);
@@ -49,17 +52,6 @@ class LyricTranslationService {
       return translatedLrc;
     } finally {
       proxyClient?.close();
-    }
-  }
-
-  String? _readProxyFromPreferences() {
-    try {
-      final value = Pref.i.get('proxy');
-      if (value is! String) return null;
-      final proxy = value.trim();
-      return proxy.isEmpty ? null : proxy;
-    } catch (_) {
-      return null;
     }
   }
 }

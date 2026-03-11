@@ -207,8 +207,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     _lyricController.setProgress(widget.playController.positionNotifier.value);
   }
 
-  Future<void> _createTranslate(String apiKey) async {
-    _tlrc = await LyricTranslationService().translate(_lrc!, apiKey: apiKey);
+  Future<void> _createTranslate() async {
+    _tlrc = await LyricTranslationService().translate(_lrc!);
 
     await File(widget.project.path.lyricT).writeAsString(_tlrc!);
 
@@ -268,7 +268,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 }
 
 class _TranslateButton extends StatefulWidget {
-  final Future<void> Function(String apiKey)? onPressed;
+  final Future<void> Function()? onPressed;
 
   const _TranslateButton({this.onPressed});
 
@@ -277,7 +277,10 @@ class _TranslateButton extends StatefulWidget {
 }
 
 class _TranslateButtonState extends State<_TranslateButton> {
-  final _keyNotifier = PreferenceValueNotifier('', key: 'gemini_key');
+  final _keyNotifier = PreferenceValueNotifier(
+    '',
+    key: PrefKeys.geminiKey.value,
+  );
   final _textController = TextEditingController();
 
   bool _isBusy = false;
@@ -308,7 +311,7 @@ class _TranslateButtonState extends State<_TranslateButton> {
                   _isBusy = true;
                 });
                 try {
-                  await widget.onPressed?.call(_keyNotifier.value);
+                  await widget.onPressed?.call();
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(

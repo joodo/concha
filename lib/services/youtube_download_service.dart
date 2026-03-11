@@ -2,8 +2,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../utils/http.dart';
-import '../utils/shell.dart';
+import '../utils/utils.dart';
 
 typedef YoutubeDownloadLogHandler = void Function(String line);
 
@@ -15,7 +14,6 @@ class YoutubeDownloadService {
 
   Future<String> downloadAudio({
     required String url,
-    String? proxy,
     YoutubeDownloadLogHandler? onLog,
   }) async {
     final trimmedUrl = url.trim();
@@ -33,13 +31,13 @@ class YoutubeDownloadService {
       throw Exception('YouTube 链接必须是 http 或 https');
     }
 
+    final proxy = Pref.normalizedProxy;
     final ytDlpExecutable = await _ensureYtDlp(proxy: proxy, onLog: onLog);
 
     final baseTempDir = await getTemporaryDirectory();
     final tempDir = await Directory(
       baseTempDir.path,
     ).createTemp('concha-youtube-');
-    final normalizedProxy = _normalizeProxy(proxy);
 
     final commandParts = <String>[
       ytDlpExecutable,
@@ -53,7 +51,7 @@ class YoutubeDownloadService {
       tempDir.path,
       '--output',
       '%(id)s.%(ext)s',
-      if (normalizedProxy != null) ...['--proxy', normalizedProxy],
+      if (proxy != null) ...['--proxy', proxy],
       trimmedUrl,
     ];
 
@@ -210,17 +208,6 @@ class YoutubeDownloadService {
     final binDir = await _appBinDirPath();
     final binaryName = Platform.isWindows ? 'yt-dlp.exe' : 'yt-dlp';
     return '$binDir/$binaryName';
-  }
-
-  String? _normalizeProxy(String? value) {
-    final proxyValue = value?.trim() ?? '';
-    if (proxyValue.isEmpty) return null;
-
-    try {
-      return Http.normalizeProxyUri(proxyValue).toString();
-    } catch (_) {
-      throw Exception('代理地址格式无效: $proxyValue');
-    }
   }
 
   Future<File?> _findDownloadedAudioFile(Directory dir) async {

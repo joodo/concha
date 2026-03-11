@@ -8,6 +8,7 @@ import '../../services/play_controller.dart';
 import '../../waveform/waveform_controller.dart';
 import '../../utils/utils.dart';
 import '../../waveform/waveform.dart';
+import '../../widgets/setting_button.dart';
 import 'project_lyric_section.dart';
 import 'project_toolbar.dart';
 
@@ -47,6 +48,8 @@ class _ProjectPageState extends State<ProjectPage> {
       appBar: AppBar(
         title: _title.asText(),
         notificationPredicate: (notification) => false,
+        actions: [const SettingButton()],
+        actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
       ),
       body: _isPreparing
           ? CircularProgressIndicator().center()

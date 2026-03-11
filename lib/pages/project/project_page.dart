@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
@@ -41,7 +43,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final content = Scaffold(
       appBar: AppBar(
         title: _title.asText(),
         notificationPredicate: (notification) => false,
@@ -69,6 +71,17 @@ class _ProjectPageState extends State<ProjectPage> {
                   .constrained(height: 200.0),
               ProjectToolbar(playController: _playController),
             ].toColumn(),
+    );
+
+    return FutureBuilder(
+      future: ColorScheme.fromImageProvider(
+        provider: FileImage(File(widget.project.path.cover)),
+      ),
+      initialData: Theme.of(context).colorScheme,
+      builder: (context, snapshot) => Theme(
+        data: Theme.of(context).copyWith(colorScheme: snapshot.data),
+        child: content,
+      ),
     );
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '../../models/models.dart';
-import '../../play_controller.dart';
+import '../../services/play_controller.dart';
 import '../../waveform/waveform_controller.dart';
 import '../../utils/utils.dart';
 import '../../waveform/waveform.dart';

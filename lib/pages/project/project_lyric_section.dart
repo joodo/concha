@@ -10,7 +10,7 @@ import '../../models/models.dart';
 import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
 import '../../utils/utils.dart';
-import '../../play_controller.dart';
+import '../../services/play_controller.dart';
 import '../../widgets/popup_widget.dart';
 
 class ProjectLyricSection extends StatefulWidget {

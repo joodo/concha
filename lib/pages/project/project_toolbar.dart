@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../../play_controller.dart';
+import '../../services/play_controller.dart';
 import 'expansible_button.dart';
 
 class _TogglePlayIntent extends Intent {

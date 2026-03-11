@@ -133,13 +133,7 @@ class ProjectToolbar extends StatelessWidget {
                   ].toRow(separator: const SizedBox(width: 12));
                 },
               ).flexible(),
-              ListenableBuilder(
-                listenable: playController.positionNotifier,
-                builder: (context, child) => Text(
-                  '${_formatDuration(playController.positionNotifier.value)} / ${_formatDuration(playController.duration)}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
+              _createDurationLabel(),
             ]
             .toRow(separator: const SizedBox(width: 8.0))
             .padding(horizontal: 12.0, bottom: 12.0);
@@ -210,16 +204,32 @@ class ProjectToolbar extends StatelessWidget {
     );
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    final hours = duration.inHours;
+  Widget _createDurationLabel() {
+    String formatDuration(Duration duration) {
+      final minutes = duration.inMinutes
+          .remainder(60)
+          .toString()
+          .padLeft(2, '0');
+      final seconds = duration.inSeconds
+          .remainder(60)
+          .toString()
+          .padLeft(2, '0');
+      final hours = duration.inHours;
 
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+      if (hours > 0) {
+        return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+      }
+
+      return '$minutes:$seconds';
     }
 
-    return '$minutes:$seconds';
+    return ListenableBuilder(
+      listenable: playController.positionNotifier,
+      builder: (context, child) => Text(
+        '${formatDuration(playController.positionNotifier.value)} / ${formatDuration(playController.duration)}',
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+    );
   }
 
   Future<void> _togglePlayPause() {

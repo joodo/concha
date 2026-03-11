@@ -4,38 +4,73 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
-class PlayController extends ChangeNotifier implements TickerProvider {
+class PlayController implements TickerProvider {
   PlayController({required this.audioPath});
+
+  static const int _defaultPitch = 0;
+  static const double _defaultSpeed = 1.0;
+  static const double _defaultVolume = 1.0;
+  static const double _minSpeed = 0.05;
 
   final String audioPath;
 
   final SoLoud _soloud = SoLoud.instance;
 
+  final ValueNotifier<bool> isPlayNotifier = ValueNotifier(false);
+  final ValueNotifier<Duration> positionNotifier = ValueNotifier(Duration.zero);
+  final ValueNotifier<Duration> startPositionNotifier = ValueNotifier(
+    Duration.zero,
+  );
+  final ValueNotifier<int> pitchNotifier = ValueNotifier(_defaultPitch);
+  final ValueNotifier<double> speedNotifier = ValueNotifier(_defaultSpeed);
+  final ValueNotifier<double> volumeNotifier = ValueNotifier(_defaultVolume);
+
   AudioSource? _source;
   SoundHandle? _handle;
   Ticker? _positionTicker;
-  Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
-  Duration _startPosition = Duration.zero;
-  bool _isPlaying = false;
-  Duration? _lastEmittedPosition;
-  bool? _lastEmittedPlaying;
   bool _isDisposed = false;
 
   bool get isInitialized => _soloud.isInitialized;
   bool get hasSource => _source != null;
-  bool get isPlaying => _isPlaying;
-  Duration get position => _position;
   Duration get duration => _duration;
-  Duration get startPosition => _startPosition;
+  Duration get startPosition => startPositionNotifier.value;
 
-  set startPosition(Duration value) {
+  void setStartPosition(Duration value) {
     final clamped = _clampToDuration(value);
-    if (clamped == _startPosition) {
+    if (clamped == startPositionNotifier.value) {
       return;
     }
-    _startPosition = clamped;
-    notifyListeners();
+    startPositionNotifier.value = clamped;
+  }
+
+  void setPitch(int value) {
+    if (value == pitchNotifier.value) {
+      return;
+    }
+
+    pitchNotifier.value = value;
+    _applyPlaybackSettingsToActiveHandle();
+  }
+
+  void setSpeed(double value) {
+    final clamped = value < _minSpeed ? _minSpeed : value;
+    if (clamped == speedNotifier.value) {
+      return;
+    }
+
+    speedNotifier.value = clamped;
+    _applyPlaybackSettingsToActiveHandle();
+  }
+
+  void setVolume(double value) {
+    final clamped = value.clamp(0.0, 1.0).toDouble();
+    if (clamped == volumeNotifier.value) {
+      return;
+    }
+
+    volumeNotifier.value = clamped;
+    _applyPlaybackSettingsToActiveHandle();
   }
 
   Future<void> initialize() async {
@@ -50,13 +85,14 @@ class PlayController extends ChangeNotifier implements TickerProvider {
 
     _source = source;
     _duration = duration;
-    _position = Duration.zero;
-    _startPosition = _clampToDuration(_startPosition);
-    _isPlaying = false;
+    _setPosition(Duration.zero, force: true);
+    _setIsPlaying(false, force: true);
+    _resetPlaybackSettings();
+    setStartPosition(_clampToDuration(startPosition));
+    _ensurePitchFilterActive(source);
 
     _ensureTicker();
     _pauseTicker();
-    _emitPosition(force: true);
   }
 
   Future<List<double>> loadSamples({
@@ -93,13 +129,14 @@ class PlayController extends ChangeNotifier implements TickerProvider {
     final handle = _handle;
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
       final newHandle = await _soloud.play(source);
-      if (_position > Duration.zero) {
-        _soloud.seek(newHandle, _position);
+      if (positionNotifier.value > Duration.zero) {
+        _soloud.seek(newHandle, positionNotifier.value);
       }
+      _applyPlaybackSettings(newHandle);
       _handle = newHandle;
-      _isPlaying = true;
+      _setIsPlaying(true, force: true);
       _resumeTickerIfNeeded();
-      _emitPosition(force: true);
+      _setPosition(positionNotifier.value, force: true);
       return;
     }
 
@@ -107,9 +144,9 @@ class PlayController extends ChangeNotifier implements TickerProvider {
       _soloud.setPause(handle, false);
     }
 
-    _isPlaying = true;
+    _setIsPlaying(true, force: true);
     _resumeTickerIfNeeded();
-    _emitPosition(force: true);
+    _setPosition(positionNotifier.value, force: true);
   }
 
   Future<void> pause() async {
@@ -119,9 +156,9 @@ class PlayController extends ChangeNotifier implements TickerProvider {
 
     final handle = _handle;
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
-      _isPlaying = false;
+      _setIsPlaying(false, force: true);
       _pauseTicker();
-      _emitPosition(force: true);
+      _setPosition(positionNotifier.value, force: true);
       return;
     }
 
@@ -129,13 +166,13 @@ class PlayController extends ChangeNotifier implements TickerProvider {
       _soloud.setPause(handle, true);
     }
 
-    _isPlaying = false;
+    _setIsPlaying(false, force: true);
     _pauseTicker();
-    _emitPosition(force: true);
+    _setPosition(positionNotifier.value, force: true);
   }
 
   Future<void> togglePlayPause() async {
-    if (_isPlaying) {
+    if (isPlayNotifier.value) {
       await pause();
       return;
     }
@@ -154,13 +191,13 @@ class PlayController extends ChangeNotifier implements TickerProvider {
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
       handle = await _soloud.play(_source!, paused: true);
       _handle = handle;
-      _isPlaying = false;
+      _setIsPlaying(false);
       _pauseTicker();
+      _applyPlaybackSettings(handle);
     }
 
     _soloud.seek(handle, clamped);
-    _position = clamped;
-    _emitPosition(force: true);
+    _setPosition(clamped, force: true);
   }
 
   Future<void> stop() async {
@@ -174,10 +211,9 @@ class PlayController extends ChangeNotifier implements TickerProvider {
     }
 
     _handle = null;
-    _isPlaying = false;
-    _position = Duration.zero;
+    _setIsPlaying(false, force: true);
+    _setPosition(Duration.zero, force: true);
     _pauseTicker();
-    _emitPosition(force: true);
   }
 
   Future<void> playFromStartPoint() async {
@@ -186,21 +222,21 @@ class PlayController extends ChangeNotifier implements TickerProvider {
       return;
     }
 
-    final target = _clampToDuration(_startPosition);
+    final target = _clampToDuration(startPosition);
     var handle = _handle;
 
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
       handle = await _soloud.play(source);
       _handle = handle;
+      _applyPlaybackSettings(handle);
     } else if (_soloud.getPause(handle)) {
       _soloud.setPause(handle, false);
     }
 
     _soloud.seek(handle, target);
-    _position = target;
-    _isPlaying = true;
+    _setPosition(target, force: true);
+    _setIsPlaying(true, force: true);
     _resumeTickerIfNeeded();
-    _emitPosition(force: true);
   }
 
   void _syncPlaybackState() {
@@ -211,13 +247,13 @@ class PlayController extends ChangeNotifier implements TickerProvider {
 
     if (!_soloud.getIsValidVoiceHandle(handle)) {
       _handle = null;
-      _isPlaying = false;
-      _position = _duration;
+      _setIsPlaying(false);
+      _setPosition(_duration);
       return;
     }
 
-    _position = _soloud.getPosition(handle);
-    _isPlaying = !_soloud.getPause(handle);
+    _setPosition(_soloud.getPosition(handle));
+    _setIsPlaying(!_soloud.getPause(handle));
   }
 
   void _onPositionTick(Duration _) {
@@ -226,9 +262,8 @@ class PlayController extends ChangeNotifier implements TickerProvider {
     }
 
     _syncPlaybackState();
-    _emitPosition();
 
-    if (!_isPlaying) {
+    if (!isPlayNotifier.value) {
       _pauseTicker();
     }
   }
@@ -245,7 +280,7 @@ class PlayController extends ChangeNotifier implements TickerProvider {
   }
 
   void _resumeTickerIfNeeded() {
-    if (_isDisposed || !_soloud.isInitialized || !_isPlaying) {
+    if (_isDisposed || !_soloud.isInitialized || !isPlayNotifier.value) {
       return;
     }
 
@@ -265,23 +300,75 @@ class PlayController extends ChangeNotifier implements TickerProvider {
     ticker.stop(canceled: false);
   }
 
-  void _emitPosition({bool force = false}) {
+  void _resetPlaybackSettings() {
+    pitchNotifier.value = _defaultPitch;
+    speedNotifier.value = _defaultSpeed;
+    volumeNotifier.value = _defaultVolume;
+  }
+
+  void _applyPlaybackSettingsToActiveHandle() {
+    final handle = _handle;
+    if (handle == null || !_soloud.isInitialized) {
+      return;
+    }
+
+    if (!_soloud.getIsValidVoiceHandle(handle)) {
+      return;
+    }
+
+    _applyPlaybackSettings(handle);
+  }
+
+  void _applyPlaybackSettings(SoundHandle handle) {
+    _soloud.setRelativePlaySpeed(handle, speedNotifier.value);
+    _soloud.setVolume(handle, volumeNotifier.value);
+    _applyPitch(handle);
+  }
+
+  void _applyPitch(SoundHandle handle) {
+    final source = _source;
+    if (source == null) {
+      return;
+    }
+
+    _ensurePitchFilterActive(source);
+    final pitchShiftFilter = source.filters.pitchShiftFilter;
+    pitchShiftFilter.semitones(soundHandle: handle).value = pitchNotifier.value
+        .toDouble();
+  }
+
+  void _ensurePitchFilterActive(AudioSource source) {
+    final pitchShiftFilter = source.filters.pitchShiftFilter;
+    if (!pitchShiftFilter.isActive) {
+      pitchShiftFilter.activate();
+    }
+    pitchShiftFilter.semitones().value = pitchNotifier.value.toDouble();
+  }
+
+  void _setPosition(Duration value, {bool force = false}) {
     if (_isDisposed) {
       return;
     }
 
-    if (!force &&
-        _lastEmittedPosition == _position &&
-        _lastEmittedPlaying == _isPlaying) {
+    if (positionNotifier.value == value) {
       return;
     }
 
-    _lastEmittedPosition = _position;
-    _lastEmittedPlaying = _isPlaying;
-    notifyListeners();
+    positionNotifier.value = value;
   }
 
-  @override
+  void _setIsPlaying(bool value, {bool force = false}) {
+    if (_isDisposed) {
+      return;
+    }
+
+    if (isPlayNotifier.value == value) {
+      return;
+    }
+
+    isPlayNotifier.value = value;
+  }
+
   void dispose() {
     _isDisposed = true;
     _pauseTicker();
@@ -293,10 +380,15 @@ class PlayController extends ChangeNotifier implements TickerProvider {
 
     _source = null;
     _handle = null;
-    _isPlaying = false;
 
     unawaited(_disposeAudioResources(handle: handle, source: source));
-    super.dispose();
+
+    isPlayNotifier.dispose();
+    positionNotifier.dispose();
+    startPositionNotifier.dispose();
+    pitchNotifier.dispose();
+    speedNotifier.dispose();
+    volumeNotifier.dispose();
   }
 
   Future<void> _disposeAudioResources({

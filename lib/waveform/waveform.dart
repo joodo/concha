@@ -64,8 +64,11 @@ class _WaveformState extends State<Waveform> {
   void initState() {
     super.initState();
     _lastObservedScale = widget.waveformController.scale;
-    _playbackBinding.reset(widget.playController.isPlaying);
-    widget.playController.addListener(_onPlayControllerChanged);
+    _playbackBinding.reset(widget.playController.isPlayNotifier.value);
+    widget.playController.positionNotifier.addListener(
+      _onPlayControllerChanged,
+    );
+    widget.playController.isPlayNotifier.addListener(_onPlayControllerChanged);
     widget.waveformController.addListener(_onWaveformControllerChanged);
     _waveScrollController.addListener(_onWaveScroll);
     _schedulePrimeIfNeeded();
@@ -75,10 +78,20 @@ class _WaveformState extends State<Waveform> {
   void didUpdateWidget(covariant Waveform oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.playController != widget.playController) {
-      oldWidget.playController.removeListener(_onPlayControllerChanged);
-      widget.playController.addListener(_onPlayControllerChanged);
+      oldWidget.playController.positionNotifier.removeListener(
+        _onPlayControllerChanged,
+      );
+      oldWidget.playController.isPlayNotifier.removeListener(
+        _onPlayControllerChanged,
+      );
+      widget.playController.positionNotifier.addListener(
+        _onPlayControllerChanged,
+      );
+      widget.playController.isPlayNotifier.addListener(
+        _onPlayControllerChanged,
+      );
       _progressLineLock.reset();
-      _playbackBinding.reset(widget.playController.isPlaying);
+      _playbackBinding.reset(widget.playController.isPlayNotifier.value);
       _resetCache();
       _schedulePrimeIfNeeded();
     }
@@ -91,7 +104,12 @@ class _WaveformState extends State<Waveform> {
 
   @override
   void dispose() {
-    widget.playController.removeListener(_onPlayControllerChanged);
+    widget.playController.positionNotifier.removeListener(
+      _onPlayControllerChanged,
+    );
+    widget.playController.isPlayNotifier.removeListener(
+      _onPlayControllerChanged,
+    );
     widget.waveformController.removeListener(_onWaveformControllerChanged);
     _waveScrollController.removeListener(_onWaveScroll);
     _waveScrollController.dispose();
@@ -187,14 +205,17 @@ class _WaveformState extends State<Waveform> {
                             },
                             child: ListenableBuilder(
                               listenable: Listenable.merge([
-                                widget.playController,
+                                widget.playController.positionNotifier,
                                 _waveScrollController,
                               ]),
                               builder: (context, _) {
                                 final progressX =
                                     contentWidth *
                                     ratioFromDuration(
-                                      value: widget.playController.position,
+                                      value: widget
+                                          .playController
+                                          .positionNotifier
+                                          .value,
                                       totalMs: safeTotalMilliseconds(
                                         widget.playController.duration,
                                       ),
@@ -242,7 +263,9 @@ class _WaveformState extends State<Waveform> {
               IgnorePointer(
                 child: ListenableBuilder(
                   listenable: Listenable.merge([
-                    widget.playController,
+                    widget.playController.positionNotifier,
+                    widget.playController.startPositionNotifier,
+                    widget.playController.isPlayNotifier,
                     _waveScrollController,
                   ]),
                   builder: (context, _) {
@@ -274,7 +297,7 @@ class _WaveformState extends State<Waveform> {
                     final progressContentX =
                         contentWidth *
                         ratioFromDuration(
-                          value: widget.playController.position,
+                          value: widget.playController.positionNotifier.value,
                           totalMs: safeTotalMilliseconds(
                             widget.playController.duration,
                           ),
@@ -308,9 +331,8 @@ class _WaveformState extends State<Waveform> {
   }
 
   void _onTimelineTap({required double localDx, required double contentWidth}) {
-    widget.playController.startPosition = _durationForContentDx(
-      localDx: localDx,
-      contentWidth: contentWidth,
+    widget.playController.setStartPosition(
+      _durationForContentDx(localDx: localDx, contentWidth: contentWidth),
     );
   }
 
@@ -404,7 +426,7 @@ class _WaveformState extends State<Waveform> {
       return;
     }
 
-    _playbackBinding.detach(widget.playController.isPlaying);
+    _playbackBinding.detach(widget.playController.isPlayNotifier.value);
     _progressLineLock.reset();
 
     final currentOffset = _waveScrollController.offset;
@@ -424,8 +446,10 @@ class _WaveformState extends State<Waveform> {
   }
 
   void _onPlayControllerChanged() {
-    final position = widget.playController.position;
-    _playbackBinding.handlePlayState(widget.playController.isPlaying);
+    final position = widget.playController.positionNotifier.value;
+    _playbackBinding.handlePlayState(
+      widget.playController.isPlayNotifier.value,
+    );
     if (_playbackBinding.isBound) {
       _scheduleFollowAndPreload(position.inMilliseconds);
     }
@@ -498,7 +522,7 @@ class _WaveformState extends State<Waveform> {
   }
 
   void _onOverviewPositionTap(Duration target) {
-    _playbackBinding.detach(widget.playController.isPlaying);
+    _playbackBinding.detach(widget.playController.isPlayNotifier.value);
     _progressLineLock.reset();
 
     _syncScrollToWaveformPosition(target);
@@ -511,14 +535,14 @@ class _WaveformState extends State<Waveform> {
 
   Duration _positionForMetrics() {
     if (_playbackBinding.isBound) {
-      return widget.playController.position;
+      return widget.playController.positionNotifier.value;
     }
     return _positionForCurrentViewport();
   }
 
   Duration _positionForScaleChange() {
     if (_playbackBinding.isBound) {
-      return widget.playController.position;
+      return widget.playController.positionNotifier.value;
     }
     return widget.waveformController.position;
   }
@@ -589,7 +613,7 @@ class _WaveformState extends State<Waveform> {
       return;
     }
 
-    _jumpToOffsetForPosition(widget.playController.position);
+    _jumpToOffsetForPosition(widget.playController.positionNotifier.value);
   }
 
   void _syncScrollToWaveformPosition(Duration position) {

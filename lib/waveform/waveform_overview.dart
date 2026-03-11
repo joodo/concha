@@ -181,7 +181,7 @@ class _WaveformOverviewState extends State<WaveformOverview> {
       onPointerSignal: _onPointerSignal,
       child: ListenableBuilder(
         listenable: Listenable.merge([
-          widget.playController,
+          widget.playController.positionNotifier,
           widget.waveformController,
         ]),
         builder: (context, _) {
@@ -191,7 +191,7 @@ class _WaveformOverviewState extends State<WaveformOverview> {
             totalMs: totalMs,
           );
           final playedRatio = ratioFromDuration(
-            value: widget.playController.position,
+            value: widget.playController.positionNotifier.value,
             totalMs: totalMs,
           );
           final rawWindowRatio =

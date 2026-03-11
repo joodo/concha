@@ -39,13 +39,13 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   void initState() {
     super.initState();
 
-    widget.playController.addListener(_updateLyricPosition);
+    widget.playController.positionNotifier.addListener(_updateLyricPosition);
     _loadLyric();
   }
 
   @override
   void dispose() {
-    widget.playController.removeListener(_updateLyricPosition);
+    widget.playController.positionNotifier.removeListener(_updateLyricPosition);
     _lyricController.dispose();
     _toolbarVisibleNotifier.dispose();
     super.dispose();
@@ -197,7 +197,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   void _updateLyricPosition() {
-    _lyricController.setProgress(widget.playController.position);
+    _lyricController.setProgress(widget.playController.positionNotifier.value);
   }
 
   Future<void> _createTranslate(String apiKey) async {

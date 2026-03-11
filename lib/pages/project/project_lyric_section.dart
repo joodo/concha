@@ -11,6 +11,7 @@ import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
 import '../../utils/utils.dart';
 import '../../play_controller.dart';
+import '../../widgets/popup_widget.dart';
 
 class ProjectLyricSection extends StatefulWidget {
   const ProjectLyricSection({
@@ -28,10 +29,9 @@ class ProjectLyricSection extends StatefulWidget {
 
 class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   final _lyricController = LyricController();
-
   String? _lrc, _tlrc;
 
-  final _toolbarVisibleNotifier = ValueNotifier(false);
+  final _toolbarVisibleNotifier = AutoResetNotifier(const Duration(seconds: 1));
 
   String? _searchKeyword;
 
@@ -110,8 +110,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   Widget _buildContent() {
     return MouseRegion(
-      onEnter: (event) => _toolbarVisibleNotifier.value = true,
-      onExit: (event) => _toolbarVisibleNotifier.value = false,
+      onEnter: (event) => _toolbarVisibleNotifier.lockUp('mouse in'),
+      onExit: (event) => _toolbarVisibleNotifier.unlock('mouse in'),
       child: [
         _buildLyricView(),
         ValueListenableBuilder(
@@ -178,6 +178,11 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget _buildLyricToolbar() {
     return [
       _TranslateButton(onPressed: _createTranslate),
+      _OffsetButton(
+        controller: _lyricController,
+        onShow: () => _toolbarVisibleNotifier.lockUp('show offset'),
+        onHide: () => _toolbarVisibleNotifier.unlock('show offset'),
+      ),
       if (_searchKeyword == null)
         IconButton.filledTonal(
           onPressed: () {
@@ -330,6 +335,101 @@ class _TranslateButtonState extends State<_TranslateButton> {
         ],
       ),
     );
+  }
+}
+
+class _OffsetButton extends StatefulWidget {
+  final LyricController controller;
+  final VoidCallback? onShow, onHide;
+  final ValueSetter<int>? onChanged;
+
+  const _OffsetButton({
+    required this.controller,
+    this.onShow,
+    this.onHide,
+    this.onChanged,
+  });
+
+  @override
+  State<_OffsetButton> createState() => _OffsetButtonState();
+}
+
+class _OffsetButtonState extends State<_OffsetButton> {
+  bool _isOpen = false;
+
+  final _offsetNotifier = ValueNotifier<int>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _offsetNotifier.value = widget.controller.lyricOffset;
+    _offsetNotifier.addListener(
+      () => widget.controller.lyricOffset = _offsetNotifier.value,
+    );
+  }
+
+  @override
+  void dispose() {
+    _offsetNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final link = LayerLink();
+    return PopupWidget(
+      showing: _isOpen,
+      popupBuilder: (context) => ValueListenableBuilder(
+        valueListenable: _offsetNotifier,
+        builder: (context, offset, child) {
+          return [
+                Slider(
+                  min: -10_000.0,
+                  max: 10_000.0,
+                  divisions: 200,
+                  onChanged: (value) {
+                    _offsetNotifier.value = value.round();
+                  },
+                  onChangeEnd: (value) => widget.onChanged?.call(value.round()),
+                  value: _offsetNotifier.value.toDouble(),
+                ),
+                Text(
+                  '${offset / 1000} s',
+                ).constrained(width: 48.0).padding(right: 16.0),
+              ]
+              .toRow(mainAxisSize: .min)
+              .backgroundColor(Theme.of(context).colorScheme.surfaceContainer)
+              .clipRRect(all: 16.0);
+        },
+      ),
+      layoutBuilder: (context, popup) => GestureDetector(
+        behavior: .opaque,
+        onTap: () => _setVisible(false),
+        child: UnconstrainedBox(
+          child: CompositedTransformFollower(
+            link: link,
+            targetAnchor: .centerRight,
+            followerAnchor: .centerLeft,
+            offset: Offset(16.0, 0),
+            child: popup,
+          ),
+        ),
+      ),
+      child: CompositedTransformTarget(
+        link: link,
+        child: IconButton.filledTonal(
+          onPressed: () => _setVisible(true),
+          icon: Icon(Icons.timer),
+        ),
+      ),
+    );
+  }
+
+  void _setVisible(bool visible) {
+    setState(() {
+      _isOpen = visible;
+    });
+    _isOpen ? widget.onShow?.call() : widget.onHide?.call();
   }
 }
 

@@ -34,6 +34,7 @@ jobs:
   build-macos:
     name: Build macOS
     runs-on: macos-latest
+    environment: Flutter
     steps:
       - name: Install Apple Certificate
         uses: apple-actions/import-codesign-certs@v3

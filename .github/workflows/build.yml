@@ -1,0 +1,72 @@
+name: Build App
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Start building
+        run: flutter build windows
+      - name: Package Windows build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "dist/concha-windows.zip" -Force
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: "dist/concha-windows.zip"
+          retention-days: 5
+          overwrite: true
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - name: Install Apple Certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_P12_PASSWORD }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Build macOS
+        run: flutter build macos --release
+      - name: Codesign executable
+        run: >
+          codesign --force --deep
+          -s ${{ secrets.IOS_IDENTITY_ID }}
+          ./build/macos/Build/Products/Release/Concha.app
+      - name: Generate dmg
+        run: |
+          # Install appdmg
+          curl "https://nodejs.org/dist/latest/$(curl -s https://nodejs.org/dist/latest/ | grep "pkg" | cut -d'"' -f 2)" -o "$HOME/Downloads/node-latest.pkg" && sudo installer -store -pkg "$HOME/Downloads/node-latest.pkg" -target "/"
+          npm install --global appdmg
+          # Generate dmg
+          appdmg 'macos/deploy/deploy.json' 'concha-macos.dmg'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: "./*.dmg"
+          retention-days: 5
+          overwrite: true

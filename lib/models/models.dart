@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:json_annotation/json_annotation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -42,10 +41,8 @@ class Project {
     savedDir = projectsDir.path;
   }
 
-  String get projectDirPath => '$savedDir/$id';
-  String get audioPath => '$projectDirPath/audio';
-  String get lyricPath => '$projectDirPath/lyric';
-  String get lyricTPath => '$projectDirPath/lyric.t';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  late final path = ProjectPath('$savedDir/$id');
 
   static Future<Project?> load(String id) async {
     try {
@@ -59,16 +56,16 @@ class Project {
   }
 
   Future<void> save() async {
-    final dir = Directory(projectDirPath);
+    final dir = Directory(path.dir);
     if (!await dir.exists()) await dir.create(recursive: true);
 
-    final file = File('$projectDirPath/info.json');
+    final file = File('${path.dir}/info.json');
     final data = jsonEncode(toJson());
     await file.writeAsString(data);
   }
 
   Future<void> delete() async {
-    final projectDir = Directory(projectDirPath);
+    final projectDir = Directory(path.dir);
     if (await projectDir.exists()) {
       await projectDir.delete(recursive: true);
     }
@@ -82,31 +79,25 @@ class Project {
 
 @JsonSerializable()
 class Metadata {
-  Metadata({required this.title, this.artist, this.album, this.coverBytes});
+  Metadata({required this.title, this.artist, this.album});
 
   final String title;
   final String? artist;
   final String? album;
 
-  @JsonKey(fromJson: _coverBytesFromJson, toJson: _coverBytesToJson)
-  final Uint8List? coverBytes;
-
-  static Uint8List? _coverBytesFromJson(String? value) {
-    if (value == null || value.isEmpty) {
-      return null;
-    }
-    return base64Decode(value);
-  }
-
-  static String? _coverBytesToJson(Uint8List? value) {
-    if (value == null || value.isEmpty) {
-      return null;
-    }
-    return base64Encode(value);
-  }
-
   factory Metadata.fromJson(Map<String, dynamic> json) =>
       _$MetadataFromJson(json);
 
   Map<String, dynamic> toJson() => _$MetadataToJson(this);
+}
+
+class ProjectPath {
+  const ProjectPath(this.dir);
+
+  final String dir;
+
+  String get audio => '$dir/audio';
+  String get cover => '$dir/cover';
+  String get lyric => '$dir/lyric';
+  String get lyricT => '$dir/lyric.t';
 }

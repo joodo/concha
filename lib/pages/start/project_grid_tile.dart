@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/models.dart';
@@ -18,6 +20,7 @@ class ProjectGridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = project.metadata;
+    final coverFile = File(project.path.cover);
 
     final tile = GridTile(
       footer: GridTileBar(
@@ -25,9 +28,13 @@ class ProjectGridTile extends StatelessWidget {
         title: Text(data.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: data.artist?.asText(),
       ),
-      child: data.coverBytes == null
-          ? const Center(child: Icon(Icons.music_note_rounded, size: 56))
-          : Ink.image(image: MemoryImage(data.coverBytes!), fit: .cover),
+      child: FutureBuilder(
+        future: coverFile.exists(),
+        initialData: false,
+        builder: (context, snapshot) => snapshot.data == true
+            ? Ink.image(image: FileImage(coverFile), fit: .cover)
+            : const Center(child: Icon(Icons.music_note_rounded, size: 56)),
+      ),
     );
 
     return Material(

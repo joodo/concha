@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/material.dart';
@@ -231,14 +232,15 @@ class _NewDialogState extends State<NewDialog> {
     MediaMatchResult? matchedMediaInfo,
   }) async {
     // Create Metadata
+    late final Uint8List? coverBytes;
     late final Metadata metadata;
     if (matchedMediaInfo != null) {
       metadata = Metadata(
         title: matchedMediaInfo.title,
         artist: matchedMediaInfo.artist,
         album: matchedMediaInfo.album,
-        coverBytes: matchedMediaInfo.coverBytes,
       );
+      coverBytes = matchedMediaInfo.coverBytes;
     } else {
       final m = readMetadata(File(audioPath), getImage: true);
       final filename = p.basenameWithoutExtension(audioPath);
@@ -246,8 +248,8 @@ class _NewDialogState extends State<NewDialog> {
         title: m.title ?? filename,
         artist: m.artist,
         album: m.album,
-        coverBytes: m.pictures.firstOrNull?.bytes,
       );
+      coverBytes = m.pictures.firstOrNull?.bytes;
     }
 
     // Create project
@@ -256,8 +258,13 @@ class _NewDialogState extends State<NewDialog> {
 
     // Copy audio file
     final sourceFile = File(audioPath);
-    await sourceFile.copy(project.audioPath);
+    await sourceFile.copy(project.path.audio);
     if (await isInTemporaryDirectory(audioPath)) await sourceFile.delete();
+
+    // Create cover file
+    if (coverBytes != null) {
+      await File(project.path.cover).writeAsBytes(coverBytes);
+    }
 
     return project;
   }

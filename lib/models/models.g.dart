@@ -24,12 +24,10 @@ Metadata _$MetadataFromJson(Map<String, dynamic> json) => Metadata(
   title: json['title'] as String,
   artist: json['artist'] as String?,
   album: json['album'] as String?,
-  coverBytes: Metadata._coverBytesFromJson(json['coverBytes'] as String?),
 );
 
 Map<String, dynamic> _$MetadataToJson(Metadata instance) => <String, dynamic>{
   'title': instance.title,
   'artist': instance.artist,
   'album': instance.album,
-  'coverBytes': Metadata._coverBytesToJson(instance.coverBytes),
 };

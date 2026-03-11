@@ -27,7 +27,7 @@ class _ProjectPageState extends State<ProjectPage> {
   @override
   void initState() {
     super.initState();
-    _playController = PlayController(audioPath: widget.project.audioPath);
+    _playController = PlayController(audioPath: widget.project.path.audio);
     _wavefromController = WavefromController();
     _initPlayer();
   }

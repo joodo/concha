@@ -55,9 +55,14 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget build(BuildContext context) {
     final content = _lrc == null ? _buildEmptyContent() : _buildContent();
 
-    final coverBytes = widget.project.metadata.coverBytes;
+    final coverFile = File(widget.project.path.cover);
     return [
-      if (coverBytes != null) Image.memory(coverBytes, fit: .cover),
+      FutureBuilder(
+        future: coverFile.exists(),
+        builder: (context, snapshot) => snapshot.data == true
+            ? Image.file(coverFile, fit: .cover)
+            : const SizedBox.shrink(),
+      ),
       content
           .backgroundBlur(10.0)
           .backgroundColor(
@@ -133,7 +138,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
             },
             onConfirm: (lrc) async {
               if (lrc != null) {
-                await File(widget.project.lyricPath).writeAsString(lrc);
+                await File(widget.project.path.lyric).writeAsString(lrc);
               }
               setState(() {
                 _lrc = lrc;
@@ -203,7 +208,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Future<void> _createTranslate(String apiKey) async {
     _tlrc = await LyricTranslationService().translate(_lrc!, apiKey: apiKey);
 
-    await File(widget.project.lyricTPath).writeAsString(_tlrc!);
+    await File(widget.project.path.lyricT).writeAsString(_tlrc!);
 
     _updateLyric();
   }
@@ -221,7 +226,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     if (picked == null) return;
 
     _lrc = await File(picked.path).readAsString();
-    await File(widget.project.lyricPath).writeAsString(_lrc!);
+    await File(widget.project.path.lyric).writeAsString(_lrc!);
 
     setState(() {
       _updateLyric();
@@ -237,12 +242,12 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Future<void> _loadLyric() async {
-    final lrcFile = File(widget.project.lyricPath);
+    final lrcFile = File(widget.project.path.lyric);
     if (await lrcFile.exists()) {
       _lrc = await lrcFile.readAsString();
     }
 
-    final tlrcFile = File(widget.project.lyricTPath);
+    final tlrcFile = File(widget.project.path.lyricT);
     if (await tlrcFile.exists()) {
       _tlrc = await tlrcFile.readAsString();
     }

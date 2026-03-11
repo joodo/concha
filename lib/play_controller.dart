@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
@@ -89,7 +90,7 @@ class PlayController implements TickerProvider {
     _setIsPlaying(false, force: true);
     _resetPlaybackSettings();
     setStartPosition(_clampToDuration(startPosition));
-    _ensurePitchFilterActive(source);
+    _syncPitchFilterState(source);
 
     _ensureTicker();
     _pauseTicker();
@@ -128,6 +129,7 @@ class PlayController implements TickerProvider {
 
     final handle = _handle;
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
+      _syncPitchFilterState(source);
       final newHandle = await _soloud.play(source);
       if (positionNotifier.value > Duration.zero) {
         _soloud.seek(newHandle, positionNotifier.value);
@@ -189,6 +191,7 @@ class PlayController implements TickerProvider {
 
     var handle = _handle;
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
+      _syncPitchFilterState(_source!);
       handle = await _soloud.play(_source!, paused: true);
       _handle = handle;
       _setIsPlaying(false);
@@ -226,6 +229,7 @@ class PlayController implements TickerProvider {
     var handle = _handle;
 
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
+      _syncPitchFilterState(source);
       handle = await _soloud.play(source);
       _handle = handle;
       _applyPlaybackSettings(handle);
@@ -331,18 +335,24 @@ class PlayController implements TickerProvider {
       return;
     }
 
-    _ensurePitchFilterActive(source);
+    _syncPitchFilterState(source);
     final pitchShiftFilter = source.filters.pitchShiftFilter;
-    pitchShiftFilter.semitones(soundHandle: handle).value = pitchNotifier.value
-        .toDouble();
+    pitchShiftFilter.semitones(soundHandle: handle).value =
+        _effectivePitchSemitones;
   }
 
-  void _ensurePitchFilterActive(AudioSource source) {
+  void _syncPitchFilterState(AudioSource source) {
     final pitchShiftFilter = source.filters.pitchShiftFilter;
     if (!pitchShiftFilter.isActive) {
       pitchShiftFilter.activate();
     }
-    pitchShiftFilter.semitones().value = pitchNotifier.value.toDouble();
+    pitchShiftFilter.semitones().value = _effectivePitchSemitones;
+  }
+
+  double get _effectivePitchSemitones {
+    // Compensate speed-induced pitch shift so speed changes keep target pitch.
+    final speedSemitoneShift = 12 * (math.log(speedNotifier.value) / math.ln2);
+    return pitchNotifier.value - speedSemitoneShift;
   }
 
   void _setPosition(Duration value, {bool force = false}) {

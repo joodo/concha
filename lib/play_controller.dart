@@ -12,6 +12,7 @@ class PlayController implements TickerProvider {
   static const double _defaultSpeed = 1.0;
   static const double _defaultVolume = 1.0;
   static const double _minSpeed = 0.05;
+  static const double _speedEpsilon = 0.0001;
 
   final String audioPath;
 
@@ -343,8 +344,15 @@ class PlayController implements TickerProvider {
 
     _syncPitchFilterState(source);
     final pitchShiftFilter = source.filters.pitchShiftFilter;
+    if (!pitchShiftFilter.isActive) {
+      return;
+    }
+
+    pitchShiftFilter.wet(soundHandle: handle).value = _shouldUsePitchShiftFilter
+        ? 1.0
+        : 0.0;
     pitchShiftFilter.semitones(soundHandle: handle).value =
-        _effectivePitchSemitones;
+        _shouldUsePitchShiftFilter ? _effectivePitchSemitones : 0.0;
   }
 
   void _syncPitchFilterState(AudioSource source) {
@@ -352,7 +360,16 @@ class PlayController implements TickerProvider {
     if (!pitchShiftFilter.isActive) {
       pitchShiftFilter.activate();
     }
-    pitchShiftFilter.semitones().value = _effectivePitchSemitones;
+
+    pitchShiftFilter.wet().value = _shouldUsePitchShiftFilter ? 1.0 : 0.0;
+    pitchShiftFilter.semitones().value = _shouldUsePitchShiftFilter
+        ? _effectivePitchSemitones
+        : 0.0;
+  }
+
+  bool get _shouldUsePitchShiftFilter {
+    final speedDelta = (speedNotifier.value - _defaultSpeed).abs();
+    return pitchNotifier.value != _defaultPitch || speedDelta > _speedEpsilon;
   }
 
   double get _effectivePitchSemitones {

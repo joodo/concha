@@ -11,7 +11,7 @@ class LyricTranslationService {
   final String modelName;
 
   static String get _prompt {
-    final targetLang = Pref.i.get(PrefKeys.translateLang.value) as String;
+    final targetLang = Pref.i.get(PrefKeys.translatePrompt.value) as String;
     return "你是一个专业的音乐翻译家。请将以下 LRC 歌词翻译成$targetLang。\n"
         "要求：1. 严禁修改或删除 [mm:ss.xx] 格式的时间戳。\n"
         "2. 保持歌词意境优雅。\n"

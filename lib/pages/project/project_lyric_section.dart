@@ -6,6 +6,7 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '../../models/models.dart';
+import '../../services/gemini_tts_service.dart';
 import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
 import '../../utils/utils.dart';
@@ -189,6 +190,10 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
         onShow: () => _toolbarVisibleNotifier.lockUp('show offset'),
         onHide: () => _toolbarVisibleNotifier.unlock('show offset'),
       ),
+      _LoadingButton(
+        icon: Icon(Icons.record_voice_over),
+        onPressed: _readAloudCurrent,
+      ),
       if (_searchKeyword == null)
         IconButton.filledTonal(
           onPressed: () {
@@ -212,6 +217,18 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     await File(widget.project.path.lyricT).writeAsString(_tlrc!);
 
     _updateLyric();
+  }
+
+  Future<void> _readAloudCurrent() async {
+    final model = _lyricController.lyricNotifier.value;
+    if (model == null || model.lines.isEmpty) return;
+    final i = _lyricController.activeIndexNotifiter.value;
+    if (i < 0 || i >= model.lines.length) return;
+
+    await widget.playController.pause();
+    final currentLyric = model.lines[i].text;
+    final voiceBytes = await GeminiTtsService().getVoice(currentLyric);
+    await widget.playController.insertInterlude(voiceBytes);
   }
 
   Future<void> _openLocalLyric() async {
@@ -255,9 +272,9 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
     _lyricController.lyricOffset = widget.project.lyricOffset.inMilliseconds;
 
-    setState(() {
-      _updateLyric();
-    });
+    _updateLyric();
+    _updateLyricPosition();
+    setState(() {});
   }
 
   void _updateLyric() {
@@ -294,7 +311,7 @@ class _LoadingButtonState extends State<_LoadingButton> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text('翻译失败：$e')));
+                  ).showSnackBar(SnackBar(content: Text('失败：$e')));
                 }
               } finally {
                 setState(() {

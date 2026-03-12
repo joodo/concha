@@ -25,18 +25,8 @@ class SettingButton extends StatelessWidget {
   }
 }
 
-class _SettingDialog extends StatefulWidget {
+class _SettingDialog extends StatelessWidget {
   const _SettingDialog();
-
-  @override
-  State<_SettingDialog> createState() => _SettingDialogState();
-}
-
-class _SettingDialogState extends State<_SettingDialog> {
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +54,7 @@ class _SettingDialogState extends State<_SettingDialog> {
           ),
           const Divider().padding(bottom: 24.0),
           Text(
-            '歌词翻译',
+            '歌词服务',
             style: Theme.of(context).textTheme.titleLarge,
           ).padding(bottom: 12.0),
           _PrefTextField(
@@ -72,10 +62,17 @@ class _SettingDialogState extends State<_SettingDialog> {
             decoration: const InputDecoration(labelText: 'Gemini Key'),
           ),
           _PrefTextField(
-            PrefKeys.translateLang.value,
+            PrefKeys.translatePrompt.value,
             decoration: const InputDecoration(
               hintText: '翻译语言',
               prefixText: '将歌词翻译成：',
+            ),
+          ),
+          _PrefTextField(
+            PrefKeys.speakPrompt.value,
+            decoration: const InputDecoration(
+              hintText: '朗读歌词要求',
+              suffixText: '[单句歌词]',
             ),
           ),
           const Divider(),

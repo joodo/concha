@@ -5,7 +5,8 @@ enum PrefKeys {
   acoustKey('acoust_key'),
   autoFillMetadata('auto_fill_metadata'),
   geminiKey('gemini_key'),
-  translateLang('translate_lang');
+  translatePrompt('translate_prompt'),
+  speakPrompt('read_aloud_prompt');
 
   final String value;
   const PrefKeys(this.value);
@@ -22,7 +23,8 @@ class Pref {
       if (!i.containsKey(key.value)) i.setString(key.value, value);
     }
 
-    setIfEmpty(.translateLang, '中文');
+    setIfEmpty(.translatePrompt, '中文');
+    setIfEmpty(.speakPrompt, '缓慢而清晰地大声读出');
   }
 
   static String? get normalizedProxy {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
@@ -29,6 +30,10 @@ class PlayController implements TickerProvider {
 
   AudioSource? _source;
   SoundHandle? _handle;
+  AudioSource? _interludeSource;
+  SoundHandle? _interludeHandle;
+  int? _interludeFingerprint;
+  int _interludeCounter = 0;
   Ticker? _positionTicker;
   Duration _duration = Duration.zero;
   bool _isDisposed = false;
@@ -79,6 +84,7 @@ class PlayController implements TickerProvider {
 
     volumeNotifier.value = clamped;
     _applyPlaybackSettingsToActiveHandle();
+    _applyVolumeToInterludeHandle();
   }
 
   Future<void> initialize() async {
@@ -187,6 +193,36 @@ class PlayController implements TickerProvider {
     }
 
     await play();
+  }
+
+  Future<void> interlude(Uint8List voiceBytes) => insertInterlude(voiceBytes);
+
+  Future<void> insertInterlude(Uint8List voiceBytes) async {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    if (voiceBytes.isEmpty) {
+      throw ArgumentError.value(voiceBytes, 'voiceBytes', '不能为空');
+    }
+
+    final nextFingerprint = _fingerprintBytes(voiceBytes);
+    if (_isSameInterlude(nextFingerprint)) {
+      await _stopInterlude();
+      return;
+    }
+
+    await _stopInterlude();
+
+    await _disposeInterludeSource();
+
+    final path = 'interlude_${_interludeCounter++}.wav';
+    final source = await _soloud.loadMem(path, voiceBytes);
+    final handle = await _soloud.play(source, volume: volumeNotifier.value);
+
+    _interludeSource = source;
+    _interludeHandle = handle;
+    _interludeFingerprint = nextFingerprint;
   }
 
   Future<void> seekTo(Duration target) async {
@@ -336,6 +372,19 @@ class PlayController implements TickerProvider {
     _applyPitch(handle);
   }
 
+  void _applyVolumeToInterludeHandle() {
+    final handle = _interludeHandle;
+    if (handle == null || !_soloud.isInitialized) {
+      return;
+    }
+
+    if (!_soloud.getIsValidVoiceHandle(handle)) {
+      return;
+    }
+
+    _soloud.setVolume(handle, volumeNotifier.value);
+  }
+
   void _applyPitch(SoundHandle handle) {
     final source = _source;
     if (source == null) {
@@ -410,11 +459,23 @@ class PlayController implements TickerProvider {
 
     final handle = _handle;
     final source = _source;
+    final interludeHandle = _interludeHandle;
+    final interludeSource = _interludeSource;
 
     _source = null;
     _handle = null;
+    _interludeSource = null;
+    _interludeHandle = null;
+    _interludeFingerprint = null;
 
-    unawaited(_disposeAudioResources(handle: handle, source: source));
+    unawaited(
+      _disposeAudioResources(
+        handle: handle,
+        source: source,
+        interludeHandle: interludeHandle,
+        interludeSource: interludeSource,
+      ),
+    );
 
     isPlayNotifier.dispose();
     positionNotifier.dispose();
@@ -427,6 +488,8 @@ class PlayController implements TickerProvider {
   Future<void> _disposeAudioResources({
     required SoundHandle? handle,
     required AudioSource? source,
+    required SoundHandle? interludeHandle,
+    required AudioSource? interludeSource,
   }) async {
     if (!_soloud.isInitialized) {
       return;
@@ -436,9 +499,73 @@ class PlayController implements TickerProvider {
       await _soloud.stop(handle);
     }
 
+    if (interludeHandle != null &&
+        _soloud.getIsValidVoiceHandle(interludeHandle)) {
+      await _soloud.stop(interludeHandle);
+    }
+
     if (source != null) {
       await _soloud.disposeSource(source);
     }
+
+    if (interludeSource != null) {
+      await _soloud.disposeSource(interludeSource);
+    }
+  }
+
+  bool get _hasActiveInterlude {
+    final handle = _interludeHandle;
+    if (handle == null || !_soloud.isInitialized) {
+      return false;
+    }
+
+    return _soloud.getIsValidVoiceHandle(handle);
+  }
+
+  Future<void> _stopInterlude() async {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    final handle = _interludeHandle;
+    _interludeHandle = null;
+    _interludeFingerprint = null;
+    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
+      await _soloud.stop(handle);
+    }
+
+    await _disposeInterludeSource();
+  }
+
+  Future<void> _disposeInterludeSource() async {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    final source = _interludeSource;
+    _interludeSource = null;
+    if (source == null) {
+      return;
+    }
+
+    await _soloud.disposeSource(source);
+  }
+
+  bool _isSameInterlude(int fingerprint) {
+    if (!_hasActiveInterlude) {
+      return false;
+    }
+
+    return _interludeFingerprint == fingerprint;
+  }
+
+  int _fingerprintBytes(Uint8List bytes) {
+    var hash = 0x811C9DC5;
+    for (final byte in bytes) {
+      hash ^= byte;
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
+    }
+    return hash;
   }
 
   Duration _clampToDuration(Duration target) {

@@ -1,4 +1,4 @@
-name: Upload assets and sync to gitee
+name: Upload assets
 
 on:
   release:

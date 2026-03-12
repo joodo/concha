@@ -9,7 +9,6 @@ import '../../models/models.dart';
 import '../../services/gemini_tts_service.dart';
 import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
-import '../../utils/utils.dart';
 import '../../services/play_controller.dart';
 import '../../widgets/popup_widget.dart';
 
@@ -31,8 +30,6 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   final _lyricController = LyricController();
   String? _lrc, _tlrc;
 
-  final _toolbarVisibleNotifier = AutoResetNotifier(const Duration(seconds: 5));
-
   String? _searchKeyword;
 
   @override
@@ -40,14 +37,17 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     super.initState();
 
     widget.playController.positionNotifier.addListener(_updateLyricPosition);
+    _lyricController.setOnTapLineCallback((position) {
+      widget.playController.seekTo(position);
+      widget.playController.startPositionNotifier.value = position;
+      _lyricController.stopSelection();
+    });
     _loadLyric();
   }
 
   @override
   void dispose() {
     widget.playController.positionNotifier.removeListener(_updateLyricPosition);
-    _lyricController.dispose();
-    _toolbarVisibleNotifier.dispose();
     super.dispose();
   }
 
@@ -114,16 +114,9 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Widget _buildContent() {
-    final content = [
+    return [
       _buildLyricView(),
-      ValueListenableBuilder(
-        valueListenable: _toolbarVisibleNotifier,
-        builder: (context, visible, child) => Visibility(
-          visible: visible,
-          maintainState: true,
-          child: IgnorePointer(ignoring: !visible, child: _buildLyricToolbar()),
-        ),
-      ).positioned(top: 12.0, left: 12.0),
+      _buildLyricToolbar().positioned(top: 12.0, left: 12.0),
       if (_searchKeyword != null)
         _SearchPanel(
           initKeyword: _searchKeyword!,
@@ -141,14 +134,6 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
           },
         ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0),
     ].toStack();
-    return MouseRegion(
-      onEnter: (event) => _toolbarVisibleNotifier.lockUp('mouse in'),
-      onExit: (event) => _toolbarVisibleNotifier.unlock('mouse in'),
-      child: GestureDetector(
-        onTap: _toolbarVisibleNotifier.mark,
-        child: content,
-      ),
-    );
   }
 
   Widget _buildLyricView() {
@@ -184,12 +169,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget _buildLyricToolbar() {
     return [
       _LoadingButton(icon: Icon(Icons.translate), onPressed: _createTranslate),
-      _OffsetButton(
-        project: widget.project,
-        controller: _lyricController,
-        onShow: () => _toolbarVisibleNotifier.lockUp('show offset'),
-        onHide: () => _toolbarVisibleNotifier.unlock('show offset'),
-      ),
+      _OffsetButton(project: widget.project, controller: _lyricController),
       _LoadingButton(
         icon: Icon(Icons.record_voice_over),
         onPressed: _readAloudCurrent,
@@ -332,14 +312,8 @@ class _LoadingButtonState extends State<_LoadingButton> {
 class _OffsetButton extends StatefulWidget {
   final Project project;
   final LyricController controller;
-  final VoidCallback? onShow, onHide;
 
-  const _OffsetButton({
-    required this.controller,
-    required this.project,
-    this.onShow,
-    this.onHide,
-  });
+  const _OffsetButton({required this.controller, required this.project});
 
   @override
   State<_OffsetButton> createState() => _OffsetButtonState();
@@ -422,7 +396,6 @@ class _OffsetButtonState extends State<_OffsetButton> {
     setState(() {
       _isOpen = visible;
     });
-    _isOpen ? widget.onShow?.call() : widget.onHide?.call();
   }
 }
 

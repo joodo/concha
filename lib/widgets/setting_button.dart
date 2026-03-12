@@ -73,7 +73,10 @@ class _SettingDialogState extends State<_SettingDialog> {
           ),
           _PrefTextField(
             PrefKeys.translateLang.value,
-            decoration: const InputDecoration(labelText: '翻译语言'),
+            decoration: const InputDecoration(
+              hintText: '翻译语言',
+              prefixText: '将歌词翻译成：',
+            ),
           ),
           const Divider(),
           FutureBuilder(

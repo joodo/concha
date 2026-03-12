@@ -486,6 +486,11 @@ class _WaveformState extends State<Waveform> {
         return;
       }
       _primeScheduled = false;
+      if (_playbackBinding.isBound) {
+        _syncScrollToProgress();
+      } else {
+        _syncScrollToWaveformPosition(widget.waveformController.position);
+      }
       if (_chunkCache.isEmpty) {
         unawaited(_loadChunksForVisibleRange());
       }

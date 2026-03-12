@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:animations/animations.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
@@ -183,7 +182,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   Widget _buildLyricToolbar() {
     return [
-      _TranslateButton(onPressed: _createTranslate),
+      _LoadingButton(icon: Icon(Icons.translate), onPressed: _createTranslate),
       _OffsetButton(
         project: widget.project,
         controller: _lyricController,
@@ -267,36 +266,18 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 }
 
-class _TranslateButton extends StatefulWidget {
+class _LoadingButton extends StatefulWidget {
   final Future<void> Function()? onPressed;
+  final Widget icon;
 
-  const _TranslateButton({this.onPressed});
+  const _LoadingButton({this.onPressed, required this.icon});
 
   @override
-  State<_TranslateButton> createState() => _TranslateButtonState();
+  State<_LoadingButton> createState() => _LoadingButtonState();
 }
 
-class _TranslateButtonState extends State<_TranslateButton> {
-  final _keyNotifier = PreferenceValueNotifier(
-    '',
-    key: PrefKeys.geminiKey.value,
-  );
-  final _textController = TextEditingController();
-
+class _LoadingButtonState extends State<_LoadingButton> {
   bool _isBusy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _textController.text = _keyNotifier.value;
-  }
-
-  @override
-  void dispose() {
-    _keyNotifier.dispose();
-    _textController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -304,48 +285,29 @@ class _TranslateButtonState extends State<_TranslateButton> {
       onPressed: _isBusy
           ? null
           : () async {
-              if (_keyNotifier.value.isEmpty) {
-                _showTokenDialog();
-              } else {
-                setState(() {
-                  _isBusy = true;
-                });
-                try {
-                  await widget.onPressed?.call();
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('翻译失败：$e')));
-                  }
-                } finally {
-                  setState(() {
-                    _isBusy = false;
-                  });
+              setState(() {
+                _isBusy = true;
+              });
+              try {
+                await widget.onPressed?.call();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('翻译失败：$e')));
                 }
+              } finally {
+                setState(() {
+                  _isBusy = false;
+                });
               }
             },
-      onLongPress: _isBusy ? null : _showTokenDialog,
-      icon: Icon(Icons.translate),
-    );
-  }
-
-  void _showTokenDialog() async {
-    await showModal(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Gemini Api Key'),
-        content: TextField(
-          controller: _textController,
-          onChanged: (value) => _keyNotifier.value = value,
-        ),
-        actions: [
-          TextButton(
-            onPressed: Navigator.of(context).pop,
-            child: const Text('确定'),
-          ),
-        ],
-      ),
+      icon: _isBusy
+          ? const SizedBox.square(
+              dimension: 16.0,
+              child: CircularProgressIndicator(strokeWidth: 2.0),
+            )
+          : widget.icon,
     );
   }
 }

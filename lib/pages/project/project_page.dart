@@ -197,7 +197,7 @@ class _HelpButton extends StatelessWidget {
                     _shortcutKeyChip(context, keys),
                     const SizedBox(width: 10),
                     Expanded(child: Text(action)),
-                  ].toRow(crossAxisAlignment: .start);
+                  ].toRow(crossAxisAlignment: .center);
                 })
                 .toList()
                 .toColumn(

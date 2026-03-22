@@ -497,13 +497,11 @@ class MvsepSeparationService {
           final cachePaths = await _cachePathsForHash(hash);
           var vocalDownloadedBytes = 0;
           var instruDownloadedBytes = 0;
+          int? vocalFileBytes;
+          int? instruFileBytes;
           var lastProgressEventAt = DateTime.fromMillisecondsSinceEpoch(0);
 
-          void emitDownloadProgress({
-            bool force = false,
-            int? vocalFileBytes,
-            int? instruFileBytes,
-          }) {
+          void emitDownloadProgress({bool force = false}) {
             final now = DateTime.now();
             if (!force &&
                 now.difference(lastProgressEventAt) <
@@ -530,16 +528,22 @@ class MvsepSeparationService {
           final vocalFuture = _downloadToPath(
             url: vocalUrl,
             savePath: cachePaths.vocalPath,
-            onProgress: (downloadedBytes) {
+            onProgress: (downloadedBytes, totalBytes) {
               vocalDownloadedBytes = downloadedBytes;
+              if (totalBytes != null && totalBytes > 0) {
+                vocalFileBytes = totalBytes;
+              }
               emitDownloadProgress();
             },
           );
           final instruFuture = _downloadToPath(
             url: instruUrl,
             savePath: cachePaths.instruPath,
-            onProgress: (downloadedBytes) {
+            onProgress: (downloadedBytes, totalBytes) {
               instruDownloadedBytes = downloadedBytes;
+              if (totalBytes != null && totalBytes > 0) {
+                instruFileBytes = totalBytes;
+              }
               emitDownloadProgress();
             },
           );
@@ -552,11 +556,7 @@ class MvsepSeparationService {
           final instruBytes = downloadResults[1];
           vocalDownloadedBytes = vocalBytes;
           instruDownloadedBytes = instruBytes;
-          emitDownloadProgress(
-            force: true,
-            vocalFileBytes: vocalBytes,
-            instruFileBytes: instruBytes,
-          );
+          emitDownloadProgress(force: true);
 
           record
             ..vocalCachePath = cachePaths.vocalPath
@@ -926,7 +926,7 @@ class MvsepSeparationService {
   Future<int> _downloadToPath({
     required String url,
     required String savePath,
-    void Function(int downloadedBytes)? onProgress,
+    void Function(int downloadedBytes, int? totalBytes)? onProgress,
   }) async {
     final client = Http.createClient(proxy: _proxy);
     IOSink? sink;
@@ -938,6 +938,10 @@ class MvsepSeparationService {
           'Download failed: HTTP ${response.statusCode} for $url',
         );
       }
+      final contentLength = response.contentLength;
+      final totalBytes = (contentLength != null && contentLength > 0)
+          ? contentLength
+          : null;
 
       final file = File(savePath);
       await file.parent.create(recursive: true);
@@ -947,7 +951,7 @@ class MvsepSeparationService {
       await for (final chunk in response.stream) {
         sink.add(chunk);
         downloadedBytes += chunk.length;
-        onProgress?.call(downloadedBytes);
+        onProgress?.call(downloadedBytes, totalBytes);
       }
       await sink.flush();
       await sink.close();

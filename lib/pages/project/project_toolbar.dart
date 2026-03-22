@@ -5,6 +5,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '../../services/mvsep_separation_service.dart';
 import '../../services/play_controller.dart';
+import '../../widgets/popup_widget.dart';
 import 'actions.dart';
 import 'expansible_button.dart';
 
@@ -43,7 +44,7 @@ class ProjectToolbar extends StatelessWidget {
           const SizedBox(width: 8.0),
           LayoutBuilder(
             builder: (context, constraints) {
-              final isExpanded = constraints.maxWidth >= 940.0;
+              final isExpanded = constraints.maxWidth >= 750.0;
               return [
                 ValueListenableBuilder(
                   valueListenable: playController.volumeNotifier,
@@ -103,7 +104,7 @@ class ProjectToolbar extends StatelessWidget {
                         playController.setPitch(value.round()),
                   ).tooltip('音调'),
                 ),
-                _createSeparateSlider(),
+                _MixTableButton(playController: playController),
               ].toRow(separator: const SizedBox(width: 12));
             },
           ).flexible(),
@@ -111,99 +112,6 @@ class ProjectToolbar extends StatelessWidget {
         ]
         .toRow(separator: const SizedBox(width: 8.0))
         .padding(horizontal: 12.0, bottom: 12.0);
-  }
-
-  Widget _createSeparateSlider() {
-    return Consumer<Stream<MvsepTaskEvent>?>(
-      builder: (context, taskStream, child) {
-        if (taskStream == null) {
-          return ValueListenableBuilder(
-            valueListenable: playController.separateModeNotifier,
-            builder: (context, isSeparated, child) => [
-              IconButton.filled(
-                onPressed: () => playController.setSeparateMode(!isSeparated),
-                isSelected: isSeparated,
-                tooltip: '伴奏模式：${isSeparated ? "开" : "关"}',
-                icon: Icon(
-                  isSeparated ? Icons.mic_external_on : Icons.mic_external_off,
-                ),
-              ),
-              ValueListenableBuilder(
-                valueListenable: playController.vocalVolumeNotifier,
-                builder: (context, volume, child) => Slider(
-                  value: volume,
-                  onChanged: isSeparated ? playController.setVocalVolume : null,
-                ),
-              ),
-            ].toRow(),
-          );
-        }
-
-        return StreamBuilder(
-          stream: taskStream,
-          builder: (context, snapshot) {
-            String getMessage(MvsepTaskEvent? event) {
-              switch (event) {
-                case null:
-                case MvsepInitEvent():
-                  return '正在初始化服务';
-
-                case MvsepLocalQueuedEvent(:final localQueuePosition):
-                  return '正在等待其他歌曲 (还有 $localQueuePosition 项';
-
-                case MvsepLocalRunningEvent():
-                  return '正在执行';
-
-                case MvsepUploadingEvent(
-                  :final uploadedBytes,
-                  :final totalBytes,
-                ):
-                  final percent = (uploadedBytes / totalBytes).asPercent;
-                  return '正在上传 ($percent%)\n'
-                      '${uploadedBytes.asByteSize} / ${totalBytes.asByteSize}';
-
-                case MvsepRemoteQueuedEvent(:final remoteCurrentOrder):
-                  return '正在排队 (还有 $remoteCurrentOrder 人)';
-
-                case MvsepRemoteProcessingEvent():
-                  return '正在分离人声和伴奏';
-
-                case MvsepDownloadingEvent(
-                  :final vocalDownloadedBytes,
-                  :final vocalFileBytes,
-                  :final instruDownloadedBytes,
-                  :final instruFileBytes,
-                ):
-                  final downloaded =
-                      instruDownloadedBytes + vocalDownloadedBytes;
-                  if (instruFileBytes == null || vocalFileBytes == null) {
-                    return '正在下载 (已下载${downloaded.asByteSize})';
-                  }
-
-                  final total = instruFileBytes + vocalFileBytes;
-                  final percent = (downloaded / total).asPercent;
-                  return '正在下载 ($percent%)\n'
-                      '${vocalDownloadedBytes.asByteSize} / ${vocalFileBytes.asByteSize}'
-                      '${instruDownloadedBytes.asByteSize} / ${instruFileBytes.asByteSize}';
-
-                case MvsepCompletedEvent():
-                  return '生成成功！正在加载';
-                case MvsepFailedEvent(:final phase, :final error):
-                  return '失败阶段：$phase\n原因：$error';
-              }
-            }
-
-            final message = getMessage(snapshot.data);
-            return Tooltip(
-              message: message,
-              child: Text(
-                snapshot.data is MvsepFailedEvent ? '生成伴奏失败' : '正在生成伴奏……',
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   Widget _createDurationLabel() {
@@ -232,5 +140,195 @@ class ProjectToolbar extends StatelessWidget {
         style: Theme.of(context).textTheme.titleMedium,
       ),
     );
+  }
+}
+
+class _MixTableButton extends StatefulWidget {
+  const _MixTableButton({required this.playController});
+
+  final PlayController playController;
+
+  @override
+  State<_MixTableButton> createState() => _MixTableButtonState();
+}
+
+class _MixTableButtonState extends State<_MixTableButton> {
+  bool _isShowing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    final link = LayerLink();
+    return PopupWidget(
+      showing: _isShowing,
+      popupBuilder: (context) =>
+          Consumer<Stream<MvsepTaskEvent>?>(builder: _popupContentBuilder)
+              .constrained(width: 250.0, height: 160.0)
+              .padding(all: 12.0)
+              .backgroundColor(colors.surfaceContainer)
+              .clipRRect(all: 16.0),
+      layoutBuilder: (context, popup) => GestureDetector(
+        behavior: .opaque,
+        onTap: () => setState(() {
+          _isShowing = false;
+        }),
+        child: UnconstrainedBox(
+          child: CompositedTransformFollower(
+            link: link,
+            targetAnchor: .topCenter,
+            followerAnchor: .bottomCenter,
+            offset: Offset(0, -16.0),
+            child: popup,
+          ),
+        ),
+      ),
+      child: CompositedTransformTarget(
+        link: link,
+        child: ValueListenableBuilder(
+          valueListenable: widget.playController.separateModeNotifier,
+          builder: (context, isSep, child) {
+            return IconButton.filled(
+              onPressed: () => setState(() {
+                _isShowing = true;
+              }),
+              isSelected: isSep,
+              icon: Image.asset(
+                'assets/icons/mixing-table.png',
+                width: 20.0,
+                color: colors.onSurfaceVariant,
+              ),
+              selectedIcon: Image.asset(
+                'assets/icons/mixing-table-fill.png',
+                width: 20.0,
+                color: colors.onInverseSurface,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _popupContentBuilder(
+    BuildContext context,
+    Stream<MvsepTaskEvent>? taskStream,
+    Widget? child,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    final separateModeNotifier = widget.playController.separateModeNotifier;
+
+    final isSepFileReady = taskStream == null;
+    return ValueListenableBuilder(
+      valueListenable: separateModeNotifier,
+      builder: (context, isSeparated, child) {
+        return [
+          SwitchListTile(
+            value: isSeparated,
+            title: '人声分离模式'.asText(),
+            onChanged: isSepFileReady
+                ? (value) => separateModeNotifier.value = value
+                : null,
+          ),
+          isSepFileReady
+              ? [
+                  [
+                    Image.asset(
+                      'assets/icons/singing.png',
+                      width: 24.0,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable:
+                          widget.playController.vocalVolumeNotifier,
+                      builder: (context, volume, child) => Slider(
+                        value: volume,
+                        onChanged: isSeparated
+                            ? widget.playController.setVocalVolume
+                            : null,
+                      ),
+                    ),
+                  ].toRow(mainAxisAlignment: .center),
+                  [
+                    Image.asset(
+                      'assets/icons/drum.png',
+                      width: 24.0,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable:
+                          widget.playController.instruVolumeNotifier,
+                      builder: (context, volume, child) => Slider(
+                        value: volume,
+                        onChanged: isSeparated
+                            ? widget.playController.setInstruVolume
+                            : null,
+                      ),
+                    ),
+                  ].toRow(mainAxisAlignment: .center),
+                ].toColumn()
+              : [
+                      '处理中'.asText(),
+                      StreamBuilder(
+                        stream: taskStream,
+                        builder: (context, snapshot) =>
+                            _getMessage(snapshot.data).asText(),
+                      ),
+                    ]
+                    .toColumn(
+                      mainAxisAlignment: .center,
+                      separator: const SizedBox(height: 8.0),
+                    )
+                    .expanded(),
+        ].toColumn(separator: const SizedBox(height: 16.0));
+      },
+    );
+  }
+
+  String _getMessage(MvsepTaskEvent? event) {
+    switch (event) {
+      case null:
+      case MvsepInitEvent():
+        return '正在初始化服务';
+
+      case MvsepLocalQueuedEvent(:final localQueuePosition):
+        return '正在等待其他歌曲 (还有 $localQueuePosition 项';
+
+      case MvsepLocalRunningEvent():
+        return '正在执行';
+
+      case MvsepUploadingEvent(:final uploadedBytes, :final totalBytes):
+        final percent = (uploadedBytes / totalBytes).asPercent;
+        return '正在上传 ($percent%)\n'
+            '${uploadedBytes.asByteSize} / ${totalBytes.asByteSize}';
+
+      case MvsepRemoteQueuedEvent(:final remoteCurrentOrder):
+        return '正在排队 (还有 $remoteCurrentOrder 人)';
+
+      case MvsepRemoteProcessingEvent():
+        return '正在分离人声和伴奏';
+
+      case MvsepDownloadingEvent(
+        :final vocalDownloadedBytes,
+        :final vocalFileBytes,
+        :final instruDownloadedBytes,
+        :final instruFileBytes,
+      ):
+        final downloaded = instruDownloadedBytes + vocalDownloadedBytes;
+        if (instruFileBytes == null || vocalFileBytes == null) {
+          return '正在下载 (已下载${downloaded.asByteSize})';
+        }
+
+        final total = instruFileBytes + vocalFileBytes;
+        final percent = (downloaded / total).asPercent;
+        return '正在下载 ($percent%)\n'
+            '${vocalDownloadedBytes.asByteSize} / ${vocalFileBytes.asByteSize}\n'
+            '${instruDownloadedBytes.asByteSize} / ${instruFileBytes.asByteSize}';
+
+      case MvsepCompletedEvent():
+        return '生成成功！正在加载';
+      case MvsepFailedEvent(:final phase, :final error):
+        return '失败阶段：$phase\n原因：$error';
+    }
   }
 }

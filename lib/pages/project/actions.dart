@@ -36,9 +36,10 @@ class DeltaPitchIntent extends Intent {
   final int delta;
 }
 
-class SetVocalVolumeIntent extends Intent {
-  final double volume;
-  const SetVocalVolumeIntent(this.volume);
+class SetMixIntent extends Intent {
+  const SetMixIntent({required this.vocalVolume, required this.instruVolume});
+  final double vocalVolume;
+  final double instruVolume;
 }
 
 class MarkStartPoint extends Intent {
@@ -128,10 +129,11 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
             return null;
           },
         ),
-        SetVocalVolumeIntent: CallbackAction<SetVocalVolumeIntent>(
+        SetMixIntent: CallbackAction<SetMixIntent>(
           onInvoke: (intent) {
             widget.playController.setSeparateMode(true);
-            widget.playController.setVocalVolume(intent.volume);
+            widget.playController.setVocalVolume(intent.vocalVolume);
+            widget.playController.setInstruVolume(intent.instruVolume);
             return null;
           },
         ),
@@ -187,9 +189,22 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
           SingleActivator(LogicalKeyboardKey.period): DeltaSpeedIntent(0.25),
           SingleActivator(LogicalKeyboardKey.bracketLeft): DeltaPitchIntent(-1),
           SingleActivator(LogicalKeyboardKey.bracketRight): DeltaPitchIntent(1),
-          SingleActivator(LogicalKeyboardKey.digit1): SetVocalVolumeIntent(1.0),
-          SingleActivator(LogicalKeyboardKey.digit2): SetVocalVolumeIntent(0.5),
-          SingleActivator(LogicalKeyboardKey.digit3): SetVocalVolumeIntent(0),
+          SingleActivator(LogicalKeyboardKey.digit1): SetMixIntent(
+            vocalVolume: 1.0,
+            instruVolume: 1.0,
+          ),
+          SingleActivator(LogicalKeyboardKey.digit2): SetMixIntent(
+            vocalVolume: 0.4,
+            instruVolume: 1.0,
+          ),
+          SingleActivator(LogicalKeyboardKey.digit3): SetMixIntent(
+            vocalVolume: 0,
+            instruVolume: 1.0,
+          ),
+          SingleActivator(LogicalKeyboardKey.digit4): SetMixIntent(
+            vocalVolume: 1.0,
+            instruVolume: 0.1,
+          ),
           SingleActivator(LogicalKeyboardKey.keyZ): MarkStartPoint(),
           SingleActivator(LogicalKeyboardKey.keyS):
               ReadAloudCurrentLyricIntent(),

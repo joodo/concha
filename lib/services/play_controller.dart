@@ -12,6 +12,7 @@ class PlayController implements TickerProvider {
   static const double _defaultSpeed = 1.0;
   static const double _defaultVolume = 1.0;
   static const double _defaultVocalVolume = 1.0;
+  static const double _defaultInstruVolume = 1.0;
   static const double _minSpeed = 0.05;
   static const double _speedEpsilon = 0.0001;
 
@@ -29,6 +30,9 @@ class PlayController implements TickerProvider {
   final ValueNotifier<double> volumeNotifier = ValueNotifier(_defaultVolume);
   final ValueNotifier<double> vocalVolumeNotifier = ValueNotifier(
     _defaultVocalVolume,
+  );
+  final ValueNotifier<double> instruVolumeNotifier = ValueNotifier(
+    _defaultInstruVolume,
   );
   final ValueNotifier<bool> separateModeNotifier = ValueNotifier(false);
 
@@ -173,6 +177,16 @@ class PlayController implements TickerProvider {
     }
 
     vocalVolumeNotifier.value = clamped;
+    _applyPlaybackSettingsToActiveHandle();
+  }
+
+  void setInstruVolume(double value) {
+    final clamped = value.clamp(0.0, 1.0).toDouble();
+    if (clamped == instruVolumeNotifier.value) {
+      return;
+    }
+
+    instruVolumeNotifier.value = clamped;
     _applyPlaybackSettingsToActiveHandle();
   }
 
@@ -467,6 +481,7 @@ class PlayController implements TickerProvider {
     speedNotifier.value = _defaultSpeed;
     volumeNotifier.value = _defaultVolume;
     vocalVolumeNotifier.value = _defaultVocalVolume;
+    instruVolumeNotifier.value = _defaultInstruVolume;
     separateModeNotifier.value = false;
   }
 
@@ -481,7 +496,7 @@ class PlayController implements TickerProvider {
         _applyPlaybackSettings(
           handle: instruHandle,
           source: _separatedInstruSource,
-          volumeScale: 1.0,
+          volumeScale: instruVolumeNotifier.value,
         );
       }
 
@@ -640,6 +655,7 @@ class PlayController implements TickerProvider {
     speedNotifier.dispose();
     volumeNotifier.dispose();
     vocalVolumeNotifier.dispose();
+    instruVolumeNotifier.dispose();
     separateModeNotifier.dispose();
   }
 

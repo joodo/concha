@@ -40,7 +40,7 @@ class _ExpansibleButtonState extends State<ExpansibleButton> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isExpanded) {
+    if (widget.isExpanded) {
       return [
         widget.icon.padding(left: 8.0),
         Slider(

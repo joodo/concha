@@ -106,6 +106,8 @@ class ProjectPath {
   final String dir;
 
   String get audio => '$dir/audio';
+  String get audioVocals => '$dir/audio.vocals';
+  String get audioInstru => '$dir/audio.inst';
   String get cover => '$dir/cover';
   String get lyric => '$dir/lyric';
   String get lyricT => '$dir/lyric.t';

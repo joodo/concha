@@ -1,7 +1,10 @@
+import 'package:concha/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '../../services/mvsep_separation_service.dart';
 import '../../services/play_controller.dart';
 import 'expansible_button.dart';
 
@@ -69,7 +72,7 @@ class ProjectToolbar extends StatelessWidget {
               const SizedBox(width: 8.0),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final isExpanded = constraints.maxWidth < 700.0;
+                  final isExpanded = constraints.maxWidth >= 940.0;
                   return [
                     ValueListenableBuilder(
                       valueListenable: playController.volumeNotifier,
@@ -130,6 +133,7 @@ class ProjectToolbar extends StatelessWidget {
                             playController.setPitch(value.round()),
                       ),
                     ),
+                    _createSeparateSlider(),
                   ].toRow(separator: const SizedBox(width: 12));
                 },
               ).flexible(),
@@ -201,6 +205,98 @@ class ProjectToolbar extends StatelessWidget {
         },
         child: Focus(autofocus: true, child: child),
       ),
+    );
+  }
+
+  Widget _createSeparateSlider() {
+    return Consumer<Stream<MvsepTaskEvent>?>(
+      builder: (context, taskStream, child) {
+        if (taskStream == null) {
+          return ValueListenableBuilder(
+            valueListenable: playController.separateModeNotifier,
+            builder: (context, isSeparated, child) => [
+              IconButton.filled(
+                onPressed: () => playController.setSeparateMode(!isSeparated),
+                isSelected: isSeparated,
+                icon: Icon(
+                  isSeparated ? Icons.mic_external_on : Icons.mic_external_off,
+                ),
+              ),
+              ValueListenableBuilder(
+                valueListenable: playController.vocalVolumeNotifier,
+                builder: (context, volume, child) => Slider(
+                  value: volume,
+                  onChanged: isSeparated ? playController.setVocalVolume : null,
+                ),
+              ),
+            ].toRow(),
+          );
+        }
+
+        return StreamBuilder(
+          stream: taskStream,
+          builder: (context, snapshot) {
+            String getMessage(MvsepTaskEvent? event) {
+              switch (event) {
+                case null:
+                case MvsepInitEvent():
+                  return '正在初始化服务';
+
+                case MvsepLocalQueuedEvent(:final localQueuePosition):
+                  return '正在等待其他歌曲 (还有 $localQueuePosition 项';
+
+                case MvsepLocalRunningEvent():
+                  return '正在执行';
+
+                case MvsepUploadingEvent(
+                  :final uploadedBytes,
+                  :final totalBytes,
+                ):
+                  final percent = (uploadedBytes / totalBytes).asPercent;
+                  return '正在上传 ($percent%)\n'
+                      '${uploadedBytes.asByteSize} / ${totalBytes.asByteSize}';
+
+                case MvsepRemoteQueuedEvent(:final remoteCurrentOrder):
+                  return '正在排队 (还有 $remoteCurrentOrder 人)';
+
+                case MvsepRemoteProcessingEvent():
+                  return '正在分离人声和伴奏';
+
+                case MvsepDownloadingEvent(
+                  :final vocalDownloadedBytes,
+                  :final vocalFileBytes,
+                  :final instruDownloadedBytes,
+                  :final instruFileBytes,
+                ):
+                  final downloaded =
+                      instruDownloadedBytes + vocalDownloadedBytes;
+                  if (instruFileBytes == null || vocalFileBytes == null) {
+                    return '正在下载 (已下载${downloaded.asByteSize})';
+                  }
+
+                  final total = instruFileBytes + vocalFileBytes;
+                  final percent = (downloaded / total).asPercent;
+                  return '正在下载 ($percent%)\n'
+                      '${vocalDownloadedBytes.asByteSize} / ${vocalFileBytes.asByteSize}'
+                      '${instruDownloadedBytes.asByteSize} / ${instruFileBytes.asByteSize}';
+
+                case MvsepCompletedEvent():
+                  return '生成成功！正在加载';
+                case MvsepFailedEvent(:final phase, :final error):
+                  return '失败阶段：$phase\n原因：$error';
+              }
+            }
+
+            final message = getMessage(snapshot.data);
+            return Tooltip(
+              message: message,
+              child: Text(
+                snapshot.data is MvsepFailedEvent ? '生成伴奏失败' : '正在生成伴奏……',
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

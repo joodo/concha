@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:concha/utils/utils.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
@@ -289,9 +290,7 @@ class _LoadingButtonState extends State<_LoadingButton> {
                 await widget.onPressed?.call();
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('失败：$e')));
+                  context.showSnackBarText('失败：$e');
                 }
               } finally {
                 setState(() {

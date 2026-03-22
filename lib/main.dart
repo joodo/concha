@@ -1,11 +1,14 @@
 import 'package:concha/pages/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:provider/provider.dart';
 
 import 'models/models.dart';
 import 'utils/preferences.dart';
 
 Future<void> main() async {
+  Provider.debugCheckInvalidValueType = null;
+
   WidgetsFlutterBinding.ensureInitialized();
 
   final soLoud = SoLoud.instance;

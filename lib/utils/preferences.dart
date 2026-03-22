@@ -6,7 +6,8 @@ enum PrefKeys {
   autoFillMetadata('auto_fill_metadata'),
   geminiKey('gemini_key'),
   translatePrompt('translate_prompt'),
-  speakPrompt('read_aloud_prompt');
+  speakPrompt('read_aloud_prompt'),
+  mvsepKey('mvsep_key');
 
   final String value;
   const PrefKeys(this.value);

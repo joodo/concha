@@ -11,6 +11,7 @@ class PlayController implements TickerProvider {
   static const int _defaultPitch = 0;
   static const double _defaultSpeed = 1.0;
   static const double _defaultVolume = 1.0;
+  static const double _defaultVocalVolume = 1.0;
   static const double _minSpeed = 0.05;
   static const double _speedEpsilon = 0.0001;
 
@@ -26,9 +27,17 @@ class PlayController implements TickerProvider {
   final ValueNotifier<int> pitchNotifier = ValueNotifier(_defaultPitch);
   final ValueNotifier<double> speedNotifier = ValueNotifier(_defaultSpeed);
   final ValueNotifier<double> volumeNotifier = ValueNotifier(_defaultVolume);
+  final ValueNotifier<double> vocalVolumeNotifier = ValueNotifier(
+    _defaultVocalVolume,
+  );
+  final ValueNotifier<bool> separateModeNotifier = ValueNotifier(false);
 
   AudioSource? _source;
   SoundHandle? _handle;
+  AudioSource? _separatedVocalSource;
+  AudioSource? _separatedInstruSource;
+  SoundHandle? _separatedVocalHandle;
+  SoundHandle? _separatedInstruHandle;
   AudioSource? _interludeSource;
   SoundHandle? _interludeHandle;
   int? _interludeFingerprint;
@@ -39,8 +48,79 @@ class PlayController implements TickerProvider {
 
   bool get isInitialized => _soloud.isInitialized;
   bool get hasSource => _source != null;
+  bool get isSeparateMode => separateModeNotifier.value;
   Duration get duration => _duration;
   Duration get startPosition => startPositionNotifier.value;
+
+  Future<void> setSeparatedAudio(
+    String vocalAudioPath,
+    String instruAudioPath,
+  ) async {
+    if (!_soloud.isInitialized) {
+      throw StateError(
+        'SoLoud is not initialized. Call SoLoud.instance.init() in main() first.',
+      );
+    }
+
+    final vocalPath = vocalAudioPath.trim();
+    final instruPath = instruAudioPath.trim();
+    if (vocalPath.isEmpty || instruPath.isEmpty) {
+      throw ArgumentError('Separated audio paths must not be empty.');
+    }
+
+    final wasPlaying = isPlayNotifier.value;
+    final keepPosition = positionNotifier.value;
+
+    await _stopSeparatedHandles();
+    await _disposeSeparatedSources();
+
+    _separatedVocalSource = await _soloud.loadFile(vocalPath);
+    _separatedInstruSource = await _soloud.loadFile(instruPath);
+
+    _syncPitchFilterState(_separatedVocalSource!);
+    _syncPitchFilterState(_separatedInstruSource!);
+
+    if (isSeparateMode) {
+      if (wasPlaying) {
+        _setPosition(keepPosition, force: true);
+        await play();
+      } else {
+        await seekTo(keepPosition);
+      }
+    }
+  }
+
+  Future<void> setSeparateMode(bool enabled) async {
+    if (enabled == separateModeNotifier.value) {
+      return;
+    }
+
+    if (enabled && !_hasSeparatedSources) {
+      throw StateError(
+        'Separated audio is not ready. Call setSeparatedAudio() first.',
+      );
+    }
+
+    final keepPosition = positionNotifier.value;
+    final wasPlaying = isPlayNotifier.value;
+
+    separateModeNotifier.value = enabled;
+
+    if (enabled) {
+      await _stopOriginalHandle();
+    } else {
+      await _stopSeparatedHandles();
+    }
+
+    _setPosition(keepPosition, force: true);
+    if (wasPlaying) {
+      await play();
+    } else {
+      await seekTo(keepPosition);
+      _setIsPlaying(false, force: true);
+      _pauseTicker();
+    }
+  }
 
   void setStartPosition(Duration value) {
     if (!hasSource) {
@@ -84,6 +164,16 @@ class PlayController implements TickerProvider {
     volumeNotifier.value = clamped;
     _applyPlaybackSettingsToActiveHandle();
     _applyVolumeToInterludeHandle();
+  }
+
+  void setVocalVolume(double value) {
+    final clamped = value.clamp(0.0, 1.0).toDouble();
+    if (clamped == vocalVolumeNotifier.value) {
+      return;
+    }
+
+    vocalVolumeNotifier.value = clamped;
+    _applyPlaybackSettingsToActiveHandle();
   }
 
   Future<void> initialize() async {
@@ -134,8 +224,17 @@ class PlayController implements TickerProvider {
   }
 
   Future<void> play() async {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    if (isSeparateMode) {
+      await _playSeparated();
+      return;
+    }
+
     final source = _source;
-    if (source == null || !_soloud.isInitialized) {
+    if (source == null) {
       return;
     }
 
@@ -146,7 +245,11 @@ class PlayController implements TickerProvider {
       if (positionNotifier.value > Duration.zero) {
         _soloud.seek(newHandle, positionNotifier.value);
       }
-      _applyPlaybackSettings(newHandle);
+      _applyPlaybackSettings(
+        handle: newHandle,
+        source: source,
+        volumeScale: 1.0,
+      );
       _handle = newHandle;
       _setIsPlaying(true, force: true);
       _resumeTickerIfNeeded();
@@ -165,6 +268,11 @@ class PlayController implements TickerProvider {
 
   Future<void> pause() async {
     if (!_soloud.isInitialized) {
+      return;
+    }
+
+    if (isSeparateMode) {
+      await _pauseSeparated();
       return;
     }
 
@@ -225,7 +333,16 @@ class PlayController implements TickerProvider {
   }
 
   Future<void> seekTo(Duration target) async {
-    if (_source == null || !_soloud.isInitialized) {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    if (isSeparateMode) {
+      await _seekSeparated(target);
+      return;
+    }
+
+    if (_source == null) {
       return;
     }
 
@@ -238,7 +355,7 @@ class PlayController implements TickerProvider {
       _handle = handle;
       _setIsPlaying(false);
       _pauseTicker();
-      _applyPlaybackSettings(handle);
+      _applyPlaybackSettings(handle: handle, source: _source, volumeScale: 1.0);
     }
 
     _soloud.seek(handle, clamped);
@@ -250,31 +367,41 @@ class PlayController implements TickerProvider {
       return;
     }
 
-    final handle = _handle;
-    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
-      await _soloud.stop(handle);
+    if (isSeparateMode) {
+      await _stopSeparatedHandles();
+    } else {
+      await _stopOriginalHandle();
     }
 
-    _handle = null;
     _setIsPlaying(false, force: true);
     _setPosition(Duration.zero, force: true);
     _pauseTicker();
   }
 
   Future<void> playFromStartPoint() async {
-    final source = _source;
-    if (source == null || !_soloud.isInitialized) {
+    if (!_soloud.isInitialized) {
       return;
     }
 
     final target = _clampToDuration(startPosition);
+
+    if (isSeparateMode) {
+      await _seekSeparated(target);
+      await _playSeparated();
+      return;
+    }
+
+    final source = _source;
+    if (source == null) {
+      return;
+    }
     var handle = _handle;
 
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
       _syncPitchFilterState(source);
       handle = await _soloud.play(source);
       _handle = handle;
-      _applyPlaybackSettings(handle);
+      _applyPlaybackSettings(handle: handle, source: source, volumeScale: 1.0);
     } else if (_soloud.getPause(handle)) {
       _soloud.setPause(handle, false);
     }
@@ -286,13 +413,18 @@ class PlayController implements TickerProvider {
   }
 
   void _syncPlaybackState() {
-    final handle = _handle;
+    final handle = _masterHandle;
     if (handle == null || !_soloud.isInitialized) {
       return;
     }
 
     if (!_soloud.getIsValidVoiceHandle(handle)) {
-      _handle = null;
+      if (isSeparateMode) {
+        _separatedInstruHandle = null;
+        _separatedVocalHandle = null;
+      } else {
+        _handle = null;
+      }
       _setIsPlaying(false);
       _setPosition(_duration);
       return;
@@ -350,25 +482,55 @@ class PlayController implements TickerProvider {
     pitchNotifier.value = _defaultPitch;
     speedNotifier.value = _defaultSpeed;
     volumeNotifier.value = _defaultVolume;
+    vocalVolumeNotifier.value = _defaultVocalVolume;
+    separateModeNotifier.value = false;
   }
 
   void _applyPlaybackSettingsToActiveHandle() {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    if (isSeparateMode) {
+      final instruHandle = _separatedInstruHandle;
+      if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
+        _applyPlaybackSettings(
+          handle: instruHandle,
+          source: _separatedInstruSource,
+          volumeScale: 1.0,
+        );
+      }
+
+      final vocalHandle = _separatedVocalHandle;
+      if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
+        _applyPlaybackSettings(
+          handle: vocalHandle,
+          source: _separatedVocalSource,
+          volumeScale: vocalVolumeNotifier.value,
+        );
+      }
+      return;
+    }
+
     final handle = _handle;
-    if (handle == null || !_soloud.isInitialized) {
+    if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
       return;
     }
 
-    if (!_soloud.getIsValidVoiceHandle(handle)) {
-      return;
-    }
-
-    _applyPlaybackSettings(handle);
+    _applyPlaybackSettings(handle: handle, source: _source, volumeScale: 1.0);
   }
 
-  void _applyPlaybackSettings(SoundHandle handle) {
+  void _applyPlaybackSettings({
+    required SoundHandle handle,
+    required AudioSource? source,
+    required double volumeScale,
+  }) {
     _soloud.setRelativePlaySpeed(handle, speedNotifier.value);
-    _soloud.setVolume(handle, volumeNotifier.value);
-    _applyPitch(handle);
+    _soloud.setVolume(
+      handle,
+      (volumeNotifier.value * volumeScale).clamp(0.0, 1.0),
+    );
+    _applyPitch(handle, source);
   }
 
   void _applyVolumeToInterludeHandle() {
@@ -384,8 +546,7 @@ class PlayController implements TickerProvider {
     _soloud.setVolume(handle, volumeNotifier.value);
   }
 
-  void _applyPitch(SoundHandle handle) {
-    final source = _source;
+  void _applyPitch(SoundHandle handle, AudioSource? source) {
     if (source == null) {
       return;
     }
@@ -458,11 +619,19 @@ class PlayController implements TickerProvider {
 
     final handle = _handle;
     final source = _source;
+    final separatedVocalHandle = _separatedVocalHandle;
+    final separatedInstruHandle = _separatedInstruHandle;
+    final separatedVocalSource = _separatedVocalSource;
+    final separatedInstruSource = _separatedInstruSource;
     final interludeHandle = _interludeHandle;
     final interludeSource = _interludeSource;
 
     _source = null;
     _handle = null;
+    _separatedVocalSource = null;
+    _separatedInstruSource = null;
+    _separatedVocalHandle = null;
+    _separatedInstruHandle = null;
     _interludeSource = null;
     _interludeHandle = null;
     _interludeFingerprint = null;
@@ -471,6 +640,10 @@ class PlayController implements TickerProvider {
       _disposeAudioResources(
         handle: handle,
         source: source,
+        separatedVocalHandle: separatedVocalHandle,
+        separatedInstruHandle: separatedInstruHandle,
+        separatedVocalSource: separatedVocalSource,
+        separatedInstruSource: separatedInstruSource,
         interludeHandle: interludeHandle,
         interludeSource: interludeSource,
       ),
@@ -482,11 +655,17 @@ class PlayController implements TickerProvider {
     pitchNotifier.dispose();
     speedNotifier.dispose();
     volumeNotifier.dispose();
+    vocalVolumeNotifier.dispose();
+    separateModeNotifier.dispose();
   }
 
   Future<void> _disposeAudioResources({
     required SoundHandle? handle,
     required AudioSource? source,
+    required SoundHandle? separatedVocalHandle,
+    required SoundHandle? separatedInstruHandle,
+    required AudioSource? separatedVocalSource,
+    required AudioSource? separatedInstruSource,
     required SoundHandle? interludeHandle,
     required AudioSource? interludeSource,
   }) async {
@@ -503,8 +682,26 @@ class PlayController implements TickerProvider {
       await _soloud.stop(interludeHandle);
     }
 
+    if (separatedVocalHandle != null &&
+        _soloud.getIsValidVoiceHandle(separatedVocalHandle)) {
+      await _soloud.stop(separatedVocalHandle);
+    }
+
+    if (separatedInstruHandle != null &&
+        _soloud.getIsValidVoiceHandle(separatedInstruHandle)) {
+      await _soloud.stop(separatedInstruHandle);
+    }
+
     if (source != null) {
       await _soloud.disposeSource(source);
+    }
+
+    if (separatedVocalSource != null) {
+      await _soloud.disposeSource(separatedVocalSource);
+    }
+
+    if (separatedInstruSource != null) {
+      await _soloud.disposeSource(separatedInstruSource);
     }
 
     if (interludeSource != null) {
@@ -575,5 +772,170 @@ class PlayController implements TickerProvider {
       return _duration;
     }
     return target;
+  }
+
+  SoundHandle? get _masterHandle =>
+      isSeparateMode ? _separatedInstruHandle : _handle;
+
+  bool get _hasSeparatedSources =>
+      _separatedVocalSource != null && _separatedInstruSource != null;
+
+  Future<void> _playSeparated() async {
+    if (!_hasSeparatedSources) {
+      return;
+    }
+
+    var instruHandle = _separatedInstruHandle;
+    var vocalHandle = _separatedVocalHandle;
+
+    final hasValidInstru =
+        instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle);
+    final hasValidVocal =
+        vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
+
+    if (!hasValidInstru || !hasValidVocal) {
+      if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
+        await _soloud.stop(instruHandle);
+      }
+      if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
+        await _soloud.stop(vocalHandle);
+      }
+
+      _syncPitchFilterState(_separatedInstruSource!);
+      _syncPitchFilterState(_separatedVocalSource!);
+      instruHandle = await _soloud.play(_separatedInstruSource!);
+      vocalHandle = await _soloud.play(_separatedVocalSource!);
+      _separatedInstruHandle = instruHandle;
+      _separatedVocalHandle = vocalHandle;
+
+      if (positionNotifier.value > Duration.zero) {
+        _soloud.seek(instruHandle, positionNotifier.value);
+        _soloud.seek(vocalHandle, positionNotifier.value);
+      }
+
+      _applyPlaybackSettingsToActiveHandle();
+      _setIsPlaying(true, force: true);
+      _resumeTickerIfNeeded();
+      _setPosition(positionNotifier.value, force: true);
+      return;
+    }
+
+    if (_soloud.getPause(instruHandle)) {
+      _soloud.setPause(instruHandle, false);
+    }
+    if (_soloud.getPause(vocalHandle)) {
+      _soloud.setPause(vocalHandle, false);
+    }
+
+    _applyPlaybackSettingsToActiveHandle();
+    _setIsPlaying(true, force: true);
+    _resumeTickerIfNeeded();
+    _setPosition(positionNotifier.value, force: true);
+  }
+
+  Future<void> _pauseSeparated() async {
+    final instruHandle = _separatedInstruHandle;
+    final vocalHandle = _separatedVocalHandle;
+    final hasValidInstru =
+        instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle);
+    final hasValidVocal =
+        vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
+
+    if (!hasValidInstru || !hasValidVocal) {
+      _setIsPlaying(false, force: true);
+      _pauseTicker();
+      _setPosition(positionNotifier.value, force: true);
+      return;
+    }
+
+    if (!_soloud.getPause(instruHandle)) {
+      _soloud.setPause(instruHandle, true);
+    }
+    if (!_soloud.getPause(vocalHandle)) {
+      _soloud.setPause(vocalHandle, true);
+    }
+
+    _setIsPlaying(false, force: true);
+    _pauseTicker();
+    _setPosition(positionNotifier.value, force: true);
+  }
+
+  Future<void> _seekSeparated(Duration target) async {
+    if (!_hasSeparatedSources) {
+      return;
+    }
+
+    final clamped = _clampToDuration(target);
+    var instruHandle = _separatedInstruHandle;
+    var vocalHandle = _separatedVocalHandle;
+
+    final hasValidInstru =
+        instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle);
+    final hasValidVocal =
+        vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
+
+    if (!hasValidInstru || !hasValidVocal) {
+      if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
+        await _soloud.stop(instruHandle);
+      }
+      if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
+        await _soloud.stop(vocalHandle);
+      }
+
+      _syncPitchFilterState(_separatedInstruSource!);
+      _syncPitchFilterState(_separatedVocalSource!);
+      instruHandle = await _soloud.play(_separatedInstruSource!, paused: true);
+      vocalHandle = await _soloud.play(_separatedVocalSource!, paused: true);
+      _separatedInstruHandle = instruHandle;
+      _separatedVocalHandle = vocalHandle;
+      _setIsPlaying(false);
+      _pauseTicker();
+      _applyPlaybackSettingsToActiveHandle();
+    }
+
+    _soloud.seek(instruHandle, clamped);
+    _soloud.seek(vocalHandle, clamped);
+    _setPosition(clamped, force: true);
+  }
+
+  Future<void> _stopOriginalHandle() async {
+    final handle = _handle;
+    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
+      await _soloud.stop(handle);
+    }
+    _handle = null;
+  }
+
+  Future<void> _stopSeparatedHandles() async {
+    final instruHandle = _separatedInstruHandle;
+    final vocalHandle = _separatedVocalHandle;
+
+    if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
+      await _soloud.stop(instruHandle);
+    }
+    if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
+      await _soloud.stop(vocalHandle);
+    }
+
+    _separatedInstruHandle = null;
+    _separatedVocalHandle = null;
+  }
+
+  Future<void> _disposeSeparatedSources() async {
+    if (!_soloud.isInitialized) {
+      return;
+    }
+
+    final vocalSource = _separatedVocalSource;
+    final instruSource = _separatedInstruSource;
+    _separatedVocalSource = null;
+    _separatedInstruSource = null;
+
+    if (vocalSource != null) {
+      await _soloud.disposeSource(vocalSource);
+    }
+    if (instruSource != null) {
+      await _soloud.disposeSource(instruSource);
+    }
   }
 }

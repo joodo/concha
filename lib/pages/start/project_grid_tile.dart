@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../models/models.dart';
+import '../../services/mvsep_separation_service.dart';
 import '../../utils/utils.dart';
 
 class ProjectGridTile extends StatelessWidget {
@@ -51,6 +52,9 @@ class ProjectGridTile extends StatelessWidget {
             items: [
               PopupMenuItem(
                 onTap: () async {
+                  await MvsepSeparationService.i.deleteCacheByAudioPath(
+                    project.path.audio,
+                  );
                   await project.delete();
                   onDelete?.call();
                 },

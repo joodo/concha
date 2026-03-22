@@ -50,13 +50,22 @@ class _SettingDialog extends StatelessWidget {
           ),
           _PrefTextField(
             PrefKeys.acoustKey.value,
-            decoration: const InputDecoration(labelText: 'AcoustID API Key'),
+            decoration: const InputDecoration(
+              labelText: 'AcoustID API Key',
+              helperText: '用于补全音乐信息',
+            ),
           ),
-          const Divider().padding(bottom: 24.0),
+          _PrefTextField(
+            PrefKeys.mvsepKey.value,
+            decoration: const InputDecoration(
+              labelText: 'MVSEP API Key',
+              helperText: '用于生成伴奏',
+            ),
+          ),
           Text(
             '歌词服务',
             style: Theme.of(context).textTheme.titleLarge,
-          ).padding(bottom: 12.0),
+          ).padding(bottom: 12.0, top: 24.0),
           _PrefTextField(
             PrefKeys.geminiKey.value,
             decoration: const InputDecoration(labelText: 'Gemini Key'),
@@ -75,7 +84,10 @@ class _SettingDialog extends StatelessWidget {
               suffixText: '[单句歌词]',
             ),
           ),
-          const Divider(),
+          Text(
+            '关于',
+            style: Theme.of(context).textTheme.titleLarge,
+          ).padding(bottom: 12.0, top: 24.0),
           FutureBuilder(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {

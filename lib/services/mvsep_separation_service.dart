@@ -671,7 +671,7 @@ class MvsepSeparationService {
       'api_token': token,
       'sep_type': sepType.toString(),
       'add_opt1': addOpt1,
-      'output_format': '1',
+      'output_format': '0',
       'is_demo': '0',
     };
     final uploadFilename = await _buildUploadFilename(audioPath);

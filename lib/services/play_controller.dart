@@ -228,6 +228,8 @@ class PlayController implements TickerProvider {
       return;
     }
 
+    _stopInterlude();
+
     if (isSeparateMode) {
       await _playSeparated();
       return;
@@ -386,31 +388,8 @@ class PlayController implements TickerProvider {
 
     final target = _clampToDuration(startPosition);
 
-    if (isSeparateMode) {
-      await _seekSeparated(target);
-      await _playSeparated();
-      return;
-    }
-
-    final source = _source;
-    if (source == null) {
-      return;
-    }
-    var handle = _handle;
-
-    if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
-      _syncPitchFilterState(source);
-      handle = await _soloud.play(source);
-      _handle = handle;
-      _applyPlaybackSettings(handle: handle, source: source, volumeScale: 1.0);
-    } else if (_soloud.getPause(handle)) {
-      _soloud.setPause(handle, false);
-    }
-
-    _soloud.seek(handle, target);
-    _setPosition(target, force: true);
-    _setIsPlaying(true, force: true);
-    _resumeTickerIfNeeded();
+    await seekTo(target);
+    await play();
   }
 
   void _syncPlaybackState() {

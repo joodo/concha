@@ -50,33 +50,29 @@ class ProjectToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final content =
         [
-              ListenableBuilder(
-                listenable: playController.isPlayNotifier,
-                builder: (context, child) => FilledButton(
+              ValueListenableBuilder(
+                valueListenable: playController.isPlayNotifier,
+                builder: (context, isPlaying, child) => IconButton.filled(
                   onPressed: Actions.handler(
                     context,
                     const _TogglePlayFromStartIntent(),
                   ),
-                  style: FilledButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(18.0),
-                  ),
-                  child: Icon(
-                    playController.isPlayNotifier.value
-                        ? Icons.pause_rounded
-                        : Icons.slow_motion_video,
+                  icon: Icon(
+                    isPlaying ? Icons.pause_rounded : Icons.slow_motion_video,
                     size: 32,
                   ),
+                  tooltip: isPlaying ? '暂停' : '从起点播放',
                 ),
               ),
               IconButton(
                 onPressed: playController.play,
+                tooltip: '播放',
                 icon: const Icon(Icons.play_arrow_rounded),
               ),
               IconButton(
                 onPressed: playController.stop,
-                icon: const Icon(Icons.stop_rounded),
                 tooltip: '停止',
+                icon: const Icon(Icons.stop_rounded),
               ),
               const SizedBox(width: 8.0),
               LayoutBuilder(
@@ -97,7 +93,7 @@ class ProjectToolbar extends StatelessWidget {
                         divisions: 100,
                         onChanged: playController.setVolume,
                       ),
-                    ),
+                    ).tooltip('音量'),
                     ValueListenableBuilder(
                       valueListenable: playController.speedNotifier,
                       builder: (context, speed, child) => ExpansibleButton(
@@ -114,7 +110,7 @@ class ProjectToolbar extends StatelessWidget {
                         divisions: 7,
                         onChanged: playController.setSpeed,
                       ),
-                    ),
+                    ).tooltip('速度'),
                     ValueListenableBuilder(
                       valueListenable: playController.pitchNotifier,
                       builder: (context, pitch, child) => ExpansibleButton(
@@ -140,7 +136,7 @@ class ProjectToolbar extends StatelessWidget {
                         divisions: 14,
                         onChanged: (value) =>
                             playController.setPitch(value.round()),
-                      ),
+                      ).tooltip('音调'),
                     ),
                     _createSeparateSlider(),
                   ].toRow(separator: const SizedBox(width: 12));
@@ -247,6 +243,7 @@ class ProjectToolbar extends StatelessWidget {
               IconButton.filled(
                 onPressed: () => playController.setSeparateMode(!isSeparated),
                 isSelected: isSeparated,
+                tooltip: '伴奏模式：${isSeparated ? "开" : "关"}',
                 icon: Icon(
                   isSeparated ? Icons.mic_external_on : Icons.mic_external_off,
                 ),

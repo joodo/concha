@@ -8,3 +8,7 @@ extension ShowSnackBarExtension on BuildContext {
   void showSnackBarText(String text) =>
       ScaffoldMessenger.of(this).showSnackBar(SnackBar(content: text.asText()));
 }
+
+extension TooltipExtension on Widget {
+  Widget tooltip(String message) => Tooltip(message: message, child: this);
+}

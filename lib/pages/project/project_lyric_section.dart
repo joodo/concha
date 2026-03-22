@@ -4,10 +4,12 @@ import 'package:concha/utils/utils.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
+import 'package:provider/provider.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import 'actions.dart';
+import 'providers.dart';
 import '../../models/models.dart';
-import '../../services/gemini_tts_service.dart';
 import '../../services/lrclib_service.dart';
 import '../../services/lyric_translation_service.dart';
 import '../../services/play_controller.dart';
@@ -18,17 +20,18 @@ class ProjectLyricSection extends StatefulWidget {
     super.key,
     required this.project,
     required this.playController,
+    required this.lyricController,
   });
 
   final Project project;
   final PlayController playController;
+  final LyricController lyricController;
 
   @override
   State<ProjectLyricSection> createState() => _ProjectLyricSectionState();
 }
 
 class _ProjectLyricSectionState extends State<ProjectLyricSection> {
-  final _lyricController = LyricController();
   String? _lrc, _tlrc;
 
   String? _searchKeyword;
@@ -38,10 +41,10 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     super.initState();
 
     widget.playController.positionNotifier.addListener(_updateLyricPosition);
-    _lyricController.setOnTapLineCallback((position) {
+    widget.lyricController.setOnTapLineCallback((position) {
       widget.playController.seekTo(position);
       widget.playController.startPositionNotifier.value = position;
-      _lyricController.stopSelection();
+      widget.lyricController.stopSelection();
     });
     _loadLyric();
   }
@@ -122,7 +125,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
         _SearchPanel(
           initKeyword: _searchKeyword!,
           onLyricSelected: (value) {
-            _lyricController.loadLyric(value);
+            widget.lyricController.loadLyric(value);
           },
           onConfirm: (lrc) async {
             if (lrc != null) {
@@ -141,7 +144,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return LyricView(
-      controller: _lyricController,
+      controller: widget.lyricController,
       style: LyricStyles.default1.copyWith(
         textStyle: textTheme.titleLarge!.copyWith(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
@@ -170,10 +173,17 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget _buildLyricToolbar() {
     return [
       _LoadingButton(icon: Icon(Icons.translate), onPressed: _createTranslate),
-      _OffsetButton(project: widget.project, controller: _lyricController),
-      _LoadingButton(
-        icon: Icon(Icons.record_voice_over),
-        onPressed: _readAloudCurrent,
+      _OffsetButton(
+        project: widget.project,
+        controller: widget.lyricController,
+      ),
+      ValueListenableBuilder(
+        valueListenable: context.read<ReadAloudPendingNotifier>(),
+        builder: (context, isPending, child) => _BusyButton(
+          icon: Icon(Icons.record_voice_over),
+          isBusy: isPending,
+          onPressed: Actions.handler(context, ReadAloudCurrentLyricIntent()),
+        ),
       ),
       if (_searchKeyword == null)
         IconButton.filledTonal(
@@ -189,7 +199,9 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   void _updateLyricPosition() {
-    _lyricController.setProgress(widget.playController.positionNotifier.value);
+    widget.lyricController.setProgress(
+      widget.playController.positionNotifier.value,
+    );
   }
 
   Future<void> _createTranslate() async {
@@ -198,18 +210,6 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     await File(widget.project.path.lyricT).writeAsString(_tlrc!);
 
     _updateLyric();
-  }
-
-  Future<void> _readAloudCurrent() async {
-    final model = _lyricController.lyricNotifier.value;
-    if (model == null || model.lines.isEmpty) return;
-    final i = _lyricController.activeIndexNotifiter.value;
-    if (i < 0 || i >= model.lines.length) return;
-
-    await widget.playController.pause();
-    final currentLyric = model.lines[i].text;
-    final voiceBytes = await GeminiTtsService().getVoice(currentLyric);
-    await widget.playController.insertInterlude(voiceBytes);
   }
 
   Future<void> _openLocalLyric() async {
@@ -251,7 +251,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
       _tlrc = await tlrcFile.readAsString();
     }
 
-    _lyricController.lyricOffset = widget.project.lyricOffset.inMilliseconds;
+    widget.lyricController.lyricOffset =
+        widget.project.lyricOffset.inMilliseconds;
 
     _updateLyric();
     _updateLyricPosition();
@@ -260,7 +261,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   void _updateLyric() {
     if (_lrc == null) return;
-    _lyricController.loadLyric(_lrc!, translationLyric: _tlrc);
+    widget.lyricController.loadLyric(_lrc!, translationLyric: _tlrc);
   }
 }
 
@@ -279,31 +280,46 @@ class _LoadingButtonState extends State<_LoadingButton> {
 
   @override
   Widget build(BuildContext context) {
+    return _BusyButton(
+      isBusy: _isBusy,
+      icon: widget.icon,
+      onPressed: () async {
+        setState(() {
+          _isBusy = true;
+        });
+        try {
+          await widget.onPressed?.call();
+        } catch (e) {
+          if (context.mounted) {
+            context.showSnackBarText('失败：$e');
+          }
+        } finally {
+          setState(() {
+            _isBusy = false;
+          });
+        }
+      },
+    );
+  }
+}
+
+class _BusyButton extends StatelessWidget {
+  final bool isBusy;
+  final VoidCallback? onPressed;
+  final Widget icon;
+
+  const _BusyButton({required this.isBusy, this.onPressed, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
     return IconButton.filledTonal(
-      onPressed: _isBusy
-          ? null
-          : () async {
-              setState(() {
-                _isBusy = true;
-              });
-              try {
-                await widget.onPressed?.call();
-              } catch (e) {
-                if (context.mounted) {
-                  context.showSnackBarText('失败：$e');
-                }
-              } finally {
-                setState(() {
-                  _isBusy = false;
-                });
-              }
-            },
-      icon: _isBusy
+      onPressed: isBusy ? null : onPressed,
+      icon: isBusy
           ? const SizedBox.square(
               dimension: 16.0,
               child: CircularProgressIndicator(strokeWidth: 2.0),
             )
-          : widget.icon,
+          : icon,
     );
   }
 }

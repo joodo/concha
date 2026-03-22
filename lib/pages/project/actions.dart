@@ -1,7 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:nested/nested.dart';
+import 'package:provider/provider.dart';
 
+import 'providers.dart';
+import '../../services/gemini_tts_service.dart';
 import '../../services/play_controller.dart';
 
 class TogglePlayFromStartIntent extends Intent {
@@ -41,14 +45,20 @@ class MarkStartPoint extends Intent {
   const MarkStartPoint();
 }
 
+class ReadAloudCurrentLyricIntent extends Intent {
+  const ReadAloudCurrentLyricIntent();
+}
+
 class ProjectActions extends SingleChildStatefulWidget {
   const ProjectActions({
-    required this.playController,
-    required Widget super.child,
     super.key,
+    required this.playController,
+    required this.lyricController,
+    required Widget super.child,
   });
 
   final PlayController playController;
+  final LyricController lyricController;
 
   @override
   State<ProjectActions> createState() => _ProjectActionsState();
@@ -132,6 +142,30 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
             return null;
           },
         ),
+        ReadAloudCurrentLyricIntent:
+            CallbackAction<ReadAloudCurrentLyricIntent>(
+              onInvoke: (intent) async {
+                final busyNotifier = context.read<ReadAloudPendingNotifier>();
+                busyNotifier.value = true;
+
+                try {
+                  final model = widget.lyricController.lyricNotifier.value;
+                  if (model == null || model.lines.isEmpty) return;
+                  final i = widget.lyricController.activeIndexNotifiter.value;
+                  if (i < 0 || i >= model.lines.length) return;
+
+                  await widget.playController.pause();
+                  final currentLyric = model.lines[i].text;
+                  final voiceBytes = await GeminiTtsService().getVoice(
+                    currentLyric,
+                  );
+                  await widget.playController.insertInterlude(voiceBytes);
+                  return null;
+                } finally {
+                  busyNotifier.value = false;
+                }
+              },
+            ),
       },
       child: Shortcuts(
         shortcuts: {
@@ -157,6 +191,8 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
           SingleActivator(LogicalKeyboardKey.digit2): SetVocalVolumeIntent(0.5),
           SingleActivator(LogicalKeyboardKey.digit3): SetVocalVolumeIntent(0),
           SingleActivator(LogicalKeyboardKey.keyZ): MarkStartPoint(),
+          SingleActivator(LogicalKeyboardKey.keyS):
+              ReadAloudCurrentLyricIntent(),
         },
         child: FocusScope(
           node: _scopeNode,
@@ -218,6 +254,12 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
 }
 
 extension ProjectActionsExtension on Widget {
-  Widget projectActions({required PlayController controller}) =>
-      ProjectActions(playController: controller, child: this);
+  Widget projectActions({
+    required PlayController playController,
+    required LyricController lyricController,
+  }) => ProjectActions(
+    playController: playController,
+    lyricController: lyricController,
+    child: this,
+  );
 }

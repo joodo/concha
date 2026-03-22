@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:provider/provider.dart';
 import 'package:styled_widget/styled_widget.dart';
 
@@ -13,6 +14,7 @@ import '../../utils/utils.dart';
 import '../../waveform/waveform.dart';
 import '../../widgets/setting_button.dart';
 import 'project_lyric_section.dart';
+import 'providers.dart';
 import 'actions.dart';
 import 'project_toolbar.dart';
 
@@ -28,6 +30,7 @@ class ProjectPage extends StatefulWidget {
 class _ProjectPageState extends State<ProjectPage> {
   late final PlayController _playController;
   late final WavefromController _wavefromController;
+  final _lyricController = LyricController();
   bool _isPreparing = true;
   String? _errorMessage;
 
@@ -47,6 +50,7 @@ class _ProjectPageState extends State<ProjectPage> {
     _playController.dispose();
     _wavefromController.dispose();
     _separateStreamNotifier.dispose();
+    _lyricController.dispose();
     super.dispose();
   }
 
@@ -70,6 +74,7 @@ class _ProjectPageState extends State<ProjectPage> {
               ProjectLyricSection(
                 project: widget.project,
                 playController: _playController,
+                lyricController: _lyricController,
               ).expanded(),
               Waveform(
                     playController: _playController,
@@ -87,7 +92,12 @@ class _ProjectPageState extends State<ProjectPage> {
             ].toColumn(),
     );
 
-    final body = content.projectActions(controller: _playController);
+    final body = content
+        .projectActions(
+          playController: _playController,
+          lyricController: _lyricController,
+        )
+        .projectProviders();
 
     return FutureBuilder(
       future: ColorScheme.fromImageProvider(
@@ -178,6 +188,7 @@ class _HelpButton extends StatelessWidget {
     ('[ / ]', '音调 -1 / +1'),
     ('1 / 2 / 3', '人声音量 100% / 50% / 0%'),
     ('z', '设置起点'),
+    ('s', '朗读当前歌词'),
   ];
 
   const _HelpButton();

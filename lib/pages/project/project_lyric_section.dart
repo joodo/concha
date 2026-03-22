@@ -172,7 +172,11 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   Widget _buildLyricToolbar() {
     return [
-      _LoadingButton(icon: Icon(Icons.translate), onPressed: _createTranslate),
+      _LoadingButton(
+        icon: Icon(Icons.translate),
+        tooltip: '翻译歌词',
+        onPressed: _createTranslate,
+      ),
       _OffsetButton(
         project: widget.project,
         controller: widget.lyricController,
@@ -182,6 +186,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
         builder: (context, isPending, child) => _BusyButton(
           icon: Icon(Icons.record_voice_over),
           isBusy: isPending,
+          tooltip: '朗读当前歌词',
           onPressed: Actions.handler(context, ReadAloudCurrentLyricIntent()),
         ),
       ),
@@ -193,6 +198,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
               _tlrc = null;
             });
           },
+          tooltip: '清除歌词',
           icon: Icon(Icons.subtitles_off),
         ),
     ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
@@ -268,8 +274,9 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 class _LoadingButton extends StatefulWidget {
   final Future<void> Function()? onPressed;
   final Widget icon;
+  final String? tooltip;
 
-  const _LoadingButton({this.onPressed, required this.icon});
+  const _LoadingButton({this.onPressed, required this.icon, this.tooltip});
 
   @override
   State<_LoadingButton> createState() => _LoadingButtonState();
@@ -283,6 +290,7 @@ class _LoadingButtonState extends State<_LoadingButton> {
     return _BusyButton(
       isBusy: _isBusy,
       icon: widget.icon,
+      tooltip: widget.tooltip,
       onPressed: () async {
         setState(() {
           _isBusy = true;
@@ -307,13 +315,20 @@ class _BusyButton extends StatelessWidget {
   final bool isBusy;
   final VoidCallback? onPressed;
   final Widget icon;
+  final String? tooltip;
 
-  const _BusyButton({required this.isBusy, this.onPressed, required this.icon});
+  const _BusyButton({
+    required this.isBusy,
+    this.onPressed,
+    required this.icon,
+    this.tooltip,
+  });
 
   @override
   Widget build(BuildContext context) {
     return IconButton.filledTonal(
       onPressed: isBusy ? null : onPressed,
+      tooltip: tooltip,
       icon: isBusy
           ? const SizedBox.square(
               dimension: 16.0,
@@ -401,6 +416,7 @@ class _OffsetButtonState extends State<_OffsetButton> {
         link: link,
         child: IconButton.filledTonal(
           onPressed: () => _setVisible(true),
+          tooltip: '调整歌词延迟',
           icon: Icon(Icons.timer),
         ),
       ),

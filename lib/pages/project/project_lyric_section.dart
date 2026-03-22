@@ -489,9 +489,7 @@ class _SearchPanelState extends State<_SearchPanel> {
     try {
       _data = await LrcLibService().search(_textController.text);
     } finally {
-      setState(() {
-        _isBusy = false;
-      });
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 }

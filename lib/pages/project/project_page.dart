@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -54,7 +55,7 @@ class _ProjectPageState extends State<ProjectPage> {
       appBar: AppBar(
         title: _title.asText(),
         notificationPredicate: (notification) => false,
-        actions: [const SettingButton()],
+        actions: [const _HelpButton(), const SettingButton()],
         actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
       ),
       body: _isPreparing
@@ -161,5 +162,71 @@ class _ProjectPageState extends State<ProjectPage> {
     final title = data.title;
     final suffix = data.artist == null ? '' : ' - ${data.artist}';
     return '$title$suffix';
+  }
+}
+
+class _HelpButton extends StatelessWidget {
+  static const List<(String, String)> _shortcutItems = [
+    ('Space', '从起点播放/暂停'),
+    ('Shift + Space', '继续播放/暂停'),
+    ('← / →', '后退/前进 10 秒'),
+    ('↑ / ↓', '音量 +10% / -10%'),
+    (', / .', '播放速度 -0.25 / +0.25'),
+    ('[ / ]', '音调 -1 / +1'),
+    ('1 / 2 / 3', '人声音量 100% / 50% / 0%'),
+  ];
+
+  const _HelpButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        showModal(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: '快捷键'.asText(),
+            content: _shortcutItems
+                .map((e) {
+                  final (keys, action) = e;
+                  return [
+                    _shortcutKeyChip(context, keys),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(action)),
+                  ].toRow(crossAxisAlignment: .start);
+                })
+                .toList()
+                .toColumn(
+                  mainAxisSize: .min,
+                  separator: const SizedBox(height: 8.0),
+                )
+                .constrained(maxWidth: 420.0),
+            actions: [
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text('确定'),
+              ),
+            ],
+          ),
+        );
+      },
+      icon: Icon(Icons.question_mark),
+    );
+  }
+
+  Widget _shortcutKeyChip(BuildContext context, String keys) {
+    final colors = Theme.of(context).colorScheme;
+    return Text(
+          keys,
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+        )
+        .padding(horizontal: 10.0, vertical: 4.0)
+        .decorated(
+          color: colors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colors.outlineVariant),
+        );
   }
 }

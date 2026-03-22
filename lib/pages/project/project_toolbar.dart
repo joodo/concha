@@ -8,6 +8,10 @@ import '../../services/mvsep_separation_service.dart';
 import '../../services/play_controller.dart';
 import 'expansible_button.dart';
 
+class _TogglePlayFromStartIntent extends Intent {
+  const _TogglePlayFromStartIntent();
+}
+
 class _TogglePlayIntent extends Intent {
   const _TogglePlayIntent();
 }
@@ -32,6 +36,11 @@ class _DeltaPitchIntent extends Intent {
   final int delta;
 }
 
+class _SetVocalVolumeIntent extends Intent {
+  final double volume;
+  const _SetVocalVolumeIntent(this.volume);
+}
+
 class ProjectToolbar extends StatelessWidget {
   const ProjectToolbar({required this.playController, super.key});
 
@@ -46,7 +55,7 @@ class ProjectToolbar extends StatelessWidget {
                 builder: (context, child) => FilledButton(
                   onPressed: Actions.handler(
                     context,
-                    const _TogglePlayIntent(),
+                    const _TogglePlayFromStartIntent(),
                   ),
                   style: FilledButton.styleFrom(
                     shape: const CircleBorder(),
@@ -148,8 +157,11 @@ class ProjectToolbar extends StatelessWidget {
   Widget _createShortcuts(Widget child) {
     return Actions(
       actions: {
+        _TogglePlayFromStartIntent: CallbackAction<_TogglePlayFromStartIntent>(
+          onInvoke: (intent) => _togglePlay(fromStart: true),
+        ),
         _TogglePlayIntent: CallbackAction<_TogglePlayIntent>(
-          onInvoke: (intent) => _togglePlayPause(),
+          onInvoke: (intent) => _togglePlay(),
         ),
         _DeltaPositionIntent: CallbackAction<_DeltaPositionIntent>(
           onInvoke: (intent) {
@@ -180,10 +192,20 @@ class ProjectToolbar extends StatelessWidget {
             return null;
           },
         ),
+        _SetVocalVolumeIntent: CallbackAction<_SetVocalVolumeIntent>(
+          onInvoke: (intent) {
+            playController.setSeparateMode(true);
+            playController.setVocalVolume(intent.volume);
+            return null;
+          },
+        ),
       },
       child: Shortcuts(
         shortcuts: {
-          SingleActivator(LogicalKeyboardKey.space): const _TogglePlayIntent(),
+          SingleActivator(LogicalKeyboardKey.space):
+              const _TogglePlayFromStartIntent(),
+          SingleActivator(LogicalKeyboardKey.space, shift: true):
+              const _TogglePlayIntent(),
           SingleActivator(LogicalKeyboardKey.arrowUp): _DeltaVolumeIntent(0.1),
           SingleActivator(LogicalKeyboardKey.arrowDown): _DeltaVolumeIntent(
             -0.1,
@@ -202,6 +224,13 @@ class ProjectToolbar extends StatelessWidget {
           SingleActivator(LogicalKeyboardKey.bracketRight): _DeltaPitchIntent(
             1,
           ),
+          SingleActivator(LogicalKeyboardKey.digit1): _SetVocalVolumeIntent(
+            1.0,
+          ),
+          SingleActivator(LogicalKeyboardKey.digit2): _SetVocalVolumeIntent(
+            0.5,
+          ),
+          SingleActivator(LogicalKeyboardKey.digit3): _SetVocalVolumeIntent(0),
         },
         child: Focus(autofocus: true, child: child),
       ),
@@ -328,11 +357,13 @@ class ProjectToolbar extends StatelessWidget {
     );
   }
 
-  Future<void> _togglePlayPause() {
+  Future<void> _togglePlay({bool fromStart = false}) {
     if (playController.isPlayNotifier.value) {
       return playController.pause();
     } else {
-      return playController.playFromStartPoint();
+      return fromStart
+          ? playController.playFromStartPoint()
+          : playController.play();
     }
   }
 }

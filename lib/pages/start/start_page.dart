@@ -30,24 +30,33 @@ class _StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      body: _projects.isEmpty
-          ? Text('暂无项目').center()
-          : GridView.extent(
-              maxCrossAxisExtent: 220,
-              padding: const EdgeInsets.all(16),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              children: _projects
-                  .map(
-                    (project) => ProjectGridTile(
-                      project: project,
-                      onSelect: () => _pushRoute(project),
-                      onDelete: _loadProjects,
-                    ),
-                  )
-                  .toList(),
-            ),
+      body: [
+        Text(
+          '我的曲库',
+          style: theme.textTheme.displayMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ).padding(all: 16.0),
+        _projects.isEmpty
+            ? Text('暂无项目').center()
+            : GridView.extent(
+                maxCrossAxisExtent: 220,
+                padding: const EdgeInsets.all(16),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: _projects
+                    .map(
+                      (project) => ProjectGridTile(
+                        project: project,
+                        onSelect: () => _pushRoute(project),
+                        onDelete: _loadProjects,
+                      ),
+                    )
+                    .toList(),
+              ).expanded(),
+      ].toColumn(crossAxisAlignment: .start),
       floatingActionButton: OpenContainer<Project?>(
         openBuilder: (context, _) => const NewDialog(),
         onClosed: (Project? project) {

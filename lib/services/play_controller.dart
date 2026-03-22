@@ -375,6 +375,7 @@ class PlayController implements TickerProvider {
 
     _setIsPlaying(false, force: true);
     _setPosition(Duration.zero, force: true);
+    setStartPosition(Duration.zero);
     _pauseTicker();
   }
 

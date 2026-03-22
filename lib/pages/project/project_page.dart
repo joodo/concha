@@ -174,6 +174,7 @@ class _HelpButton extends StatelessWidget {
     (', / .', '播放速度 -0.25 / +0.25'),
     ('[ / ]', '音调 -1 / +1'),
     ('1 / 2 / 3', '人声音量 100% / 50% / 0%'),
+    ('z', '设置起点'),
   ];
 
   const _HelpButton();

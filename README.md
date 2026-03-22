@@ -77,16 +77,6 @@ Concha is a Flutter-based singing practice app.
 - `aac`
 - `ogg`
 
-## Keyboard Shortcuts
-
-- `Space`: play from start point / pause.
-- `Shift + Space`: continue play / pause.
-- `Arrow Left` / `Arrow Right`: seek backward/forward 10s.
-- `Arrow Up` / `Arrow Down`: volume +10% / -10%.
-- `,` / `.`: speed -0.25x / +0.25x.
-- `[` / `]`: pitch -1 / +1 semitone.
-- `1` / `2` / `3`: set vocal volume to 100% / 50% / 0% (and enable accompaniment mode).
-
 ## Environment and Dependencies
 
 ### Required

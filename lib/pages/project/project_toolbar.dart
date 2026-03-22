@@ -41,6 +41,10 @@ class _SetVocalVolumeIntent extends Intent {
   const _SetVocalVolumeIntent(this.volume);
 }
 
+class _MarkStartPoint extends Intent {
+  const _MarkStartPoint();
+}
+
 class ProjectToolbar extends StatelessWidget {
   const ProjectToolbar({required this.playController, super.key});
 
@@ -195,6 +199,13 @@ class ProjectToolbar extends StatelessWidget {
             return null;
           },
         ),
+        _MarkStartPoint: CallbackAction<_MarkStartPoint>(
+          onInvoke: (intent) {
+            final position = playController.positionNotifier.value;
+            playController.setStartPosition(position);
+            return null;
+          },
+        ),
       },
       child: Shortcuts(
         shortcuts: {
@@ -227,6 +238,7 @@ class ProjectToolbar extends StatelessWidget {
             0.5,
           ),
           SingleActivator(LogicalKeyboardKey.digit3): _SetVocalVolumeIntent(0),
+          SingleActivator(LogicalKeyboardKey.keyZ): _MarkStartPoint(),
         },
         child: Focus(autofocus: true, child: child),
       ),

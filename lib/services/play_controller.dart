@@ -253,9 +253,7 @@ class PlayController implements TickerProvider {
         volumeScale: 1.0,
       );
       _handle = newHandle;
-      _setIsPlaying(true, force: true);
-      _resumeTickerIfNeeded();
-      _setPosition(positionNotifier.value, force: true);
+      _markPlayingAtCurrentPosition();
       return;
     }
 
@@ -263,9 +261,7 @@ class PlayController implements TickerProvider {
       _soloud.setPause(handle, false);
     }
 
-    _setIsPlaying(true, force: true);
-    _resumeTickerIfNeeded();
-    _setPosition(positionNotifier.value, force: true);
+    _markPlayingAtCurrentPosition();
   }
 
   Future<void> pause() async {
@@ -280,9 +276,7 @@ class PlayController implements TickerProvider {
 
     final handle = _handle;
     if (handle == null || !_soloud.getIsValidVoiceHandle(handle)) {
-      _setIsPlaying(false, force: true);
-      _pauseTicker();
-      _setPosition(positionNotifier.value, force: true);
+      _markPausedAtCurrentPosition();
       return;
     }
 
@@ -290,9 +284,7 @@ class PlayController implements TickerProvider {
       _soloud.setPause(handle, true);
     }
 
-    _setIsPlaying(false, force: true);
-    _pauseTicker();
-    _setPosition(positionNotifier.value, force: true);
+    _markPausedAtCurrentPosition();
   }
 
   Future<void> togglePlayPause() async {
@@ -456,6 +448,18 @@ class PlayController implements TickerProvider {
       return;
     }
     ticker.stop(canceled: false);
+  }
+
+  void _markPlayingAtCurrentPosition() {
+    _setIsPlaying(true, force: true);
+    _resumeTickerIfNeeded();
+    _setPosition(positionNotifier.value, force: true);
+  }
+
+  void _markPausedAtCurrentPosition() {
+    _setIsPlaying(false, force: true);
+    _pauseTicker();
+    _setPosition(positionNotifier.value, force: true);
   }
 
   void _resetPlaybackSettings() {
@@ -653,24 +657,10 @@ class PlayController implements TickerProvider {
       return;
     }
 
-    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
-      await _soloud.stop(handle);
-    }
-
-    if (interludeHandle != null &&
-        _soloud.getIsValidVoiceHandle(interludeHandle)) {
-      await _soloud.stop(interludeHandle);
-    }
-
-    if (separatedVocalHandle != null &&
-        _soloud.getIsValidVoiceHandle(separatedVocalHandle)) {
-      await _soloud.stop(separatedVocalHandle);
-    }
-
-    if (separatedInstruHandle != null &&
-        _soloud.getIsValidVoiceHandle(separatedInstruHandle)) {
-      await _soloud.stop(separatedInstruHandle);
-    }
+    await _stopIfValid(handle);
+    await _stopIfValid(interludeHandle);
+    await _stopIfValid(separatedVocalHandle);
+    await _stopIfValid(separatedInstruHandle);
 
     if (source != null) {
       await _soloud.disposeSource(source);
@@ -706,9 +696,7 @@ class PlayController implements TickerProvider {
     final handle = _interludeHandle;
     _interludeHandle = null;
     _interludeFingerprint = null;
-    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
-      await _soloud.stop(handle);
-    }
+    await _stopIfValid(handle);
 
     await _disposeInterludeSource();
   }
@@ -774,12 +762,8 @@ class PlayController implements TickerProvider {
         vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
 
     if (!hasValidInstru || !hasValidVocal) {
-      if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
-        await _soloud.stop(instruHandle);
-      }
-      if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
-        await _soloud.stop(vocalHandle);
-      }
+      await _stopIfValid(instruHandle);
+      await _stopIfValid(vocalHandle);
 
       _syncPitchFilterState(_separatedInstruSource!);
       _syncPitchFilterState(_separatedVocalSource!);
@@ -794,9 +778,7 @@ class PlayController implements TickerProvider {
       }
 
       _applyPlaybackSettingsToActiveHandle();
-      _setIsPlaying(true, force: true);
-      _resumeTickerIfNeeded();
-      _setPosition(positionNotifier.value, force: true);
+      _markPlayingAtCurrentPosition();
       return;
     }
 
@@ -808,9 +790,7 @@ class PlayController implements TickerProvider {
     }
 
     _applyPlaybackSettingsToActiveHandle();
-    _setIsPlaying(true, force: true);
-    _resumeTickerIfNeeded();
-    _setPosition(positionNotifier.value, force: true);
+    _markPlayingAtCurrentPosition();
   }
 
   Future<void> _pauseSeparated() async {
@@ -822,9 +802,7 @@ class PlayController implements TickerProvider {
         vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
 
     if (!hasValidInstru || !hasValidVocal) {
-      _setIsPlaying(false, force: true);
-      _pauseTicker();
-      _setPosition(positionNotifier.value, force: true);
+      _markPausedAtCurrentPosition();
       return;
     }
 
@@ -835,9 +813,7 @@ class PlayController implements TickerProvider {
       _soloud.setPause(vocalHandle, true);
     }
 
-    _setIsPlaying(false, force: true);
-    _pauseTicker();
-    _setPosition(positionNotifier.value, force: true);
+    _markPausedAtCurrentPosition();
   }
 
   Future<void> _seekSeparated(Duration target) async {
@@ -855,12 +831,8 @@ class PlayController implements TickerProvider {
         vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle);
 
     if (!hasValidInstru || !hasValidVocal) {
-      if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
-        await _soloud.stop(instruHandle);
-      }
-      if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
-        await _soloud.stop(vocalHandle);
-      }
+      await _stopIfValid(instruHandle);
+      await _stopIfValid(vocalHandle);
 
       _syncPitchFilterState(_separatedInstruSource!);
       _syncPitchFilterState(_separatedVocalSource!);
@@ -880,9 +852,7 @@ class PlayController implements TickerProvider {
 
   Future<void> _stopOriginalHandle() async {
     final handle = _handle;
-    if (handle != null && _soloud.getIsValidVoiceHandle(handle)) {
-      await _soloud.stop(handle);
-    }
+    await _stopIfValid(handle);
     _handle = null;
   }
 
@@ -890,15 +860,21 @@ class PlayController implements TickerProvider {
     final instruHandle = _separatedInstruHandle;
     final vocalHandle = _separatedVocalHandle;
 
-    if (instruHandle != null && _soloud.getIsValidVoiceHandle(instruHandle)) {
-      await _soloud.stop(instruHandle);
-    }
-    if (vocalHandle != null && _soloud.getIsValidVoiceHandle(vocalHandle)) {
-      await _soloud.stop(vocalHandle);
-    }
+    await _stopIfValid(instruHandle);
+    await _stopIfValid(vocalHandle);
 
     _separatedInstruHandle = null;
     _separatedVocalHandle = null;
+  }
+
+  Future<void> _stopIfValid(SoundHandle? handle) async {
+    if (handle == null) {
+      return;
+    }
+
+    if (_soloud.getIsValidVoiceHandle(handle)) {
+      await _soloud.stop(handle);
+    }
   }
 
   Future<void> _disposeSeparatedSources() async {

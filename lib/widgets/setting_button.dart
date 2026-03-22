@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:styled_widget/styled_widget.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../utils/utils.dart';
 
@@ -50,16 +51,25 @@ class _SettingDialog extends StatelessWidget {
           ),
           _PrefTextField(
             PrefKeys.acoustKey.value,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'AcoustID API Key',
               helperText: '用于补全音乐信息',
+              suffix: TextButton(
+                onPressed: () =>
+                    launchUrlString('https://acoustid.org/new-application'),
+                child: '申请'.asText(),
+              ),
             ),
           ),
           _PrefTextField(
             PrefKeys.mvsepKey.value,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'MVSEP API Key',
               helperText: '用于生成伴奏',
+              suffix: TextButton(
+                onPressed: () => launchUrlString('https://mvsep.com/user-api'),
+                child: '申请'.asText(),
+              ),
             ),
           ),
           Text(
@@ -68,7 +78,14 @@ class _SettingDialog extends StatelessWidget {
           ).padding(bottom: 12.0, top: 24.0),
           _PrefTextField(
             PrefKeys.geminiKey.value,
-            decoration: const InputDecoration(labelText: 'Gemini Key'),
+            decoration: InputDecoration(
+              labelText: 'Gemini Key',
+              suffix: TextButton(
+                onPressed: () =>
+                    launchUrlString('https://aistudio.google.com/api-keys'),
+                child: '申请'.asText(),
+              ),
+            ),
           ),
           _PrefTextField(
             PrefKeys.translatePrompt.value,

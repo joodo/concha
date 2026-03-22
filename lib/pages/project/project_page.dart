@@ -13,6 +13,7 @@ import '../../utils/utils.dart';
 import '../../waveform/waveform.dart';
 import '../../widgets/setting_button.dart';
 import 'project_lyric_section.dart';
+import 'actions.dart';
 import 'project_toolbar.dart';
 
 class ProjectPage extends StatefulWidget {
@@ -86,6 +87,8 @@ class _ProjectPageState extends State<ProjectPage> {
             ].toColumn(),
     );
 
+    final body = content.projectActions(controller: _playController);
+
     return FutureBuilder(
       future: ColorScheme.fromImageProvider(
         provider: FileImage(File(widget.project.path.cover)),
@@ -93,7 +96,7 @@ class _ProjectPageState extends State<ProjectPage> {
       initialData: Theme.of(context).colorScheme,
       builder: (context, snapshot) => Theme(
         data: Theme.of(context).copyWith(colorScheme: snapshot.data),
-        child: content,
+        child: body,
       ),
     );
   }

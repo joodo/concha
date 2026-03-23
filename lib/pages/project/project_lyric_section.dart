@@ -171,26 +171,29 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Widget _buildLyricToolbar() {
+    final notSearchMode = _searchKeyword == null;
     return [
-      _LoadingButton(
-        icon: Icon(Icons.translate),
-        tooltip: '翻译歌词',
-        onPressed: _createTranslate,
-      ),
+      if (notSearchMode)
+        _LoadingButton(
+          icon: Icon(Icons.translate),
+          tooltip: '翻译歌词',
+          onPressed: _createTranslate,
+        ),
       _OffsetButton(
         project: widget.project,
         controller: widget.lyricController,
       ),
-      ValueListenableBuilder(
-        valueListenable: context.read<ReadAloudPendingNotifier>(),
-        builder: (context, isPending, child) => _BusyButton(
-          icon: Icon(Icons.record_voice_over),
-          isBusy: isPending,
-          tooltip: '朗读当前歌词',
-          onPressed: Actions.handler(context, ReadAloudCurrentLyricIntent()),
+      if (notSearchMode)
+        ValueListenableBuilder(
+          valueListenable: context.read<ReadAloudPendingNotifier>(),
+          builder: (context, isPending, child) => _BusyButton(
+            icon: Icon(Icons.record_voice_over),
+            isBusy: isPending,
+            tooltip: '朗读当前歌词',
+            onPressed: Actions.handler(context, ReadAloudCurrentLyricIntent()),
+          ),
         ),
-      ),
-      if (_searchKeyword == null)
+      if (notSearchMode)
         IconButton.filledTonal(
           onPressed: () {
             setState(() {
@@ -450,7 +453,7 @@ class _SearchPanelState extends State<_SearchPanel> {
   bool _isBusy = false;
   List<LrcLibLyric> _data = [];
 
-  String? _selected;
+  int? _selected;
 
   @override
   void initState() {
@@ -470,6 +473,7 @@ class _SearchPanelState extends State<_SearchPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return [
           SearchBar(
             controller: _textController,
@@ -485,31 +489,46 @@ class _SearchPanelState extends State<_SearchPanel> {
           ),
           Material(
             color: Colors.transparent,
-            child: ListView(
-              children: _data
-                  .map(
-                    (e) => ListTile(
-                      title: Text('${e.trackName} - ${e.artistName}'),
-                      onTap: () {
-                        setState(() {
-                          _selected = e.syncedLyrics;
-                        });
-                        widget.onLyricSelected(e.syncedLyrics);
-                      },
-                    ),
-                  )
-                  .toList(),
+            child: RadioGroup(
+              groupValue: _selected,
+              onChanged: (value) {
+                setState(() {
+                  _selected = value;
+                });
+
+                if (value != null) {
+                  final lyric = _data[value].syncedLyrics;
+                  widget.onLyricSelected(lyric);
+                }
+              },
+              child: ListView(
+                children: _data.indexed
+                    .map(
+                      (e) => RadioListTile(
+                        value: e.$1,
+                        title: Text(
+                          '[${e.$1}] ${e.$2.trackName} - ${e.$2.artistName}',
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
           ).expanded(),
-          TextButton(
-            onPressed: () => widget.onConfirm(_selected),
-            child: Text(_selected == null ? '取消' : '确定'),
-          ).padding(vertical: 12.0),
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              onTap: () => widget.onConfirm(
+                _selected == null ? null : _data[_selected!].syncedLyrics,
+              ),
+              title: Text(
+                _selected == null ? '取消' : '确定',
+              ).textColor(colors.primary).center(),
+            ),
+          ),
         ]
         .toColumn()
-        .backgroundColor(
-          Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha(220),
-        )
+        .backgroundColor(colors.surfaceContainerHigh.withAlpha(220))
         .clipRRect(all: 30.0);
   }
 

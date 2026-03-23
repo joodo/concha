@@ -4,13 +4,10 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
 
+import '../../utils/utils.dart';
 import 'providers.dart';
 import '../../services/gemini_tts_service.dart';
 import '../../services/play_controller.dart';
-
-class TogglePlayFromStartIntent extends Intent {
-  const TogglePlayFromStartIntent();
-}
 
 class TogglePlayIntent extends Intent {
   const TogglePlayIntent();
@@ -18,7 +15,7 @@ class TogglePlayIntent extends Intent {
 
 class DeltaPositionIntent extends Intent {
   const DeltaPositionIntent(this.delta);
-  final Duration delta;
+  final int delta;
 }
 
 class DeltaVolumeIntent extends Intent {
@@ -89,16 +86,26 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
   Widget buildWithChild(BuildContext context, Widget? child) {
     return Actions(
       actions: {
-        TogglePlayFromStartIntent: CallbackAction<TogglePlayFromStartIntent>(
-          onInvoke: (intent) => _togglePlay(fromStart: true),
-        ),
         TogglePlayIntent: CallbackAction<TogglePlayIntent>(
-          onInvoke: (intent) => _togglePlay(),
+          onInvoke: (intent) {
+            if (!_playController.isPlayNotifier.value) return _play();
+
+            final attach = context.read<AttachToLyricNotifier>().value;
+            return attach ? _pauseToLyricStart() : _playController.pause();
+          },
         ),
         DeltaPositionIntent: CallbackAction<DeltaPositionIntent>(
           onInvoke: (intent) {
-            final current = _playController.positionNotifier.value;
-            return _playController.seekTo(current + intent.delta);
+            final attach = context.read<AttachToLyricNotifier>().value;
+            final lyricStart = _getCurrentLyricStart(offset: intent.delta);
+
+            if (!attach || lyricStart == null) {
+              final current = _playController.positionNotifier.value;
+              final deltaDuration = 5.seconds * intent.delta;
+              return _playController.seekTo(current + deltaDuration);
+            } else {
+              return _playController.seekTo(lyricStart);
+            }
           },
         ),
         DeltaVolumeIntent: CallbackAction<DeltaVolumeIntent>(
@@ -166,19 +173,16 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
       },
       child: Shortcuts(
         shortcuts: {
-          SingleActivator(LogicalKeyboardKey.space):
-              const TogglePlayFromStartIntent(),
-          SingleActivator(LogicalKeyboardKey.space, shift: true):
-              const TogglePlayIntent(),
+          SingleActivator(LogicalKeyboardKey.space): const TogglePlayIntent(),
           SingleActivator(LogicalKeyboardKey.arrowUp): DeltaVolumeIntent(0.1),
           SingleActivator(LogicalKeyboardKey.arrowDown): DeltaVolumeIntent(
             -0.1,
           ),
           SingleActivator(LogicalKeyboardKey.arrowLeft): DeltaPositionIntent(
-            Duration(seconds: -10),
+            -1,
           ),
           SingleActivator(LogicalKeyboardKey.arrowRight): DeltaPositionIntent(
-            Duration(seconds: 10),
+            1,
           ),
           SingleActivator(LogicalKeyboardKey.comma): DeltaSpeedIntent(-0.25),
           SingleActivator(LogicalKeyboardKey.period): DeltaSpeedIntent(0.25),
@@ -252,14 +256,32 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
     return false;
   }
 
-  Future<void> _togglePlay({bool fromStart = false}) {
-    if (_playController.isPlayNotifier.value) {
+  Future<void> _play() {
+    final fromStart = context.read<LoopNotifier>().value;
+    return fromStart
+        ? _playController.playFromStartPoint()
+        : _playController.play();
+  }
+
+  Future<void> _pauseToLyricStart() async {
+    final position = _getCurrentLyricStart();
+    if (position == null) {
       return _playController.pause();
-    } else {
-      return fromStart
-          ? _playController.playFromStartPoint()
-          : _playController.play();
     }
+
+    await _playController.pause();
+    await _playController.seekTo(position);
+  }
+
+  Duration? _getCurrentLyricStart({int offset = 0}) {
+    final lyricModel = _lyricController.lyricNotifier.value;
+    if (lyricModel == null || lyricModel.lines.isEmpty) return null;
+
+    final index = _lyricController.activeIndexNotifiter.value + offset;
+    final targetIndex = index.clamp(0, lyricModel.lines.length - 1);
+    final start = lyricModel.lines[targetIndex].start;
+
+    return start - _lyricController.lyricOffset.milliseconds;
   }
 }
 

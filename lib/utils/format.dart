@@ -17,4 +17,7 @@ extension ByteSizeExtension on int {
       return '${gb.toStringAsFixed(2)} GB';
     }
   }
+
+  Duration get seconds => Duration(seconds: this);
+  Duration get milliseconds => Duration(milliseconds: this);
 }

@@ -1,5 +1,7 @@
+import 'package:concha/pages/project/providers.dart';
 import 'package:concha/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lyric/core/lyric_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:styled_widget/styled_widget.dart';
 
@@ -15,25 +17,54 @@ class ProjectToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playController = context.read<PlayController>();
+    final loopNotifier = context.read<LoopNotifier>();
+    final attachNotifier = context.read<AttachToLyricNotifier>();
+    final lyricController = context.read<LyricController>();
     return [
-          ValueListenableBuilder(
-            valueListenable: playController.isPlayNotifier,
-            builder: (context, isPlaying, child) => IconButton.filled(
-              onPressed: Actions.handler(
-                context,
-                const TogglePlayFromStartIntent(),
-              ),
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              playController.isPlayNotifier,
+              loopNotifier,
+            ]),
+            builder: (context, child) => IconButton.filled(
+              onPressed: Actions.handler(context, const TogglePlayIntent()),
               icon: Icon(
-                isPlaying ? Icons.pause_rounded : Icons.slow_motion_video,
+                playController.isPlayNotifier.value
+                    ? Icons.pause_rounded
+                    : loopNotifier.value
+                    ? Icons.slow_motion_video
+                    : Icons.play_arrow,
                 size: 32,
               ),
-              tooltip: isPlaying ? '暂停' : '从起点播放',
+              tooltip: playController.isPlayNotifier.value
+                  ? '暂停'
+                  : loopNotifier.value
+                  ? '从起点播放'
+                  : '播放',
             ),
           ),
-          IconButton(
-            onPressed: playController.play,
-            tooltip: '播放',
-            icon: const Icon(Icons.play_arrow_rounded),
+          ValueListenableBuilder(
+            valueListenable: loopNotifier,
+            builder: (context, value, child) => IconButton.outlined(
+              onPressed: () => loopNotifier.value = !value,
+              isSelected: value,
+              tooltip: '从起点播放',
+              icon: const Icon(Icons.repeat),
+            ),
+          ),
+          ListenableBuilder(
+            listenable: Listenable.merge([
+              attachNotifier,
+              lyricController.lyricNotifier,
+            ]),
+            builder: (context, child) => IconButton.outlined(
+              onPressed: lyricController.lyricNotifier.value == null
+                  ? null
+                  : () => attachNotifier.value = !attachNotifier.value,
+              tooltip: '位置吸附到歌词',
+              isSelected: attachNotifier.value,
+              icon: const Icon(Icons.my_location),
+            ),
           ),
           IconButton(
             onPressed: playController.stop,
@@ -187,7 +218,7 @@ class _MixTableButtonState extends State<_MixTableButton> {
         child: ValueListenableBuilder(
           valueListenable: widget.playController.separateModeNotifier,
           builder: (context, isSep, child) {
-            return IconButton.filled(
+            return IconButton.outlined(
               onPressed: () => setState(() {
                 _isShowing = true;
               }),

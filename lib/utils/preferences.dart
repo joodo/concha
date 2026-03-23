@@ -7,7 +7,9 @@ enum PrefKeys {
   geminiKey('gemini_key'),
   translatePrompt('translate_prompt'),
   speakPrompt('read_aloud_prompt'),
-  mvsepKey('mvsep_key');
+  mvsepKey('mvsep_key'),
+  playLoop('play_loop'),
+  attachToLyric('attach_to_lyric');
 
   final String value;
   const PrefKeys(this.value);

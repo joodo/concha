@@ -84,9 +84,8 @@ class ProjectPage extends StatelessWidget {
 
 class _HelpButton extends StatelessWidget {
   static const List<(String, String)> _shortcutItems = [
-    ('Space', '从起点播放/暂停'),
-    ('Shift + Space', '继续播放/暂停'),
-    ('← / →', '后退/前进 10 秒'),
+    ('Space', '播放/暂停'),
+    ('← / →', '后退/前进'),
     ('↑ / ↓', '音量 +10% / -10%'),
     (', / .', '播放速度 -0.25 / +0.25'),
     ('[ / ]', '音调 -1 / +1'),

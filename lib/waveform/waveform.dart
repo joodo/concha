@@ -16,6 +16,8 @@ import 'waveform_overlay_lines.dart';
 import 'waveform_overview.dart';
 import 'waveform_timeline.dart';
 
+export 'waveform_controller.dart';
+
 class Waveform extends StatefulWidget {
   const Waveform({
     required this.playController,

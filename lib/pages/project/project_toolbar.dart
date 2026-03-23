@@ -10,12 +10,11 @@ import 'actions.dart';
 import 'expansible_button.dart';
 
 class ProjectToolbar extends StatelessWidget {
-  const ProjectToolbar({required this.playController, super.key});
-
-  final PlayController playController;
+  const ProjectToolbar({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final playController = context.read<PlayController>();
     return [
           ValueListenableBuilder(
             valueListenable: playController.isPlayNotifier,
@@ -108,13 +107,13 @@ class ProjectToolbar extends StatelessWidget {
               ].toRow(separator: const SizedBox(width: 12));
             },
           ).flexible(),
-          _createDurationLabel(),
+          _createDurationLabel(playController: playController),
         ]
         .toRow(separator: const SizedBox(width: 8.0))
         .padding(horizontal: 12.0, bottom: 12.0);
   }
 
-  Widget _createDurationLabel() {
+  Widget _createDurationLabel({required PlayController playController}) {
     String formatDuration(Duration duration) {
       final minutes = duration.inMinutes
           .remainder(60)

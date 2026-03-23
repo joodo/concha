@@ -16,22 +16,17 @@ import '../../services/play_controller.dart';
 import '../../widgets/popup_widget.dart';
 
 class ProjectLyricSection extends StatefulWidget {
-  const ProjectLyricSection({
-    super.key,
-    required this.project,
-    required this.playController,
-    required this.lyricController,
-  });
-
-  final Project project;
-  final PlayController playController;
-  final LyricController lyricController;
+  const ProjectLyricSection({super.key});
 
   @override
   State<ProjectLyricSection> createState() => _ProjectLyricSectionState();
 }
 
 class _ProjectLyricSectionState extends State<ProjectLyricSection> {
+  late final _playController = context.read<PlayController>();
+  late final _lyricController = context.read<LyricController>();
+  late final _project = context.read<Project>();
+
   String? _lrc, _tlrc;
 
   String? _searchKeyword;
@@ -40,18 +35,18 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   void initState() {
     super.initState();
 
-    widget.playController.positionNotifier.addListener(_updateLyricPosition);
-    widget.lyricController.setOnTapLineCallback((position) {
-      widget.playController.seekTo(position);
-      widget.playController.startPositionNotifier.value = position;
-      widget.lyricController.stopSelection();
+    _playController.positionNotifier.addListener(_updateLyricPosition);
+    _lyricController.setOnTapLineCallback((position) {
+      _playController.seekTo(position);
+      _playController.startPositionNotifier.value = position;
+      _lyricController.stopSelection();
     });
     _loadLyric();
   }
 
   @override
   void dispose() {
-    widget.playController.positionNotifier.removeListener(_updateLyricPosition);
+    _playController.positionNotifier.removeListener(_updateLyricPosition);
     super.dispose();
   }
 
@@ -59,7 +54,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget build(BuildContext context) {
     final content = _lrc == null ? _buildEmptyContent() : _buildContent();
 
-    final coverFile = File(widget.project.path.cover);
+    final coverFile = File(_project.path.cover);
     return [
       FutureBuilder(
         future: coverFile.exists(),
@@ -125,11 +120,11 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
         _SearchPanel(
           initKeyword: _searchKeyword!,
           onLyricSelected: (value) {
-            widget.lyricController.loadLyric(value);
+            _lyricController.loadLyric(value);
           },
           onConfirm: (lrc) async {
             if (lrc != null) {
-              await File(widget.project.path.lyric).writeAsString(lrc);
+              await File(_project.path.lyric).writeAsString(lrc);
             }
             setState(() {
               _lrc = lrc;
@@ -144,7 +139,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return LyricView(
-      controller: widget.lyricController,
+      controller: _lyricController,
       style: LyricStyles.default1.copyWith(
         textStyle: textTheme.titleLarge!.copyWith(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
@@ -179,10 +174,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
           tooltip: '翻译歌词',
           onPressed: _createTranslate,
         ),
-      _OffsetButton(
-        project: widget.project,
-        controller: widget.lyricController,
-      ),
+      _OffsetButton(),
       if (notSearchMode)
         ValueListenableBuilder(
           valueListenable: context.read<ReadAloudPendingNotifier>(),
@@ -208,15 +200,13 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   void _updateLyricPosition() {
-    widget.lyricController.setProgress(
-      widget.playController.positionNotifier.value,
-    );
+    _lyricController.setProgress(_playController.positionNotifier.value);
   }
 
   Future<void> _createTranslate() async {
     _tlrc = await LyricTranslationService().translate(_lrc!);
 
-    await File(widget.project.path.lyricT).writeAsString(_tlrc!);
+    await File(_project.path.lyricT).writeAsString(_tlrc!);
 
     _updateLyric();
   }
@@ -234,7 +224,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     if (picked == null) return;
 
     _lrc = await File(picked.path).readAsString();
-    await File(widget.project.path.lyric).writeAsString(_lrc!);
+    await File(_project.path.lyric).writeAsString(_lrc!);
 
     setState(() {
       _updateLyric();
@@ -244,24 +234,23 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   void _searchLyric() {
     setState(() {
       _lrc = '';
-      final m = widget.project.metadata;
+      final m = _project.metadata;
       _searchKeyword = '${m.title} ${m.artist ?? ""}'.trim();
     });
   }
 
   Future<void> _loadLyric() async {
-    final lrcFile = File(widget.project.path.lyric);
+    final lrcFile = File(_project.path.lyric);
     if (await lrcFile.exists()) {
       _lrc = await lrcFile.readAsString();
     }
 
-    final tlrcFile = File(widget.project.path.lyricT);
+    final tlrcFile = File(_project.path.lyricT);
     if (await tlrcFile.exists()) {
       _tlrc = await tlrcFile.readAsString();
     }
 
-    widget.lyricController.lyricOffset =
-        widget.project.lyricOffset.inMilliseconds;
+    _lyricController.lyricOffset = _project.lyricOffset.inMilliseconds;
 
     _updateLyric();
     _updateLyricPosition();
@@ -270,7 +259,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   void _updateLyric() {
     if (_lrc == null) return;
-    widget.lyricController.loadLyric(_lrc!, translationLyric: _tlrc);
+    _lyricController.loadLyric(_lrc!, translationLyric: _tlrc);
   }
 }
 
@@ -343,16 +332,16 @@ class _BusyButton extends StatelessWidget {
 }
 
 class _OffsetButton extends StatefulWidget {
-  final Project project;
-  final LyricController controller;
-
-  const _OffsetButton({required this.controller, required this.project});
+  const _OffsetButton();
 
   @override
   State<_OffsetButton> createState() => _OffsetButtonState();
 }
 
 class _OffsetButtonState extends State<_OffsetButton> {
+  late final _controller = context.read<LyricController>();
+  late final _project = context.read<Project>();
+
   bool _isOpen = false;
 
   final _offsetNotifier = ValueNotifier<int>(0);
@@ -361,9 +350,9 @@ class _OffsetButtonState extends State<_OffsetButton> {
   void initState() {
     super.initState();
     _offsetNotifier.addListener(
-      () => widget.controller.lyricOffset = _offsetNotifier.value,
+      () => _controller.lyricOffset = _offsetNotifier.value,
     );
-    _offsetNotifier.value = widget.project.lyricOffset.inMilliseconds;
+    _offsetNotifier.value = _project.lyricOffset.inMilliseconds;
   }
 
   @override
@@ -388,7 +377,7 @@ class _OffsetButtonState extends State<_OffsetButton> {
                   onChanged: (value) {
                     _offsetNotifier.value = value.round();
                   },
-                  onChangeEnd: (value) => widget.project.lyricOffset = Duration(
+                  onChangeEnd: (value) => _project.lyricOffset = Duration(
                     milliseconds: value.round(),
                   ),
                   value: _offsetNotifier.value.toDouble(),

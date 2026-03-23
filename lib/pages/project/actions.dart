@@ -51,21 +51,16 @@ class ReadAloudCurrentLyricIntent extends Intent {
 }
 
 class ProjectActions extends SingleChildStatefulWidget {
-  const ProjectActions({
-    super.key,
-    required this.playController,
-    required this.lyricController,
-    required Widget super.child,
-  });
-
-  final PlayController playController;
-  final LyricController lyricController;
+  const ProjectActions({super.key, required Widget super.child});
 
   @override
   State<ProjectActions> createState() => _ProjectActionsState();
 }
 
 class _ProjectActionsState extends SingleChildState<ProjectActions> {
+  late final _playController = context.read<PlayController>();
+  late final _lyricController = context.read<LyricController>();
+
   final _scopeNode = FocusScopeNode(debugLabel: 'project-actions-scope');
   final _rootFocusNode = FocusNode(debugLabel: 'project-actions-root');
 
@@ -102,45 +97,45 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
         ),
         DeltaPositionIntent: CallbackAction<DeltaPositionIntent>(
           onInvoke: (intent) {
-            final current = widget.playController.positionNotifier.value;
-            return widget.playController.seekTo(current + intent.delta);
+            final current = _playController.positionNotifier.value;
+            return _playController.seekTo(current + intent.delta);
           },
         ),
         DeltaVolumeIntent: CallbackAction<DeltaVolumeIntent>(
           onInvoke: (intent) {
-            final current = widget.playController.volumeNotifier.value;
-            widget.playController.setVolume(current + intent.delta);
+            final current = _playController.volumeNotifier.value;
+            _playController.setVolume(current + intent.delta);
             return null;
           },
         ),
         DeltaSpeedIntent: CallbackAction<DeltaSpeedIntent>(
           onInvoke: (intent) {
-            final current = widget.playController.speedNotifier.value;
+            final current = _playController.speedNotifier.value;
             final next = (current + intent.delta).clamp(0.25, 2.0).toDouble();
-            widget.playController.setSpeed(next);
+            _playController.setSpeed(next);
             return null;
           },
         ),
         DeltaPitchIntent: CallbackAction<DeltaPitchIntent>(
           onInvoke: (intent) {
-            final current = widget.playController.pitchNotifier.value;
+            final current = _playController.pitchNotifier.value;
             final next = (current + intent.delta).clamp(-7, 7);
-            widget.playController.setPitch(next);
+            _playController.setPitch(next);
             return null;
           },
         ),
         SetMixIntent: CallbackAction<SetMixIntent>(
           onInvoke: (intent) {
-            widget.playController.setSeparateMode(true);
-            widget.playController.setVocalVolume(intent.vocalVolume);
-            widget.playController.setInstruVolume(intent.instruVolume);
+            _playController.setSeparateMode(true);
+            _playController.setVocalVolume(intent.vocalVolume);
+            _playController.setInstruVolume(intent.instruVolume);
             return null;
           },
         ),
         MarkStartPoint: CallbackAction<MarkStartPoint>(
           onInvoke: (intent) {
-            final position = widget.playController.positionNotifier.value;
-            widget.playController.setStartPosition(position);
+            final position = _playController.positionNotifier.value;
+            _playController.setStartPosition(position);
             return null;
           },
         ),
@@ -151,17 +146,17 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
                 busyNotifier.value = true;
 
                 try {
-                  final model = widget.lyricController.lyricNotifier.value;
+                  final model = _lyricController.lyricNotifier.value;
                   if (model == null || model.lines.isEmpty) return;
-                  final i = widget.lyricController.activeIndexNotifiter.value;
+                  final i = _lyricController.activeIndexNotifiter.value;
                   if (i < 0 || i >= model.lines.length) return;
 
-                  await widget.playController.pause();
+                  await _playController.pause();
                   final currentLyric = model.lines[i].text;
                   final voiceBytes = await GeminiTtsService().getVoice(
                     currentLyric,
                   );
-                  await widget.playController.insertInterlude(voiceBytes);
+                  await _playController.insertInterlude(voiceBytes);
                   return null;
                 } finally {
                   busyNotifier.value = false;
@@ -258,23 +253,16 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
   }
 
   Future<void> _togglePlay({bool fromStart = false}) {
-    if (widget.playController.isPlayNotifier.value) {
-      return widget.playController.pause();
+    if (_playController.isPlayNotifier.value) {
+      return _playController.pause();
     } else {
       return fromStart
-          ? widget.playController.playFromStartPoint()
-          : widget.playController.play();
+          ? _playController.playFromStartPoint()
+          : _playController.play();
     }
   }
 }
 
 extension ProjectActionsExtension on Widget {
-  Widget projectActions({
-    required PlayController playController,
-    required LyricController lyricController,
-  }) => ProjectActions(
-    playController: playController,
-    lyricController: lyricController,
-    child: this,
-  );
+  Widget projectActions() => ProjectActions(child: this);
 }

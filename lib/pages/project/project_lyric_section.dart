@@ -52,22 +52,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
 
   @override
   Widget build(BuildContext context) {
-    final content = _lrc == null ? _buildEmptyContent() : _buildContent();
-
-    final coverFile = File(_project.path.cover);
-    return [
-      FutureBuilder(
-        future: coverFile.exists(),
-        builder: (context, snapshot) => snapshot.data == true
-            ? Image.file(coverFile, fit: .cover)
-            : const SizedBox.shrink(),
-      ),
-      content
-          .backgroundBlur(10.0)
-          .backgroundColor(
-            Theme.of(context).colorScheme.surfaceContainerLow.withAlpha(180),
-          ),
-    ].toStack(fit: .expand);
+    return _lrc == null ? _buildEmptyContent() : _buildContent();
   }
 
   Widget _buildEmptyContent() {
@@ -141,7 +126,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     return LyricView(
       controller: _lyricController,
       style: LyricStyles.default1.copyWith(
-        textStyle: textTheme.titleLarge!.copyWith(
+        textStyle: textTheme.displaySmall!.copyWith(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         activeStyle: textTheme.displayMedium!.copyWith(

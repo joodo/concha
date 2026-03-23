@@ -23,8 +23,40 @@ class ProjectPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final coverFile = File(project.path.cover);
+    final header = [
+      FutureBuilder(
+        future: coverFile.exists(),
+        builder: (context, snapshot) => snapshot.data == true
+            ? Image.file(coverFile, fit: .cover)
+            : const SizedBox.shrink(),
+      ),
+      [
+            [
+                  BackButton(),
+                  Text(
+                    _title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  const _HelpButton(),
+                  const SettingButton(),
+                ]
+                .toRow(separator: const SizedBox(width: 8.0))
+                .padding(horizontal: 12.0, top: 12.0),
+            ProjectLyricSection().expanded(),
+          ]
+          .toColumn()
+          .backgroundBlur(10.0)
+          .backgroundColor(
+            Theme.of(context).colorScheme.surfaceContainerLow.withAlpha(200),
+          ),
+    ].toStack(fit: .expand);
+
     final bodyContent = [
-      ProjectLyricSection().expanded(),
+      header.expanded(),
       Builder(
             builder: (context) {
               return Waveform(
@@ -39,28 +71,21 @@ class ProjectPage extends StatelessWidget {
       ProjectToolbar(),
     ].toColumn();
 
-    final content = Scaffold(
-      appBar: AppBar(
-        title: _title.asText(),
-        notificationPredicate: (notification) => false,
-        actions: [const _HelpButton(), const SettingButton()],
-        actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
-      ),
-      body: Consumer<InitStatus?>(
-        builder: (context, status, child) => status == null
-            ? CircularProgressIndicator().center()
-            : status is InitFailed
-            ? Text(
-                status.message,
-                style: Theme.of(context).textTheme.titleMedium,
-              ).center()
-            : bodyContent,
-      ),
+    final loadWrap = Consumer<InitStatus?>(
+      builder: (context, status, child) => status == null
+          ? CircularProgressIndicator().center()
+          : status is InitFailed
+          ? Text(
+              status.message,
+              style: Theme.of(context).textTheme.titleMedium,
+            ).center()
+          : bodyContent,
     );
 
-    final body = content.projectBusiness().projectActions().projectProviders(
-      project: project,
-    );
+    final businessWrap = loadWrap
+        .projectBusiness()
+        .projectActions()
+        .projectProviders(project: project);
 
     return FutureBuilder(
       future: ColorScheme.fromImageProvider(
@@ -69,7 +94,7 @@ class ProjectPage extends StatelessWidget {
       initialData: Theme.of(context).colorScheme,
       builder: (context, snapshot) => Theme(
         data: Theme.of(context).copyWith(colorScheme: snapshot.data),
-        child: body,
+        child: businessWrap,
       ),
     );
   }

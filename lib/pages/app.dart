@@ -39,7 +39,7 @@ class _ConchaAppState extends State<ConchaApp> {
     return MaterialApp(
       title: 'Concha',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0x00e9c299)),
         pageTransitionsTheme: PageTransitionsTheme(
           builders: {
             for (final platform in TargetPlatform.values)

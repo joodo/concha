@@ -192,12 +192,13 @@ class _MixTableButtonState extends State<_MixTableButton> {
     final link = LayerLink();
     return PopupWidget(
       showing: _isShowing,
-      popupBuilder: (context) =>
-          Consumer<Stream<MvsepTaskEvent>?>(builder: _popupContentBuilder)
-              .constrained(width: 250.0, height: 160.0)
-              .padding(all: 12.0)
-              .backgroundColor(colors.surfaceContainer)
-              .clipRRect(all: 16.0),
+      popupBuilder: (context) => Material(
+        color: colors.surfaceContainer,
+        borderRadius: BorderRadius.circular(12.0),
+        child: Consumer<Stream<MvsepTaskEvent>?>(
+          builder: _popupContentBuilder,
+        ).constrained(width: 240.0, height: 160.0),
+      ),
       layoutBuilder: (context, popup) => GestureDetector(
         behavior: .opaque,
         onTap: () => setState(() {
@@ -267,7 +268,7 @@ class _MixTableButtonState extends State<_MixTableButton> {
                       'assets/icons/singing.png',
                       width: 24.0,
                       color: colors.onSurfaceVariant,
-                    ),
+                    ).padding(left: 12.0),
                     ValueListenableBuilder(
                       valueListenable:
                           widget.playController.vocalVolumeNotifier,
@@ -284,7 +285,7 @@ class _MixTableButtonState extends State<_MixTableButton> {
                       'assets/icons/drum.png',
                       width: 24.0,
                       color: colors.onSurfaceVariant,
-                    ),
+                    ).padding(left: 12.0),
                     ValueListenableBuilder(
                       valueListenable:
                           widget.playController.instruVolumeNotifier,

@@ -16,6 +16,7 @@ class SettingButton extends StatelessWidget {
       closedShape: const CircleBorder(),
       closedElevation: 0,
       openColor: Theme.of(context).scaffoldBackgroundColor,
+      closedColor: Colors.transparent,
       closedBuilder: (context, openContainer) {
         return IconButton(
           onPressed: openContainer,

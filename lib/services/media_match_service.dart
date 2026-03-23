@@ -121,6 +121,7 @@ class MediaMatchService {
           MediaMatchCandidate(
             title: acoustResult.title,
             artist: acoustResult.artist,
+            album: _extractBestAcoustAlbum(acoustResult.raw),
             source: 'acoustid',
             confidence: 0.72,
           ),
@@ -240,6 +241,7 @@ class MediaMatchService {
           MediaMatchCandidate(
             title: title,
             artist: artist,
+            album: _extractAcoustAlbum(recording),
             source: 'acoustid',
             recordingId: recording['id']?.toString(),
             releaseId: _extractReleaseId(recording),
@@ -291,8 +293,15 @@ class MediaMatchService {
           hasCoverMbid &&
           !prevHasCoverMbid &&
           c.confidence >= prev.confidence - 0.02;
+      final hasAlbum = c.album?.isNotEmpty ?? false;
+      final prevHasAlbum = prev?.album?.isNotEmpty ?? false;
+      final shouldPreferAlbum =
+          prev != null &&
+          hasAlbum &&
+          !prevHasAlbum &&
+          c.confidence >= prev.confidence - 0.02;
 
-      if (hasBetterScore || shouldPreferMbid) {
+      if (hasBetterScore || shouldPreferMbid || shouldPreferAlbum) {
         merged[key] = c;
       }
     }
@@ -387,6 +396,71 @@ class MediaMatchService {
         final id = release['id']?.toString();
         if (_isValidMbid(id)) {
           return id;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String? _extractBestAcoustAlbum(Map<String, dynamic> raw) {
+    final results = raw['results'];
+    if (results is! List || results.isEmpty) {
+      return null;
+    }
+
+    final resultMaps = results.whereType<Map<String, dynamic>>().toList()
+      ..sort((a, b) {
+        final aScore = (a['score'] is num)
+            ? (a['score'] as num).toDouble()
+            : 0.0;
+        final bScore = (b['score'] is num)
+            ? (b['score'] as num).toDouble()
+            : 0.0;
+        return bScore.compareTo(aScore);
+      });
+
+    for (final item in resultMaps) {
+      final recordings = item['recordings'];
+      if (recordings is! List || recordings.isEmpty) continue;
+
+      for (final recording in recordings.whereType<Map<String, dynamic>>()) {
+        final album = _extractAcoustAlbum(recording);
+        if (album != null) {
+          return album;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String? _extractAcoustAlbum(Map<String, dynamic> recording) {
+    final releaseGroups = recording['releasegroups'];
+    if (releaseGroups is List && releaseGroups.isNotEmpty) {
+      for (final group in releaseGroups.whereType<Map<String, dynamic>>()) {
+        final groupTitle = _normalizeText(group['title']);
+        if (groupTitle != null) {
+          return groupTitle;
+        }
+
+        final releases = group['releases'];
+        if (releases is! List || releases.isEmpty) continue;
+        for (final release in releases.whereType<Map<String, dynamic>>()) {
+          final releaseTitle = _normalizeText(release['title']);
+          if (releaseTitle != null) {
+            return releaseTitle;
+          }
+        }
+      }
+    }
+
+    final releases = recording['releases'];
+    if (releases is List && releases.isNotEmpty) {
+      for (final release in releases.whereType<Map<String, dynamic>>()) {
+        final releaseTitle = _normalizeText(release['title']);
+        if (releaseTitle != null) {
+          return releaseTitle;
         }
       }
     }

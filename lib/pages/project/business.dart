@@ -40,6 +40,7 @@ class _ProjectBusinessState extends SingleChildState<ProjectBusiness> {
 
     _initStatus = _initPlayer();
     _createSeparatedAudio();
+    _createSummary();
   }
 
   @override
@@ -103,6 +104,17 @@ class _ProjectBusinessState extends SingleChildState<ProjectBusiness> {
     await _playController.setSeparatedAudio(vocalPath, instruPath);
     await _playController.setSeparateMode(true);
     _separateStreamNotifier.value = null;
+  }
+
+  Future<void> _createSummary() async {
+    if (_project.summary?.isNotEmpty == true) return;
+
+    final file = File(_project.path.lyric);
+    if (!await file.exists()) return;
+
+    final lrc = await file.readAsString();
+    final summary = await GeminiService.i.summary(lrc);
+    if (summary.isNotEmpty) _project.summary = summary;
   }
 }
 

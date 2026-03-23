@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 extension PercentExtension on double {
   int get asPercent => (this * 100.0).round();
 }
@@ -17,7 +19,14 @@ extension ByteSizeExtension on int {
       return '${gb.toStringAsFixed(2)} GB';
     }
   }
+}
 
+extension DurationExtension on int {
   Duration get seconds => Duration(seconds: this);
   Duration get milliseconds => Duration(milliseconds: this);
+}
+
+extension SizedBoxExtension on double {
+  SizedBox asWidth() => SizedBox(width: this);
+  SizedBox asHeight() => SizedBox(height: this);
 }

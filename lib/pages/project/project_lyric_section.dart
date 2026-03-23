@@ -11,7 +11,7 @@ import 'actions.dart';
 import 'providers.dart';
 import '../../models/models.dart';
 import '../../services/lrclib_service.dart';
-import '../../services/lyric_translation_service.dart';
+import '../../services/gemini_service.dart';
 import '../../services/play_controller.dart';
 import '../../widgets/popup_widget.dart';
 
@@ -189,7 +189,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   }
 
   Future<void> _createTranslate() async {
-    _tlrc = await LyricTranslationService().translate(_lrc!);
+    _tlrc = await GeminiService.i.translate(_lrc!);
 
     await File(_project.path.lyricT).writeAsString(_tlrc!);
 

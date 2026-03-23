@@ -40,6 +40,14 @@ class Project {
     unawaited(save());
   }
 
+  @JsonKey(name: 'summary')
+  String? _summary;
+  String? get summary => _summary;
+  set summary(String? value) {
+    _summary = value;
+    unawaited(save());
+  }
+
   static late String savedDir;
   static Future<void> initSavedDir() async {
     final appSupportDir = await getApplicationSupportDirectory();

@@ -15,13 +15,14 @@ Project _$ProjectFromJson(Map<String, dynamic> json) => Project(
       ? Duration.zero
       : Duration(microseconds: (json['lyricOffset'] as num).toInt()),
   metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
-);
+)..summary = json['summary'] as String?;
 
 Map<String, dynamic> _$ProjectToJson(Project instance) => <String, dynamic>{
   'id': instance.id,
   'metadata': instance.metadata,
   'position': instance.position.inMicroseconds,
   'lyricOffset': instance.lyricOffset.inMicroseconds,
+  'summary': instance.summary,
 };
 
 Metadata _$MetadataFromJson(Map<String, dynamic> json) => Metadata(

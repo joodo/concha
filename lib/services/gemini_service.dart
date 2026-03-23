@@ -5,12 +5,13 @@ import 'package:http/http.dart' as http;
 import '../utils/http.dart' as app_http;
 import '../utils/preferences.dart';
 
-class LyricTranslationService {
-  const LyricTranslationService({this.modelName = 'gemini-2.5-flash'});
+class GeminiService {
+  GeminiService._internal();
+  static final i = GeminiService._internal();
 
-  final String modelName;
+  static const modelName = 'gemini-2.5-flash';
 
-  static String get _prompt {
+  static String get _translatePrompt {
     final targetLang = Pref.i.get(PrefKeys.translatePrompt.value) as String;
     return "你是一个专业的音乐翻译家。请将以下 LRC 歌词翻译成$targetLang。\n"
         "要求：1. 严禁修改或删除 [mm:ss.xx] 格式的时间戳。\n"
@@ -18,15 +19,27 @@ class LyricTranslationService {
         "3. 只输出翻译后的 LRC 内容，不要任何解释。\n\n";
   }
 
+  static const _summaryPrompt =
+      '你是一个乐评家。请根据以下 LRC 歌词，配一段意象文字。'
+      '要求：1. 50 字之内'
+      '2. 语气轻松自然'
+      '3. 只输出意向文字，不要任何解释';
+
   Future<String> translate(String lrc) async {
+    if (lrc.trim().isEmpty) return '';
+    return _request('$_translatePrompt$lrc');
+  }
+
+  Future<String> summary(String lrc) async {
+    if (lrc.trim().isEmpty) return '';
+    return _request('$_summaryPrompt$lrc');
+  }
+
+  Future<String> _request(String prompt) async {
     final apiKey = Pref.i.get(PrefKeys.geminiKey.value) as String;
     final normalizedApiKey = apiKey.trim();
     if (normalizedApiKey.isEmpty) {
       throw ArgumentError.value(apiKey, 'apiKey', '不能为空');
-    }
-
-    if (lrc.trim().isEmpty) {
-      return '';
     }
 
     final proxy = Pref.normalizedProxy;
@@ -48,7 +61,7 @@ class LyricTranslationService {
           'contents': [
             {
               'parts': [
-                {'text': '$_prompt$lrc'},
+                {'text': prompt},
               ],
             },
           ],
@@ -82,17 +95,17 @@ class LyricTranslationService {
         throw Exception('歌词翻译失败：Gemini 返回文本为空');
       }
 
-      final translatedLrc = parts
+      final responseText = parts
           .whereType<Map<String, dynamic>>()
           .map((part) => part['text'])
           .whereType<String>()
           .join()
           .trim();
-      if (translatedLrc.isEmpty) {
+      if (responseText.isEmpty) {
         throw Exception('歌词翻译失败：Gemini 未返回有效内容');
       }
 
-      return translatedLrc;
+      return responseText;
     } finally {
       proxyClient?.close();
       if (shouldCloseClient) {

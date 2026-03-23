@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:styled_widget/styled_widget.dart';
 
 import '../../models/models.dart';
 import '../../services/mvsep_separation_service.dart';
@@ -34,7 +35,7 @@ class ProjectGridTile extends StatelessWidget {
         initialData: false,
         builder: (context, snapshot) => snapshot.data == true
             ? Ink.image(image: FileImage(coverFile), fit: .cover)
-            : const Center(child: Icon(Icons.music_note_rounded, size: 56)),
+            : Icon(Icons.music_note_rounded, size: 56.0).center(),
       ),
     );
 

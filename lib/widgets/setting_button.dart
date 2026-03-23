@@ -72,6 +72,7 @@ class _SettingDialog extends StatelessWidget {
               ),
             ),
           ),
+
           Text(
             '歌词服务',
             style: Theme.of(context).textTheme.titleLarge,
@@ -101,6 +102,7 @@ class _SettingDialog extends StatelessWidget {
               suffixText: '[单句歌词]',
             ),
           ),
+
           Text(
             '关于',
             style: Theme.of(context).textTheme.titleLarge,
@@ -114,6 +116,12 @@ class _SettingDialog extends StatelessWidget {
               return Text('${data.appName}，版本 ${data.version}');
             },
           ),
+          'Copyright 2026 Joodo. Licensed under GPLv3 License.'.asText(),
+          TextButton.icon(
+            onPressed: () => launchUrlString('https://github.com/joodo/concha'),
+            label: 'Github'.asText(),
+            icon: Icon(Icons.open_in_browser),
+          ).alignment(.centerLeft).padding(top: 12.0),
         ],
       ),
     );

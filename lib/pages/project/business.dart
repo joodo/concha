@@ -1,10 +1,12 @@
 import 'dart:io';
 
-import 'package:concha/models/models.dart';
-import 'package:concha/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:nested/nested.dart';
 import 'package:provider/provider.dart';
+
+import '/helpers.dart';
+import '/models/models.dart';
+import '/services/services.dart';
 
 sealed class InitStatus {
   const InitStatus();
@@ -108,13 +110,7 @@ class _ProjectBusinessState extends SingleChildState<ProjectBusiness> {
 
   Future<void> _createSummary() async {
     if (_project.summary?.isNotEmpty == true) return;
-
-    final file = File(_project.path.lyric);
-    if (!await file.exists()) return;
-
-    final lrc = await file.readAsString();
-    final summary = await GeminiService.i.summary(lrc);
-    if (summary.isNotEmpty) _project.summary = summary;
+    return _project.generateSummary();
   }
 }
 

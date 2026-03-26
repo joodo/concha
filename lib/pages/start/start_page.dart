@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:animations/animations.dart';
+import 'package:concha/helpers.dart';
 import 'package:concha/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -189,13 +190,20 @@ class _StartPageState extends State<StartPage> {
           items: [
             PopupMenuItem(
               onTap: () async {
+                await project.generateSummary();
+                if (mounted) setState(() {});
+              },
+              child: '重新生成副标题'.asText(),
+            ),
+            PopupMenuItem(
+              onTap: () async {
                 await MvsepSeparationService.i.deleteCacheByAudioPath(
                   project.path.audio,
                 );
                 await project.delete();
                 _loadProjects();
               },
-              child: const Text('删除'),
+              child: '删除'.asText(),
             ),
           ],
         );

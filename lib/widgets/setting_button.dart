@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../utils/utils.dart';
+import '/models/models.dart';
+import '/utils/utils.dart';
 
 class SettingButton extends StatelessWidget {
   const SettingButton({super.key});
@@ -118,11 +120,19 @@ class _SettingDialog extends StatelessWidget {
             },
           ),
           'Copyright 2026 Joodo. Licensed under GPLv3 License.'.asText(),
-          TextButton.icon(
-            onPressed: () => launchUrlString('https://github.com/joodo/concha'),
-            label: 'Github'.asText(),
-            icon: Icon(Icons.open_in_browser),
-          ).alignment(.centerLeft).padding(top: 12.0),
+          [
+            TextButton.icon(
+              onPressed: () =>
+                  launchUrlString('https://github.com/joodo/concha'),
+              label: 'Github'.asText(),
+              icon: Icon(Icons.open_in_browser),
+            ),
+            TextButton.icon(
+              onPressed: () => launchUrl(Uri.file(Project.savedDir)),
+              label: '本地存储目录'.asText(),
+              icon: Icon(Icons.open_in_browser),
+            ),
+          ].toRow().padding(top: 12.0),
         ],
       ),
     );

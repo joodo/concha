@@ -20,10 +20,10 @@ class GeminiService {
   }
 
   static const _summaryPrompt =
-      '你是一个乐评家。请根据以下 LRC 歌词，配一段意象文字。'
+      '你是一个乐评家。请根据以下 LRC 歌词，为歌曲配一个副标题。'
       '要求：1. 50 字之内'
       '2. 语气轻松自然'
-      '3. 只输出意向文字，不要任何解释';
+      '3. 只输出标题内容，不要任何解释';
 
   Future<String> translate(String lrc) async {
     if (lrc.trim().isEmpty) return '';

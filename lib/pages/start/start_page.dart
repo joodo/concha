@@ -56,7 +56,7 @@ class _StartPageState extends State<StartPage> {
                       (project) => ProjectGridTile(
                         project: project,
                         onSelect: () => _pushRoute(project),
-                        onDelete: _loadProjects,
+                        onDelete: () => _deleteProject(project),
                       ),
                     )
                     .toList(),
@@ -196,13 +196,7 @@ class _StartPageState extends State<StartPage> {
               child: '重新生成副标题'.asText(),
             ),
             PopupMenuItem(
-              onTap: () async {
-                await MvsepSeparationService.i.deleteCacheByAudioPath(
-                  project.path.audio,
-                );
-                await project.delete();
-                _loadProjects();
-              },
+              onTap: () => _deleteProject(project),
               child: '删除'.asText(),
             ),
           ],
@@ -213,4 +207,30 @@ class _StartPageState extends State<StartPage> {
   }
 
   bool get _couldDisplayTile => _projects.firstOrNull?.summary != null;
+
+  Future<void> _deleteProject(Project project) async {
+    final index = _projects.indexWhere((p) => p.id == project.id);
+    setState(() {
+      _projects.removeAt(index);
+    });
+
+    final controller = context.showSnackBar(
+      SnackBar(
+        content: '已删除 ${project.metadata.title}'.asText(),
+        persist: false,
+        action: SnackBarAction(
+          label: '撤销',
+          onPressed: () => setState(() {
+            _projects.insert(index, project);
+          }),
+        ),
+      ),
+    );
+
+    final reason = await controller.closed;
+    if (reason != SnackBarClosedReason.action) {
+      await MvsepSeparationService.i.deleteCacheByAudioPath(project.path.audio);
+      await project.delete();
+    }
+  }
 }

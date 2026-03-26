@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../../models/models.dart';
-import '../../services/mvsep_separation_service.dart';
-import '../../utils/utils.dart';
+import '/models/models.dart';
+import '/utils/utils.dart';
 
 class ProjectGridTile extends StatelessWidget {
   const ProjectGridTile({
@@ -50,18 +49,7 @@ class ProjectGridTile extends StatelessWidget {
           showMenu(
             context: context,
             position: RelativeRect.fromLTRB(o.dx, o.dy, o.dx, o.dy),
-            items: [
-              PopupMenuItem(
-                onTap: () async {
-                  await MvsepSeparationService.i.deleteCacheByAudioPath(
-                    project.path.audio,
-                  );
-                  await project.delete();
-                  onDelete?.call();
-                },
-                child: const Text('删除'),
-              ),
-            ],
+            items: [PopupMenuItem(onTap: onDelete, child: '删除'.asText())],
           );
         },
         child: tile,

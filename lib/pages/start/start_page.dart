@@ -154,10 +154,10 @@ class _StartPageState extends State<StartPage> {
         [
               Text(metadata.title, style: textStyles.titleLarge, maxLines: 2),
               if (subtitle.isNotEmpty)
-                Text(subtitle, maxLines: 1, overflow: .ellipsis),
+                Text(subtitle, maxLines: 3, overflow: .ellipsis),
               Text(
                 project.summary!,
-                maxLines: 4,
+                maxLines: 3,
                 overflow: .ellipsis,
               ).padding(top: 8.0),
               const Spacer(),

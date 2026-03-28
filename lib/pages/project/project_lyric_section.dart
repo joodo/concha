@@ -104,9 +104,7 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
       if (_searchKeyword != null)
         _SearchPanel(
           initKeyword: _searchKeyword!,
-          onLyricSelected: (value) {
-            _lyricController.loadLyric(value);
-          },
+          onLyricSelected: _lyricController.loadLyric,
           onConfirm: (lrc) async {
             if (lrc != null) {
               await File(_project.path.lyric).writeAsString(lrc);
@@ -123,7 +121,8 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
   Widget _buildLyricView() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return LyricView(
+
+    final lyricView = LyricView(
       controller: _lyricController,
       style: LyricStyles.default1.copyWith(
         textStyle: textTheme.displaySmall!.copyWith(
@@ -147,6 +146,35 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
       ),
       width: double.infinity,
       height: double.infinity,
+    );
+
+    return GestureDetector(
+      onSecondaryTapDown: (details) {
+        final total = _lyricController.lyricText;
+        if (total == null) return;
+
+        final current = _lyricController.currentText;
+
+        context.showPopupMenu(details.globalPosition, [
+          PopupMenuItem(
+            onTap: current == null
+                ? null
+                : () async {
+                    await current.copyToClipboard();
+                    if (mounted) context.showSnackBarText('已复制当前歌词');
+                  },
+            child: '复制当前歌词'.asText(),
+          ),
+          PopupMenuItem(
+            onTap: () async {
+              await total.copyToClipboard();
+              if (mounted) context.showSnackBarText('已复制全部歌词');
+            },
+            child: '复制全部歌词'.asText(),
+          ),
+        ]);
+      },
+      child: lyricView,
     );
   }
 

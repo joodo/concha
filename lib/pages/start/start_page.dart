@@ -291,12 +291,8 @@ class _StartPageState extends State<StartPage> {
     );
 
     return GestureDetector(
-      onSecondaryTapDown: (details) {
-        final o = details.globalPosition;
-        showMenu(
-          context: context,
-          position: RelativeRect.fromLTRB(o.dx, o.dy, o.dx, o.dy),
-          items: [
+      onSecondaryTapDown: (details) =>
+          context.showPopupMenu(details.globalPosition, [
             PopupMenuItem(
               onTap: () async {
                 await project.generateSummary();
@@ -308,9 +304,7 @@ class _StartPageState extends State<StartPage> {
               onTap: () => _deleteProject(project),
               child: '删除'.asText(),
             ),
-          ],
-        );
-      },
+          ]),
       child: themeWrap,
     );
   }

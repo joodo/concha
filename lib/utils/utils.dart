@@ -6,3 +6,7 @@ export 'path.dart';
 export 'widget.dart';
 export 'run_after_build.dart';
 export 'format.dart';
+export 'lyric_controller.dart';
+export 'popup_menu.dart';
+export 'copy_to_clipboard.dart';
+export 'build_context.dart';

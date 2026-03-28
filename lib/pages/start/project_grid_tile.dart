@@ -44,14 +44,10 @@ class ProjectGridTile extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: InkWell(
         onTap: onSelect,
-        onSecondaryTapDown: (details) {
-          final o = details.globalPosition;
-          showMenu(
-            context: context,
-            position: RelativeRect.fromLTRB(o.dx, o.dy, o.dx, o.dy),
-            items: [PopupMenuItem(onTap: onDelete, child: '删除'.asText())],
-          );
-        },
+        onSecondaryTapDown: (details) => context.showPopupMenu(
+          details.globalPosition,
+          [PopupMenuItem(onTap: onDelete, child: '删除'.asText())],
+        ),
         child: tile,
       ),
     );

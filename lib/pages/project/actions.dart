@@ -153,13 +153,9 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
                 busyNotifier.value = true;
 
                 try {
-                  final model = _lyricController.lyricNotifier.value;
-                  if (model == null || model.lines.isEmpty) return;
-                  final i = _lyricController.activeIndexNotifiter.value;
-                  if (i < 0 || i >= model.lines.length) return;
+                  final currentLyric = _lyricController.currentText;
+                  if (currentLyric == null) return;
 
-                  await _playController.pause();
-                  final currentLyric = model.lines[i].text;
                   final voiceBytes = await GeminiTtsService().getVoice(
                     currentLyric,
                   );

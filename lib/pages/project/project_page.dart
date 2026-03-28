@@ -24,48 +24,28 @@ class ProjectPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final coverFile = File(project.path.cover);
-    final header = [
+    final lyricSection = [
       FutureBuilder(
         future: coverFile.exists(),
         builder: (context, snapshot) => snapshot.data == true
             ? Image.file(coverFile, fit: .cover)
             : const SizedBox.shrink(),
       ),
-      [
-            [
-                  BackButton(),
-                  Text(
-                    _title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
-                  const _HelpButton(),
-                  const SettingButton(),
-                ]
-                .toRow(separator: const SizedBox(width: 8.0))
-                .padding(horizontal: 12.0, top: 12.0),
-            ProjectLyricSection().expanded(),
-          ]
-          .toColumn()
+      ProjectLyricSection()
+          .padding(top: kToolbarHeight)
           .backgroundBlur(10.0)
-          .backgroundColor(
-            Theme.of(context).colorScheme.surfaceContainerLow.withAlpha(200),
-          ),
+          .backgroundColor(context.colors.surfaceContainerLow.withAlpha(200)),
     ].toStack(fit: .expand);
 
     final bodyContent = [
-      header.expanded(),
+      lyricSection.expanded(),
       Builder(
-            builder: (context) {
-              return Waveform(
-                playController: context.read<PlayController>(),
-                waveformController: context.read<WavefromController>(),
-              );
-            },
+            builder: (context) => Waveform(
+              playController: context.read<PlayController>(),
+              waveformController: context.read<WavefromController>(),
+            ),
           )
-          .backgroundColor(Theme.of(context).colorScheme.surfaceContainerLow)
+          .backgroundColor(context.colors.surfaceContainerLow)
           .padding(all: 12.0)
           .constrained(height: 200.0),
       ProjectToolbar(),
@@ -82,7 +62,19 @@ class ProjectPage extends StatelessWidget {
           : bodyContent,
     );
 
-    final businessWrap = loadWrap
+    final scaffoldWrap = Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: _title.asText(),
+        centerTitle: false,
+        actions: [const _HelpButton(), const SettingButton()],
+        backgroundColor: Colors.transparent, // 设置半透明才能看到底层内容
+        elevation: 0, // 去掉阴影，增强悬浮感
+      ),
+      body: loadWrap,
+    );
+
+    final businessWrap = scaffoldWrap
         .projectBusiness()
         .projectActions()
         .projectProviders(project: project);
@@ -91,7 +83,7 @@ class ProjectPage extends StatelessWidget {
       future: ColorScheme.fromImageProvider(
         provider: FileImage(File(project.path.cover)),
       ),
-      initialData: Theme.of(context).colorScheme,
+      initialData: context.colors,
       builder: (context, snapshot) => Theme(
         data: Theme.of(context).copyWith(colorScheme: snapshot.data),
         child: businessWrap,
@@ -159,7 +151,6 @@ class _HelpButton extends StatelessWidget {
   }
 
   Widget _shortcutKeyChip(BuildContext context, String keys) {
-    final colors = Theme.of(context).colorScheme;
     return Text(
           keys,
           style: Theme.of(
@@ -168,9 +159,9 @@ class _HelpButton extends StatelessWidget {
         )
         .padding(horizontal: 10.0, vertical: 4.0)
         .decorated(
-          color: colors.surfaceContainerHighest,
+          color: context.colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colors.outlineVariant),
+          border: Border.all(color: context.colors.outlineVariant),
         );
   }
 }

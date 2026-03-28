@@ -20,128 +20,136 @@ class ProjectToolbar extends StatelessWidget {
     final loopNotifier = context.read<LoopNotifier>();
     final attachNotifier = context.read<AttachToLyricNotifier>();
     final lyricController = context.read<LyricController>();
-    return [
-          ListenableBuilder(
-            listenable: Listenable.merge([
-              playController.isPlayNotifier,
-              loopNotifier,
-            ]),
-            builder: (context, child) => IconButton.filled(
-              onPressed: Actions.handler(context, const TogglePlayIntent()),
-              icon: Icon(
-                playController.isPlayNotifier.value
-                    ? Icons.pause_rounded
-                    : loopNotifier.value
-                    ? Icons.slow_motion_video
-                    : Icons.play_arrow,
-                size: 32,
-              ),
-              tooltip: playController.isPlayNotifier.value
-                  ? '暂停'
-                  : loopNotifier.value
-                  ? '从起点播放'
-                  : '播放',
-            ),
-          ),
+
+    final toggleButton = ListenableBuilder(
+      listenable: Listenable.merge([
+        playController.isPlayNotifier,
+        loopNotifier,
+      ]),
+      builder: (context, child) => IconButton.filled(
+        onPressed: Actions.handler(context, const TogglePlayIntent()),
+        icon: Icon(
+          playController.isPlayNotifier.value
+              ? Icons.pause_rounded
+              : loopNotifier.value
+              ? Icons.slow_motion_video
+              : Icons.play_arrow,
+          size: 32,
+        ),
+        tooltip: playController.isPlayNotifier.value
+            ? '暂停'
+            : loopNotifier.value
+            ? '从起点播放'
+            : '播放',
+      ),
+    );
+
+    final loopButton = ValueListenableBuilder(
+      valueListenable: loopNotifier,
+      builder: (context, value, child) => IconButton.outlined(
+        onPressed: () => loopNotifier.value = !value,
+        isSelected: value,
+        tooltip: '从起点播放',
+        icon: const Icon(Icons.repeat),
+      ),
+    );
+
+    final attachButton = ListenableBuilder(
+      listenable: Listenable.merge([
+        attachNotifier,
+        lyricController.lyricNotifier,
+      ]),
+      builder: (context, child) => IconButton.outlined(
+        onPressed: lyricController.lyricNotifier.value == null
+            ? null
+            : () => attachNotifier.value = !attachNotifier.value,
+        tooltip: '位置吸附到歌词',
+        isSelected: attachNotifier.value,
+        icon: const Icon(Icons.my_location),
+      ),
+    );
+
+    final stopButton = IconButton(
+      onPressed: playController.stop,
+      tooltip: '停止',
+      icon: const Icon(Icons.stop_rounded),
+    );
+
+    final tunings = LayoutBuilder(
+      builder: (context, constraints) {
+        final isExpanded = constraints.maxWidth >= 750.0;
+        return [
           ValueListenableBuilder(
-            valueListenable: loopNotifier,
-            builder: (context, value, child) => IconButton.outlined(
-              onPressed: () => loopNotifier.value = !value,
-              isSelected: value,
-              tooltip: '从起点播放',
-              icon: const Icon(Icons.repeat),
+            valueListenable: playController.volumeNotifier,
+            builder: (context, volumn, child) => ExpansibleButton(
+              isExpanded: isExpanded,
+              icon: Icon(
+                Icons.volume_up,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              value: volumn,
+              labelStringBuilder: (value) => '${(value * 100).round()} %',
+              divisions: 100,
+              onChanged: playController.setVolume,
             ),
-          ),
-          ListenableBuilder(
-            listenable: Listenable.merge([
-              attachNotifier,
-              lyricController.lyricNotifier,
-            ]),
-            builder: (context, child) => IconButton.outlined(
-              onPressed: lyricController.lyricNotifier.value == null
-                  ? null
-                  : () => attachNotifier.value = !attachNotifier.value,
-              tooltip: '位置吸附到歌词',
-              isSelected: attachNotifier.value,
-              icon: const Icon(Icons.my_location),
+          ).tooltip('音量'),
+          ValueListenableBuilder(
+            valueListenable: playController.speedNotifier,
+            builder: (context, speed, child) => ExpansibleButton(
+              isExpanded: isExpanded,
+              icon: Image.asset(
+                'assets/icons/metronome.png',
+                width: 24.0,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              value: speed,
+              min: 0.25,
+              max: 2.0,
+              labelStringBuilder: (value) => 'x $value',
+              divisions: 7,
+              onChanged: playController.setSpeed,
             ),
+          ).tooltip('速度'),
+          ValueListenableBuilder(
+            valueListenable: playController.pitchNotifier,
+            builder: (context, pitch, child) => ExpansibleButton(
+              isExpanded: isExpanded,
+              icon: Image.asset(
+                'assets/icons/diapason.png',
+                width: 24.0,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              value: pitch.toDouble(),
+              min: -7,
+              max: 7,
+              labelStringBuilder: (value) {
+                final pitch = value.round();
+                final mark = switch (pitch) {
+                  0 => '♮',
+                  < 0 => '♭',
+                  > 0 => '♯',
+                  _ => '?',
+                };
+                return '[$pitch] $mark';
+              },
+              divisions: 14,
+              onChanged: (value) => playController.setPitch(value.round()),
+            ).tooltip('音调'),
           ),
-          IconButton(
-            onPressed: playController.stop,
-            tooltip: '停止',
-            icon: const Icon(Icons.stop_rounded),
-          ),
-          const SizedBox(width: 8.0),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isExpanded = constraints.maxWidth >= 750.0;
-              return [
-                ValueListenableBuilder(
-                  valueListenable: playController.volumeNotifier,
-                  builder: (context, volumn, child) => ExpansibleButton(
-                    isExpanded: isExpanded,
-                    icon: Icon(
-                      Icons.volume_up,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    value: volumn,
-                    labelStringBuilder: (value) => '${(value * 100).round()} %',
-                    divisions: 100,
-                    onChanged: playController.setVolume,
-                  ),
-                ).tooltip('音量'),
-                ValueListenableBuilder(
-                  valueListenable: playController.speedNotifier,
-                  builder: (context, speed, child) => ExpansibleButton(
-                    isExpanded: isExpanded,
-                    icon: Image.asset(
-                      'assets/icons/metronome.png',
-                      width: 24.0,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    value: speed,
-                    min: 0.25,
-                    max: 2.0,
-                    labelStringBuilder: (value) => 'x $value',
-                    divisions: 7,
-                    onChanged: playController.setSpeed,
-                  ),
-                ).tooltip('速度'),
-                ValueListenableBuilder(
-                  valueListenable: playController.pitchNotifier,
-                  builder: (context, pitch, child) => ExpansibleButton(
-                    isExpanded: isExpanded,
-                    icon: Image.asset(
-                      'assets/icons/diapason.png',
-                      width: 24.0,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    value: pitch.toDouble(),
-                    min: -7,
-                    max: 7,
-                    labelStringBuilder: (value) {
-                      final pitch = value.round();
-                      final mark = switch (pitch) {
-                        0 => '♮',
-                        < 0 => '♭',
-                        > 0 => '♯',
-                        _ => '?',
-                      };
-                      return '[$pitch] $mark';
-                    },
-                    divisions: 14,
-                    onChanged: (value) =>
-                        playController.setPitch(value.round()),
-                  ).tooltip('音调'),
-                ),
-                _MixTableButton(playController: playController),
-              ].toRow(separator: const SizedBox(width: 12));
-            },
-          ).flexible(),
-          _createDurationLabel(playController: playController),
-        ]
-        .toRow(separator: const SizedBox(width: 8.0))
-        .padding(horizontal: 12.0, bottom: 12.0);
+          _MixTableButton(playController: playController),
+        ].toRow(separator: 12.0.asWidth());
+      },
+    );
+
+    return [
+      toggleButton,
+      loopButton,
+      attachButton,
+      stopButton,
+      8.0.asWidth(),
+      tunings.flexible(),
+      _createDurationLabel(playController: playController),
+    ].toRow(separator: 8.0.asWidth());
   }
 
   Widget _createDurationLabel({required PlayController playController}) {

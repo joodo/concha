@@ -46,10 +46,25 @@ class ProjectPage extends StatelessWidget {
             ),
           )
           .backgroundColor(context.colors.surfaceContainerLow)
-          .padding(all: 12.0)
+          .padding(top: 12.0)
           .constrained(height: 200.0),
-      ProjectToolbar(),
     ].toColumn();
+
+    final scaffoldWrap = Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: _title.asText(),
+        centerTitle: false,
+        actions: [const _HelpButton(), const SettingButton()],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      bottomNavigationBar: BottomAppBar(
+        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 0),
+        child: ProjectToolbar(),
+      ),
+      body: bodyContent,
+    );
 
     final loadWrap = Consumer<InitStatus?>(
       builder: (context, status, child) => status == null
@@ -59,22 +74,10 @@ class ProjectPage extends StatelessWidget {
               status.message,
               style: Theme.of(context).textTheme.titleMedium,
             ).center()
-          : bodyContent,
+          : scaffoldWrap,
     );
 
-    final scaffoldWrap = Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: _title.asText(),
-        centerTitle: false,
-        actions: [const _HelpButton(), const SettingButton()],
-        backgroundColor: Colors.transparent, // 设置半透明才能看到底层内容
-        elevation: 0, // 去掉阴影，增强悬浮感
-      ),
-      body: loadWrap,
-    );
-
-    final businessWrap = scaffoldWrap
+    final businessWrap = loadWrap
         .projectBusiness()
         .projectActions()
         .projectProviders(project: project);

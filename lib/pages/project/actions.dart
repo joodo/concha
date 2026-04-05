@@ -1,13 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_lyric/flutter_lyric.dart';
-import 'package:nested/nested.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../utils/utils.dart';
-import 'providers.dart';
-import '../../services/gemini_tts_service.dart';
-import '../../services/play_controller.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
+
+import 'riverpod.dart' hide LyricController;
 
 class TogglePlayIntent extends Intent {
   const TogglePlayIntent();
@@ -47,122 +46,190 @@ class ReadAloudCurrentLyricIntent extends Intent {
   const ReadAloudCurrentLyricIntent();
 }
 
-class ProjectActions extends SingleChildStatefulWidget {
-  const ProjectActions({super.key, required Widget super.child});
+class ProjectActions extends HookConsumerWidget {
+  const ProjectActions({super.key, required this.child});
+
+  final Widget child;
 
   @override
-  State<ProjectActions> createState() => _ProjectActionsState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scopeNode = useFocusScopeNode();
+    final rootFocusNode = useFocusNode();
+    useEffect(() {
+      runAfterBuild(() {
+        if (!context.mounted) return;
+        if (rootFocusNode.canRequestFocus) rootFocusNode.requestFocus();
+      });
+      return null;
+    }, []);
 
-class _ProjectActionsState extends SingleChildState<ProjectActions> {
-  late final _playController = context.read<PlayController>();
-  late final _lyricController = context.read<LyricController>();
+    final restoreQueued = useRef(false);
+    useEffect(() {
+      void handleGlobalFocusChange() {
+        if (restoreQueued.value ||
+            scopeNode.context == null ||
+            rootFocusNode.context == null) {
+          return;
+        }
 
-  final _scopeNode = FocusScopeNode(debugLabel: 'project-actions-scope');
-  final _rootFocusNode = FocusNode(debugLabel: 'project-actions-root');
+        final route = ModalRoute.of(context);
+        if (route != null && !route.isCurrent) return;
 
-  bool _restoreQueued = false;
+        final primaryFocus = FocusManager.instance.primaryFocus;
+        final isInScope =
+            primaryFocus != null && _isDescendantOf(primaryFocus, scopeNode);
+        if (isInScope) return;
 
-  @override
-  void initState() {
-    super.initState();
-    FocusManager.instance.addListener(_handleGlobalFocusChange);
+        restoreQueued.value = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          restoreQueued.value = false;
+          if (!context.mounted ||
+              scopeNode.context == null ||
+              rootFocusNode.context == null) {
+            return;
+          }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (_rootFocusNode.canRequestFocus) _rootFocusNode.requestFocus();
+          final currentRoute = ModalRoute.of(context);
+          if (currentRoute != null && !currentRoute.isCurrent) return;
+          if (!rootFocusNode.canRequestFocus) return;
+          rootFocusNode.requestFocus();
+        });
+      }
+
+      FocusManager.instance.addListener(handleGlobalFocusChange);
+      return () =>
+          FocusManager.instance.removeListener(handleGlobalFocusChange);
+    }, []);
+
+    final play = useCallback(() {
+      final fromStart = ref.read(loopProvider);
+      return fromStart
+          ? ref.playController!.playFromStartPoint()
+          : ref.playController!.play();
     });
-  }
 
-  @override
-  void dispose() {
-    FocusManager.instance.removeListener(_handleGlobalFocusChange);
-    _rootFocusNode.dispose();
-    _scopeNode.dispose();
-    super.dispose();
-  }
+    final getCurrentLyricStart = useCallback(({int offset = 0}) {
+      final lyricController = ref.lyricController!;
 
-  @override
-  Widget buildWithChild(BuildContext context, Widget? child) {
+      final lyricModel = lyricController.lyricNotifier.value;
+      if (lyricModel == null || lyricModel.lines.isEmpty) return null;
+
+      final index = lyricController.activeIndexNotifiter.value + offset;
+      final targetIndex = index.clamp(0, lyricModel.lines.length - 1);
+      final start = lyricModel.lines[targetIndex].start;
+
+      return start - lyricController.lyricOffset.milliseconds;
+    });
+
+    final pauseToLyricStart = useCallback(() async {
+      final playController = ref.playController!;
+
+      final position = getCurrentLyricStart();
+      if (position == null) {
+        return playController.pause();
+      }
+
+      await playController.pause();
+      await playController.seekTo(position);
+    });
+
     return Actions(
       actions: {
         TogglePlayIntent: CallbackAction<TogglePlayIntent>(
           onInvoke: (intent) {
-            if (!_playController.isPlayNotifier.value) return _play();
+            final playController = ref.playController!;
+            if (!playController.isPlayNotifier.value) return play();
 
-            final attach = context.read<AttachToLyricNotifier>().value;
-            return attach ? _pauseToLyricStart() : _playController.pause();
+            final attach = ref.read(attachToLyricProvider);
+            return attach ? pauseToLyricStart() : playController.pause();
           },
         ),
         DeltaPositionIntent: CallbackAction<DeltaPositionIntent>(
           onInvoke: (intent) {
-            final attach = context.read<AttachToLyricNotifier>().value;
-            final lyricStart = _getCurrentLyricStart(offset: intent.delta);
+            final playController = ref.playController!;
+
+            final attach = ref.read(attachToLyricProvider);
+            final lyricStart = getCurrentLyricStart(offset: intent.delta);
 
             if (!attach || lyricStart == null) {
-              final current = _playController.positionNotifier.value;
+              final current = playController.positionNotifier.value;
               final deltaDuration = 5.seconds * intent.delta;
-              return _playController.seekTo(current + deltaDuration);
+              return playController.seekTo(current + deltaDuration);
             } else {
-              return _playController.seekTo(lyricStart);
+              return playController.seekTo(lyricStart);
             }
           },
         ),
         DeltaVolumeIntent: CallbackAction<DeltaVolumeIntent>(
           onInvoke: (intent) {
-            final current = _playController.volumeNotifier.value;
-            _playController.setVolume(current + intent.delta);
+            final playController = ref.playController!;
+
+            final current = playController.volumeNotifier.value;
+            playController.setVolume(current + intent.delta);
             return null;
           },
         ),
         DeltaSpeedIntent: CallbackAction<DeltaSpeedIntent>(
           onInvoke: (intent) {
-            final current = _playController.speedNotifier.value;
+            final playController = ref.playController!;
+
+            final current = playController.speedNotifier.value;
             final next = (current + intent.delta).clamp(0.25, 2.0).toDouble();
-            _playController.setSpeed(next);
+            playController.setSpeed(next);
             return null;
           },
         ),
         DeltaPitchIntent: CallbackAction<DeltaPitchIntent>(
           onInvoke: (intent) {
-            final current = _playController.pitchNotifier.value;
+            final playController = ref.playController!;
+
+            final current = playController.pitchNotifier.value;
             final next = (current + intent.delta).clamp(-7, 7);
-            _playController.setPitch(next);
+            playController.setPitch(next);
             return null;
           },
         ),
         SetMixIntent: CallbackAction<SetMixIntent>(
           onInvoke: (intent) {
-            _playController.setSeparateMode(true);
-            _playController.setVocalVolume(intent.vocalVolume);
-            _playController.setInstruVolume(intent.instruVolume);
+            final playController = ref.playController!;
+
+            playController.setSeparateMode(true);
+            playController.setVocalVolume(intent.vocalVolume);
+            playController.setInstruVolume(intent.instruVolume);
             return null;
           },
         ),
         MarkStartPoint: CallbackAction<MarkStartPoint>(
           onInvoke: (intent) {
-            final position = _playController.positionNotifier.value;
-            _playController.setStartPosition(position);
+            final playController = ref.playController!;
+
+            final position = playController.positionNotifier.value;
+            playController.setStartPosition(position);
             return null;
           },
         ),
         ReadAloudCurrentLyricIntent:
             CallbackAction<ReadAloudCurrentLyricIntent>(
               onInvoke: (intent) async {
-                final busyNotifier = context.read<ReadAloudPendingNotifier>();
-                busyNotifier.value = true;
+                final playController = ref.playController!;
+                final lyricController = ref.lyricController!;
+
+                final busyNotifier = ref.read(
+                  readAloudPendingProvider.notifier,
+                );
+                busyNotifier.set(true);
 
                 try {
-                  final currentLyric = _lyricController.currentText;
+                  final currentLyric = lyricController.currentText;
                   if (currentLyric == null) return;
 
-                  final voiceBytes = await GeminiTtsService().getVoice(
+                  final voiceBytes = await GeminiTtsService.i.getVoice(
                     currentLyric,
                   );
-                  await _playController.insertInterlude(voiceBytes);
+                  await playController.insertInterlude(voiceBytes);
                   return null;
                 } finally {
-                  busyNotifier.value = false;
+                  busyNotifier.set(false);
                 }
               },
             ),
@@ -205,42 +272,11 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
               ReadAloudCurrentLyricIntent(),
         },
         child: FocusScope(
-          node: _scopeNode,
-          child: Focus(focusNode: _rootFocusNode, child: child!),
+          node: scopeNode,
+          child: Focus(focusNode: rootFocusNode, child: child),
         ),
       ),
     );
-  }
-
-  void _handleGlobalFocusChange() {
-    if (_restoreQueued ||
-        _scopeNode.context == null ||
-        _rootFocusNode.context == null) {
-      return;
-    }
-
-    final route = ModalRoute.of(context);
-    if (route != null && !route.isCurrent) return;
-
-    final primaryFocus = FocusManager.instance.primaryFocus;
-    final isInScope =
-        primaryFocus != null && _isDescendantOf(primaryFocus, _scopeNode);
-    if (isInScope) return;
-
-    _restoreQueued = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _restoreQueued = false;
-      if (!mounted ||
-          _scopeNode.context == null ||
-          _rootFocusNode.context == null) {
-        return;
-      }
-
-      final currentRoute = ModalRoute.of(context);
-      if (currentRoute != null && !currentRoute.isCurrent) return;
-      if (!_rootFocusNode.canRequestFocus) return;
-      _rootFocusNode.requestFocus();
-    });
   }
 
   bool _isDescendantOf(FocusNode node, FocusNode ancestor) {
@@ -251,36 +287,4 @@ class _ProjectActionsState extends SingleChildState<ProjectActions> {
     }
     return false;
   }
-
-  Future<void> _play() {
-    final fromStart = context.read<LoopNotifier>().value;
-    return fromStart
-        ? _playController.playFromStartPoint()
-        : _playController.play();
-  }
-
-  Future<void> _pauseToLyricStart() async {
-    final position = _getCurrentLyricStart();
-    if (position == null) {
-      return _playController.pause();
-    }
-
-    await _playController.pause();
-    await _playController.seekTo(position);
-  }
-
-  Duration? _getCurrentLyricStart({int offset = 0}) {
-    final lyricModel = _lyricController.lyricNotifier.value;
-    if (lyricModel == null || lyricModel.lines.isEmpty) return null;
-
-    final index = _lyricController.activeIndexNotifiter.value + offset;
-    final targetIndex = index.clamp(0, lyricModel.lines.length - 1);
-    final start = lyricModel.lines[targetIndex].start;
-
-    return start - _lyricController.lyricOffset.milliseconds;
-  }
-}
-
-extension ProjectActionsExtension on Widget {
-  Widget projectActions() => ProjectActions(child: this);
 }

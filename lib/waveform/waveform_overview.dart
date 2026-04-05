@@ -24,7 +24,7 @@ class WaveformOverview extends StatefulWidget {
   });
 
   final PlayController playController;
-  final WavefromController waveformController;
+  final WaveformController waveformController;
   final Color fixedColor;
   final Color liveColor;
   final Color sliderColor;

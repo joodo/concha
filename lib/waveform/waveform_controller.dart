@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-class WavefromController extends ChangeNotifier {
-  WavefromController({
+class WaveformController extends ChangeNotifier {
+  WaveformController({
     double scale = 1.0,
     Duration position = Duration.zero,
     Duration window = Duration.zero,

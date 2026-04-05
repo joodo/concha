@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../../widgets/popup_widget.dart';
+import '/utils/utils.dart';
+import '/widgets/popup_widget.dart';
 
 class ExpansibleButton extends StatefulWidget {
   const ExpansibleButton({
@@ -77,7 +78,7 @@ class _ExpansibleButtonState extends State<ExpansibleButton> {
                 ).constrained(width: 48.0).padding(right: 16.0),
               ]
               .toRow(mainAxisSize: .min)
-              .backgroundColor(Theme.of(context).colorScheme.surfaceContainer)
+              .backgroundColor(context.colors.surfaceContainerHighest)
               .clipRRect(all: 16.0),
       layoutBuilder: (context, popup) => GestureDetector(
         behavior: .opaque,

@@ -2,10 +2,11 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:styled_widget/styled_widget.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-import '/models/models.dart';
+import '/preferences/preferences.dart';
+import '/projects/models.dart';
 import '/utils/utils.dart';
 
 class SettingButton extends StatelessWidget {

@@ -1,56 +1,58 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:animations/animations.dart';
-import 'package:concha/helpers.dart';
-import 'package:concha/utils/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../../models/models.dart';
-import '../../services/services.dart';
-import '../project/project_page.dart';
+import '/projects/projects.dart';
+import '/utils/utils.dart';
+
 import 'new_dialog.dart';
 import 'project_grid_tile.dart';
 
-class StartPage extends StatefulWidget {
+class StartPage extends HookConsumerWidget {
   const StartPage({super.key});
 
   @override
-  State<StartPage> createState() => _StartPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projectsAsync = ref.watch(projectListProvider);
+    late final List<String> projectIds;
+    switch (projectsAsync) {
+      case AsyncData(:final value):
+        projectIds = value;
+      case AsyncError(:final error):
+        return '加载错误：\n$error'.asText().center();
+      case _:
+        return CircularProgressIndicator().center();
+    }
 
-class _StartPageState extends State<StartPage> {
-  final List<Project> _projects = [];
+    final fabExpandedNotifier = useValueNotifier<bool>(true);
 
-  final _fabExpandedNotifier = ValueNotifier<bool>(true);
+    final hasDisplayTile = _calcDisplayCardExistance(ref, projectIds);
 
-  @override
-  void initState() {
-    super.initState();
+    final gridProjects = projectIds.sublist(hasDisplayTile ? 1 : 0);
 
-    unawaited(_loadProjects());
-  }
-
-  @override
-  void dispose() {
-    _fabExpandedNotifier.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasDisplayTile = _couldDisplayTile;
-    final gridProjects = _projects.sublist(hasDisplayTile ? 1 : 0);
+    final firstId = projectIds.firstOrNull;
+    final displayCard = hasDisplayTile
+        ? _DisplayCard(
+            projectId: firstId!,
+            onSelected: (project) => _pushRoute(context: context, id: firstId),
+            onDelete: (projectId) =>
+                _deleteProject(ref: ref, context: context, id: projectId),
+          )
+        : null;
 
     final scrollView = CustomScrollView(
       slivers: [
-        _buildSliverAppBar(context),
-        if (_projects.isEmpty)
+        _AppBar(displayCard: displayCard),
+        if (projectIds.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: Text('暂无项目').center(),
+            child: '暂无项目'.asText().center(),
           )
         else if (gridProjects.isNotEmpty)
           SliverPadding(
@@ -59,10 +61,15 @@ class _StartPageState extends State<StartPage> {
               delegate: SliverChildListDelegate(
                 gridProjects
                     .map(
-                      (project) => ProjectGridTile(
-                        project: project,
-                        onSelect: () => _pushRoute(project),
-                        onDelete: () => _deleteProject(project),
+                      (projectId) => ProjectGridTile(
+                        projectId: projectId,
+                        onSelect: () =>
+                            _pushRoute(context: context, id: projectId),
+                        onDelete: () => _deleteProject(
+                          ref: ref,
+                          context: context,
+                          id: projectId,
+                        ),
                       ),
                     )
                     .toList(),
@@ -81,54 +88,105 @@ class _StartPageState extends State<StartPage> {
       body: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
           if (notification.direction == .reverse) {
-            _fabExpandedNotifier.value = false;
+            fabExpandedNotifier.value = false;
           } else if (notification.direction == .forward) {
-            _fabExpandedNotifier.value = true;
+            fabExpandedNotifier.value = true;
           }
           return true;
         },
         child: scrollView,
       ),
-      floatingActionButton: _createFAB(),
+      floatingActionButton: ValueListenableBuilder(
+        valueListenable: fabExpandedNotifier,
+        builder: (context, isExpanded, child) {
+          return _FAB(
+            isExpanded: isExpanded,
+            onProjectCreated: (value) {
+              ref.invalidate(projectListProvider);
+              _pushRoute(context: context, id: value);
+            },
+          );
+        },
+      ),
     );
   }
 
-  OpenContainer<Project?> _createFAB() {
-    Widget fabBuilder(BuildContext context, VoidCallback openContainer) {
-      return ValueListenableBuilder(
-        valueListenable: _fabExpandedNotifier,
-        builder: (context, isExpanded, child) {
-          return FloatingActionButton.extended(
-            isExtended: isExpanded,
-            onPressed: openContainer,
-            label: '添加曲目'.asText(),
-            icon: const Icon(Icons.add),
-          );
-        },
-      );
-    }
+  bool _calcDisplayCardExistance(WidgetRef ref, List<String> ids) {
+    if (ids.isEmpty) return false;
+    final firstId = ids.first;
 
+    final project = ref.watch(projectDetailProvider(firstId)).value;
+    if (project == null) return false;
+
+    return project.summary != null;
+  }
+
+  void _pushRoute({required BuildContext context, required String id}) {
+    Navigator.of(context).pushNamed('/project', arguments: {'id': id});
+  }
+
+  Future<void> _deleteProject({
+    required WidgetRef ref,
+    required BuildContext context,
+    required String id,
+  }) async {
+    final action = ref.read(projectListProvider.notifier).dismiss(id);
+    if (action == null) return;
+
+    final controller = context.showSnackBar(
+      SnackBar(
+        content: '已删除 ${action.value.metadata.title}'.asText(),
+        persist: false,
+        action: SnackBarAction(label: '撤销', onPressed: action.undo),
+      ),
+    );
+
+    final reason = await controller.closed;
+    if (reason != SnackBarClosedReason.action) {
+      await action.commit();
+    }
+  }
+}
+
+class _FAB extends StatelessWidget {
+  const _FAB({required this.isExpanded, required this.onProjectCreated});
+
+  final bool isExpanded;
+  final ValueSetter<String> onProjectCreated;
+
+  @override
+  Widget build(BuildContext context) {
     return OpenContainer<Project?>(
       openBuilder: (context, _) => const NewDialog(),
       onClosed: (Project? project) {
         if (project == null) return;
-
-        unawaited(_loadProjects());
-        _pushRoute(project);
+        onProjectCreated(project.id);
       },
       closedShape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(16.0)), // M3 默认是 16.0
       ),
       closedColor: Colors.transparent,
-      openColor: Theme.of(context).scaffoldBackgroundColor,
-      closedBuilder: fabBuilder,
+      openColor: context.theme.scaffoldBackgroundColor,
+      closedBuilder: (context, openContainer) => FloatingActionButton.extended(
+        isExtended: isExpanded,
+        onPressed: openContainer,
+        label: '添加曲目'.asText(),
+        icon: const Icon(Icons.add),
+      ),
     );
   }
+}
 
-  Widget _buildSliverAppBar(BuildContext context) {
-    final theme = Theme.of(context);
+class _AppBar extends StatelessWidget {
+  const _AppBar({required this.displayCard});
+
+  final Widget? displayCard;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDisplayTile = displayCard != null;
+
     final topPadding = MediaQuery.paddingOf(context).top;
-    final hasDisplayTile = _couldDisplayTile;
     final expandedHeight = hasDisplayTile ? 330.0 : 150.0;
 
     return SliverAppBar(
@@ -172,8 +230,8 @@ class _StartPageState extends State<StartPage> {
                   opacity: backgroundOpacity,
                   child: Text(
                     '我的曲库',
-                    style: theme.textTheme.displayMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: context.textStyles.displayMedium?.copyWith(
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ).padding(horizontal: 16.0, top: 16.0),
                 ),
@@ -182,7 +240,7 @@ class _StartPageState extends State<StartPage> {
                     ignoring: backgroundOpacity < 0.05,
                     child: Opacity(
                       opacity: backgroundOpacity,
-                      child: _createDisplayTile(),
+                      child: displayCard,
                     ),
                   ),
               ].toColumn(crossAxisAlignment: .start),
@@ -192,54 +250,23 @@ class _StartPageState extends State<StartPage> {
       ),
     );
   }
+}
 
-  void _pushRoute(Project project) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => ProjectPage(project: project)),
-    );
-  }
+class _DisplayCard extends ConsumerWidget {
+  const _DisplayCard({
+    required this.projectId,
+    required this.onSelected,
+    required this.onDelete,
+  });
 
-  Future<void> _loadProjects() async {
-    final directory = Directory(Project.savedDir);
-    final entries = await directory
-        .list()
-        .map((entity) {
-          final infoPath = '${entity.path}${Platform.pathSeparator}info.json';
-          return File(infoPath);
-        })
-        .where((entity) => entity.existsSync())
-        .cast<File>()
-        .toList();
+  final String projectId;
+  final ValueSetter<Project> onSelected;
+  final ValueSetter<String> onDelete;
 
-    final projectsWithMtime = <MapEntry<Project, DateTime>>[];
-
-    for (final file in entries) {
-      try {
-        final content = await file.readAsString();
-        final json = jsonDecode(content) as Map<String, dynamic>;
-        final project = Project.fromJson(json);
-        final modifiedAt = await file.lastModified();
-        projectsWithMtime.add(MapEntry(project, modifiedAt));
-      } catch (_) {
-        // Ignore malformed files and continue loading valid projects.
-      }
-    }
-
-    projectsWithMtime.sort((a, b) => b.value.compareTo(a.value));
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _projects
-        ..clear()
-        ..addAll(projectsWithMtime.map((entry) => entry.key));
-    });
-  }
-
-  Widget _createDisplayTile() {
-    final project = _projects.first;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final project = ref.watch(projectDetailProvider(projectId)).value;
+    if (project == null) return const SizedBox.shrink();
 
     final coverFile = File(project.path.cover);
     final metadata = project.metadata;
@@ -248,7 +275,6 @@ class _StartPageState extends State<StartPage> {
       metadata.album,
     ].whereType<String>().join(' - ');
 
-    final textStyles = Theme.of(context).textTheme;
     final content = Card(
       margin: EdgeInsets.all(16.0),
       clipBehavior: .hardEdge,
@@ -261,7 +287,11 @@ class _StartPageState extends State<StartPage> {
               Icon(Icons.music_note_rounded, size: 56.0).center(),
         ).constrained(width: 240.0),
         [
-              Text(metadata.title, style: textStyles.titleLarge, maxLines: 2),
+              Text(
+                metadata.title,
+                style: context.textStyles.titleLarge,
+                maxLines: 2,
+              ),
               if (subtitle.isNotEmpty)
                 Text(subtitle, maxLines: 3, overflow: .ellipsis),
               Text(
@@ -271,7 +301,7 @@ class _StartPageState extends State<StartPage> {
               ).padding(top: 8.0),
               const Spacer(),
               FilledButton.tonal(
-                onPressed: () => _pushRoute(project),
+                onPressed: () => onSelected(project),
                 child: '继续'.asText(),
               ),
             ]
@@ -283,7 +313,7 @@ class _StartPageState extends State<StartPage> {
 
     final themeWrap = FutureBuilder(
       future: ColorScheme.fromImageProvider(provider: FileImage(coverFile)),
-      initialData: Theme.of(context).colorScheme,
+      initialData: context.colors,
       builder: (context, snapshot) => Theme(
         data: Theme.of(context).copyWith(colorScheme: snapshot.data),
         child: content,
@@ -294,46 +324,17 @@ class _StartPageState extends State<StartPage> {
       onSecondaryTapDown: (details) =>
           context.showPopupMenu(details.globalPosition, [
             PopupMenuItem(
-              onTap: () async {
-                await project.generateSummary();
-                if (mounted) setState(() {});
-              },
+              onTap: ref
+                  .read(projectDetailProvider(projectId).notifier)
+                  .generateSummary,
               child: '重新生成副标题'.asText(),
             ),
             PopupMenuItem(
-              onTap: () => _deleteProject(project),
+              onTap: () => onDelete(projectId),
               child: '删除'.asText(),
             ),
           ]),
       child: themeWrap,
     );
-  }
-
-  bool get _couldDisplayTile => _projects.firstOrNull?.summary != null;
-
-  Future<void> _deleteProject(Project project) async {
-    final index = _projects.indexWhere((p) => p.id == project.id);
-    setState(() {
-      _projects.removeAt(index);
-    });
-
-    final controller = context.showSnackBar(
-      SnackBar(
-        content: '已删除 ${project.metadata.title}'.asText(),
-        persist: false,
-        action: SnackBarAction(
-          label: '撤销',
-          onPressed: () => setState(() {
-            _projects.insert(index, project);
-          }),
-        ),
-      ),
-    );
-
-    final reason = await controller.closed;
-    if (reason != SnackBarClosedReason.action) {
-      await MvsepSeparationService.i.deleteCacheByAudioPath(project.path.audio);
-      await project.delete();
-    }
   }
 }

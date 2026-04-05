@@ -3,7 +3,9 @@ import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 
-import '../utils/utils.dart';
+import '/preferences/preferences.dart';
+import '/utils/utils.dart';
+
 import 'acoustid_service.dart';
 import 'musicbrainz_service.dart';
 

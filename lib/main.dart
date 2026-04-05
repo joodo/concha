@@ -1,14 +1,12 @@
-import 'package:concha/pages/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'models/models.dart';
-import 'utils/preferences.dart';
+import '/pages/app.dart';
+import '/preferences/preferences.dart';
+import '/projects/models.dart';
 
 Future<void> main() async {
-  Provider.debugCheckInvalidValueType = null;
-
   WidgetsFlutterBinding.ensureInitialized();
 
   final soLoud = SoLoud.instance;
@@ -21,5 +19,5 @@ Future<void> main() async {
 
   await Project.initSavedDir();
 
-  runApp(const ConchaApp());
+  runApp(const ProviderScope(child: ConchaApp()));
 }

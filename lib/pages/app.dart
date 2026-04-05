@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
+import 'project/project_page.dart';
 import 'start/start_page.dart';
 
 class ConchaApp extends StatefulWidget {
@@ -49,7 +50,11 @@ class _ConchaAppState extends State<ConchaApp> {
           },
         ),
       ),
-      home: const StartPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => StartPage(),
+        '/project': (context) => ProjectPage(),
+      },
     );
   }
 }

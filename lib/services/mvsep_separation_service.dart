@@ -8,8 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../preferences/preferences.dart';
 import '../utils/http.dart';
-import '../utils/preferences.dart';
 
 sealed class MvsepTaskEvent {
   const MvsepTaskEvent();

@@ -1,25 +1,28 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '/models/models.dart';
+import '/projects/riverpod.dart';
 import '/utils/utils.dart';
 
-class ProjectGridTile extends StatelessWidget {
+class ProjectGridTile extends ConsumerWidget {
   const ProjectGridTile({
-    required this.project,
+    required this.projectId,
     this.onSelect,
     super.key,
     this.onDelete,
   });
 
-  final Project project;
-  final VoidCallback? onSelect;
-  final VoidCallback? onDelete;
+  final String projectId;
+  final VoidCallback? onDelete, onSelect;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final project = ref.watch(projectDetailProvider(projectId)).value;
+    if (project == null) return const SizedBox.shrink();
+
     final data = project.metadata;
     final coverFile = File(project.path.cover);
 

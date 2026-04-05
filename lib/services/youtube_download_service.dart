@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
+import '/preferences/preferences.dart';
+
 import '../utils/utils.dart';
 
 typedef YoutubeDownloadLogHandler = void Function(String line);

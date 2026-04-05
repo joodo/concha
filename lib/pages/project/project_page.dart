@@ -2,103 +2,150 @@ import 'dart:io';
 
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '/models/models.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
 import '/widgets/setting_button.dart';
-import 'business.dart';
-import 'project_lyric_section.dart';
-import 'providers.dart';
+
 import 'actions.dart';
+import 'project_lyric_section.dart';
 import 'project_toolbar.dart';
+import 'riverpod.dart';
 
-class ProjectPage extends StatelessWidget {
-  const ProjectPage({required this.project, super.key});
-
-  final Project project;
+class ProjectPage extends HookConsumerWidget {
+  const ProjectPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final coverFile = File(project.path.cover);
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Create project summary
+    useEffect(() {
+      runAfterBuild(() => ref.projectNotifier!.generateSummaryIfAbsent());
+      return null;
+    }, []);
+
+    // Seprate audio
+    ref.listen(sepAudioEventProvider(ref.projectId!), (previous, next) async {
+      if (next.hasError) {
+        debugPrint('Failed to load sep audio: ${next.error}');
+      }
+      if (!next.hasValue) return;
+
+      final event = next.value!;
+      if (event is MvsepCompletedEvent) {
+        final playController = await ref.read(
+          playControllerProvider(ref.projectId!).future,
+        );
+        await playController.setSeparatedAudio(
+          event.vocalPath,
+          event.instruPath,
+        );
+        await playController.setSeparateMode(true);
+      }
+    });
+
+    late final PlayController playController;
+    switch (ref.watch(playControllerProvider(ref.projectId!))) {
+      case AsyncLoading<PlayController>():
+        return CircularProgressIndicator().center();
+      case AsyncError<PlayController>(:final error):
+        return Text(
+          error.toString(),
+          style: context.textStyles.titleMedium,
+        ).center();
+      case AsyncData<PlayController>(:final value):
+        playController = value;
+    }
+
+    final bgSection = Consumer(
+      builder: (context, ref, child) {
+        final coverPath =
+            ref.watch(
+              ref.projectProvider!.select((p) => p.value?.path.cover),
+            ) ??
+            '';
+        final coverFile = File(coverPath);
+        return FutureBuilder(
+          future: coverFile.exists(),
+          builder: (context, snapshot) => snapshot.data == true
+              ? Image.file(coverFile, fit: .cover)
+              : const SizedBox.shrink(),
+        );
+      },
+    );
     final lyricSection = [
-      FutureBuilder(
-        future: coverFile.exists(),
-        builder: (context, snapshot) => snapshot.data == true
-            ? Image.file(coverFile, fit: .cover)
-            : const SizedBox.shrink(),
-      ),
-      ProjectLyricSection()
-          .padding(top: kToolbarHeight)
+      bgSection,
+      SafeArea(child: ProjectLyricSection())
           .backgroundBlur(10.0)
           .backgroundColor(context.colors.surfaceContainerLow.withAlpha(200)),
     ].toStack(fit: .expand);
 
     final bodyContent = [
       lyricSection.expanded(),
-      Builder(
-            builder: (context) => Waveform(
-              playController: context.read<PlayController>(),
-              waveformController: context.read<WavefromController>(),
-            ),
+      Waveform(
+            playController: playController,
+            waveformController: ref.watch(waveformControllerProvider),
           )
           .backgroundColor(context.colors.surfaceContainerLow)
           .padding(top: 12.0)
           .constrained(height: 200.0),
     ].toColumn();
 
+    final appBar = AppBar(
+      title: Consumer(
+        builder: (BuildContext context, WidgetRef ref, Widget? child) {
+          final title =
+              ref.watch(
+                ref.projectProvider!.select(
+                  (p) => p.value?.metadata.displayTitle,
+                ),
+              ) ??
+              '';
+          return title.asText();
+        },
+      ),
+      centerTitle: false,
+      actions: [const _HelpButton(), const SettingButton()],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+    );
+
     final scaffoldWrap = Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: _title.asText(),
-        centerTitle: false,
-        actions: [const _HelpButton(), const SettingButton()],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: appBar,
       bottomNavigationBar: BottomAppBar(
         padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 0),
-        child: ProjectToolbar(),
+        child: ProjectToolbar(playController: playController),
       ),
       body: bodyContent,
     );
 
-    final loadWrap = Consumer<InitStatus?>(
-      builder: (context, status, child) => status == null
-          ? CircularProgressIndicator().center()
-          : status is InitFailed
-          ? Text(
-              status.message,
-              style: Theme.of(context).textTheme.titleMedium,
-            ).center()
-          : scaffoldWrap,
+    final themeBuilder = Consumer(
+      builder: (context, ref, child) {
+        final coverPath =
+            ref.watch(
+              ref.projectProvider!.select((p) => p.value?.path.cover),
+            ) ??
+            '';
+        return FutureBuilder(
+          future: ColorScheme.fromImageProvider(
+            provider: FileImage(File(coverPath)),
+          ),
+          initialData: context.colors,
+          builder: (context, snapshot) => Theme(
+            data: context.theme.copyWith(colorScheme: snapshot.data),
+            child: child!,
+          ),
+        );
+      },
+      child: scaffoldWrap,
     );
 
-    final businessWrap = loadWrap
-        .projectBusiness()
-        .projectActions()
-        .projectProviders(project: project);
-
-    return FutureBuilder(
-      future: ColorScheme.fromImageProvider(
-        provider: FileImage(File(project.path.cover)),
-      ),
-      initialData: context.colors,
-      builder: (context, snapshot) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: snapshot.data),
-        child: businessWrap,
-      ),
-    );
-  }
-
-  String get _title {
-    final data = project.metadata;
-    final title = data.title;
-    final suffix = data.artist == null ? '' : ' - ${data.artist}';
-    return '$title$suffix';
+    return ProjectActions(child: themeBuilder);
   }
 }
 

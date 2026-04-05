@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '/preferences/preferences.dart';
+
 import '../utils/http.dart' as app_http;
-import '../utils/preferences.dart';
 
 class GeminiService {
   GeminiService._internal();

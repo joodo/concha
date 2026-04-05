@@ -1,26 +1,23 @@
-import 'dart:convert';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../preferences/preferences.dart';
 import '../utils/http.dart' as app_http;
-import '../utils/preferences.dart';
 
 class GeminiTtsService {
   static const int _maxCacheEntries = 10;
   static final LinkedHashMap<String, Uint8List> _voiceCache =
       LinkedHashMap<String, Uint8List>();
 
-  const GeminiTtsService({
-    this.modelName = 'gemini-2.5-flash-preview-tts',
-    this.voiceName = 'Kore',
-    this.languageCode,
-  });
+  static const String modelName = 'gemini-2.5-flash-preview-tts';
+  static const String voiceName = 'Kora';
+  static const String? languageCode = null;
 
-  final String modelName;
-  final String voiceName;
-  final String? languageCode;
+  const GeminiTtsService._internal();
+  static final i = GeminiTtsService._internal();
 
   Future<Uint8List> getVoice(String text) async {
     final normalizedText = text.trim();

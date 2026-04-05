@@ -1,72 +1,310 @@
 import 'dart:io';
 
-import 'package:concha/utils/utils.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import 'actions.dart';
-import 'providers.dart';
-import '../../models/models.dart';
-import '../../services/lrclib_service.dart';
-import '../../services/gemini_service.dart';
-import '../../services/play_controller.dart';
-import '../../widgets/popup_widget.dart';
+import '/projects/projects.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
+import '/widgets/popup_widget.dart';
 
-class ProjectLyricSection extends StatefulWidget {
+import 'actions.dart';
+import 'riverpod.dart' hide LyricController;
+
+class ProjectLyricSection extends HookConsumerWidget {
   const ProjectLyricSection({super.key});
 
   @override
-  State<ProjectLyricSection> createState() => _ProjectLyricSectionState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSearchingNotifier = useValueNotifier<bool>(false);
+
+    final controller = ref.watch(lyricControllerProvider(ref.projectId!)).value;
+    if (controller == null) return const SizedBox.shrink();
+
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        controller.lyricNotifier,
+        isSearchingNotifier,
+      ]),
+      builder: (context, child) {
+        final hasLyric = controller.lyricNotifier.value != null;
+        final isSearching = isSearchingNotifier.value;
+        return hasLyric || isSearching
+            ? _Content(isSearchingNotifier: isSearchingNotifier)
+            : _EmptyContent(
+                onLocalPathSelected: (lyricPath) async {
+                  final lrc = await File(lyricPath).readAsString();
+
+                  controller.loadLyric(lrc);
+
+                  _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
+                },
+                onSearch: () => isSearchingNotifier.value = true,
+              );
+      },
+    );
+  }
 }
 
-class _ProjectLyricSectionState extends State<ProjectLyricSection> {
-  late final _playController = context.read<PlayController>();
-  late final _lyricController = context.read<LyricController>();
-  late final _project = context.read<Project>();
-
-  String? _lrc, _tlrc;
-
-  String? _searchKeyword;
+class _Content extends ConsumerWidget {
+  const _Content({required this.isSearchingNotifier});
+  final ValueNotifier<bool> isSearchingNotifier;
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lyricController = ref.lyricController!;
 
-    _playController.positionNotifier.addListener(_updateLyricPosition);
-    _lyricController.setOnTapLineCallback((position) {
-      _playController.seekTo(position);
-      _playController.startPositionNotifier.value = position;
-      _lyricController.stopSelection();
-    });
-    _loadLyric();
+    return [
+      _buildLyricView(context, lyricController),
+      ValueListenableBuilder(
+        valueListenable: isSearchingNotifier,
+        builder: (context, isSearching, child) {
+          return _LyricToolbar(isSearching: isSearching);
+        },
+      ).positioned(top: 12.0, left: 12.0),
+      ValueListenableBuilder(
+        valueListenable: isSearchingNotifier,
+        builder: (context, isSearching, child) {
+          if (!isSearching) return const SizedBox.shrink();
+          return _SearchPanel(
+            onLyricSelected: lyricController.loadLyric,
+            onConfirm: (lrc) async {
+              if (lrc != null) {
+                _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
+              }
+              isSearchingNotifier.value = false;
+            },
+          ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0);
+        },
+      ),
+    ].toStack();
   }
+
+  Widget _buildLyricView(BuildContext context, LyricController controller) {
+    final lyricView = LyricView(
+      controller: controller,
+      style: LyricStyles.default1.copyWith(
+        textStyle: context.textStyles.displaySmall!.copyWith(
+          color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
+        activeStyle: context.textStyles.displayMedium!.copyWith(
+          shadows: [
+            Shadow(
+              blurRadius: 10,
+              color: context.colors.primaryContainer.withValues(alpha: 0.6),
+            ),
+          ],
+        ),
+        translationStyle: context.textStyles.titleMedium!.copyWith(
+          color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
+        activeHighlightColor: context.colors.primary,
+        translationActiveColor: context.colors.primary.withValues(alpha: 0.8),
+        selectedColor: context.colors.tertiary,
+        selectedTranslationColor: context.colors.tertiary.withValues(
+          alpha: 0.8,
+        ),
+      ),
+      width: double.infinity,
+      height: double.infinity,
+    );
+
+    return GestureDetector(
+      onSecondaryTapDown: (details) {
+        final total = controller.lyricText;
+        if (total == null) return;
+
+        final current = controller.currentText;
+
+        context.showPopupMenu(details.globalPosition, [
+          PopupMenuItem(
+            onTap: current == null
+                ? null
+                : () async {
+                    await current.copyToClipboard();
+                    if (context.mounted) {
+                      context.showSnackBarText('已复制当前歌词');
+                    }
+                  },
+            child: '复制当前歌词'.asText(),
+          ),
+          PopupMenuItem(
+            onTap: () async {
+              await total.copyToClipboard();
+              if (context.mounted) context.showSnackBarText('已复制全部歌词');
+            },
+            child: '复制全部歌词'.asText(),
+          ),
+        ]);
+      },
+      child: lyricView,
+    );
+  }
+}
+
+class _LyricToolbar extends ConsumerWidget {
+  const _LyricToolbar({required this.isSearching});
+
+  final bool isSearching;
 
   @override
-  void dispose() {
-    _playController.positionNotifier.removeListener(_updateLyricPosition);
-    super.dispose();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lyricController = ref.lyricController!;
+
+    return [
+      if (!isSearching)
+        _LoadingButton(
+          icon: Icon(Icons.translate),
+          tooltip: '翻译歌词',
+          onPressed: () async {
+            final lrc = lyricController.lyricText;
+            if (lrc == null) return;
+
+            final tlrc = await GeminiService.i.translate(lrc);
+
+            lyricController.loadLyric(lrc, translationLyric: tlrc);
+
+            await ref.projectNotifier!.updateLyric(tlrc, isTranslate: true);
+          },
+        ),
+      _OffsetButton(onChanged: (value) => lyricController.lyricOffset = value),
+      if (!isSearching)
+        Consumer(
+          builder: (context, ref, child) {
+            final readAloudPending = ref.watch(readAloudPendingProvider);
+            return _BusyButton(
+              icon: Icon(Icons.record_voice_over),
+              isBusy: readAloudPending,
+              tooltip: '朗读当前歌词',
+              onPressed: Actions.handler(
+                context,
+                ReadAloudCurrentLyricIntent(),
+              ),
+            );
+          },
+        ),
+      if (!isSearching)
+        IconButton.filledTonal(
+          onPressed: () => lyricController.lyricNotifier.value = null,
+          tooltip: '清除歌词',
+          icon: Icon(Icons.subtitles_off),
+        ),
+    ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
   }
+}
+
+class _SearchPanel extends HookConsumerWidget {
+  const _SearchPanel({required this.onLyricSelected, required this.onConfirm});
+
+  final ValueSetter<String> onLyricSelected;
+  final ValueSetter<String?> onConfirm;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final m = ref.project!.metadata;
+    final initKeyword = '${m.title} ${m.artist ?? ""}'.trim();
+    final textController = useTextEditingController(text: initKeyword);
+
+    final searchTask = useState<Future<List<LrcLibLyric>>?>(null);
+    void doSearch() {
+      searchTask.value = LrcLibService.i.search(textController.text);
+    }
+
+    final selected = useState<int?>(null);
+
+    useEffect(() {
+      doSearch();
+      return null;
+    }, []);
+
+    final snapshot = useFuture(searchTask.value);
+
+    final data = snapshot.data ?? [];
+    return [
+          SearchBar(
+            controller: textController,
+            onSubmitted: (value) => doSearch(),
+            trailing: [
+              snapshot.connectionState == .waiting
+                  ? const SizedBox.square(
+                      dimension: 16.0,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ).padding(right: 12.0)
+                  : IconButton(onPressed: doSearch, icon: Icon(Icons.search)),
+            ],
+          ),
+          Material(
+            color: Colors.transparent,
+            child: RadioGroup(
+              groupValue: selected.value,
+              onChanged: (value) {
+                selected.value = value;
+
+                if (value != null) {
+                  final lyric = data[value].syncedLyrics;
+                  onLyricSelected(lyric);
+                }
+              },
+              child: MediaQuery.removePadding(
+                // For parent Scaffold use extendBodyBehindAppBar: true
+                context: context,
+                removeTop: true,
+                child: ListView(
+                  padding: EdgeInsets.only(top: 8.0),
+                  children: data.indexed
+                      .map(
+                        (e) => RadioListTile(
+                          value: e.$1,
+                          title: Text(
+                            '[${e.$1}] ${e.$2.trackName} - ${e.$2.artistName}',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          ).expanded(),
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              onTap: () => onConfirm(
+                selected.value.mapOrNull((v) => data[v].syncedLyrics),
+              ),
+              title: Text(
+                selected.value == null ? '取消' : '确定',
+              ).textColor(context.colors.primary).center(),
+            ),
+          ),
+        ]
+        .toColumn()
+        .backgroundColor(context.colors.surfaceContainerHigh.withAlpha(220))
+        .clipRRect(all: 30.0);
+  }
+}
+
+class _EmptyContent extends StatelessWidget {
+  const _EmptyContent({
+    required this.onLocalPathSelected,
+    required this.onSearch,
+  });
+
+  final ValueSetter<String> onLocalPathSelected;
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
-    return _lrc == null ? _buildEmptyContent() : _buildContent();
-  }
-
-  Widget _buildEmptyContent() {
     return [
           _buildBigButton(
             onTap: _openLocalLyric,
             title: '打开本地',
             icon: Icons.folder_open,
           ),
-          _buildBigButton(
-            onTap: _searchLyric,
-            title: '在线搜索',
-            icon: Icons.search,
-          ),
+          _buildBigButton(onTap: onSearch, title: '在线搜索', icon: Icons.search),
         ]
         .toRow(mainAxisSize: .min, separator: const SizedBox(width: 32.0))
         .center();
@@ -77,154 +315,37 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     required String title,
     required IconData icon,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Card(
-      clipBehavior: .hardEdge,
-      color: colorScheme.primaryContainer,
-      child: InkWell(
-        onTap: onTap,
-        child:
-            [
-                  Icon(icon, size: 48.0, color: colorScheme.secondary),
-                  Text(title, style: Theme.of(context).textTheme.bodyLarge),
-                ]
-                .toColumn(
-                  mainAxisSize: .min,
-                  separator: const SizedBox(height: 8.0),
-                )
-                .padding(all: 16.0),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return [
-      _buildLyricView(),
-      _buildLyricToolbar().positioned(top: 12.0, left: 12.0),
-      if (_searchKeyword != null)
-        _SearchPanel(
-          initKeyword: _searchKeyword!,
-          onLyricSelected: _lyricController.loadLyric,
-          onConfirm: (lrc) async {
-            if (lrc != null) {
-              await File(_project.path.lyric).writeAsString(lrc);
-            }
-            setState(() {
-              _lrc = lrc;
-              _searchKeyword = null;
-            });
-          },
-        ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0),
-    ].toStack();
-  }
-
-  Widget _buildLyricView() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    final lyricView = LyricView(
-      controller: _lyricController,
-      style: LyricStyles.default1.copyWith(
-        textStyle: textTheme.displaySmall!.copyWith(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-        ),
-        activeStyle: textTheme.displayMedium!.copyWith(
-          shadows: [
-            Shadow(
-              blurRadius: 10,
-              color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
-        translationStyle: textTheme.titleMedium!.copyWith(
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-        ),
-        activeHighlightColor: colorScheme.primary,
-        translationActiveColor: colorScheme.primary.withValues(alpha: 0.8),
-        selectedColor: colorScheme.tertiary,
-        selectedTranslationColor: colorScheme.tertiary.withValues(alpha: 0.8),
-      ),
-      width: double.infinity,
-      height: double.infinity,
-    );
-
-    return GestureDetector(
-      onSecondaryTapDown: (details) {
-        final total = _lyricController.lyricText;
-        if (total == null) return;
-
-        final current = _lyricController.currentText;
-
-        context.showPopupMenu(details.globalPosition, [
-          PopupMenuItem(
-            onTap: current == null
-                ? null
-                : () async {
-                    await current.copyToClipboard();
-                    if (mounted) context.showSnackBarText('已复制当前歌词');
-                  },
-            child: '复制当前歌词'.asText(),
+    return Builder(
+      builder: (context) {
+        return Card(
+          clipBehavior: .hardEdge,
+          color: context.colors.primaryContainer,
+          child: InkWell(
+            onTap: onTap,
+            child:
+                [
+                      Icon(icon, size: 48.0, color: context.colors.secondary),
+                      Text(title, style: context.textStyles.bodyLarge),
+                    ]
+                    .toColumn(
+                      mainAxisSize: .min,
+                      separator: const SizedBox(height: 8.0),
+                    )
+                    .padding(all: 16.0),
           ),
-          PopupMenuItem(
-            onTap: () async {
-              await total.copyToClipboard();
-              if (mounted) context.showSnackBarText('已复制全部歌词');
-            },
-            child: '复制全部歌词'.asText(),
-          ),
-        ]);
+        );
       },
-      child: lyricView,
     );
-  }
-
-  Widget _buildLyricToolbar() {
-    final notSearchMode = _searchKeyword == null;
-    return [
-      if (notSearchMode)
-        _LoadingButton(
-          icon: Icon(Icons.translate),
-          tooltip: '翻译歌词',
-          onPressed: _createTranslate,
-        ),
-      _OffsetButton(),
-      if (notSearchMode)
-        ValueListenableBuilder(
-          valueListenable: context.read<ReadAloudPendingNotifier>(),
-          builder: (context, isPending, child) => _BusyButton(
-            icon: Icon(Icons.record_voice_over),
-            isBusy: isPending,
-            tooltip: '朗读当前歌词',
-            onPressed: Actions.handler(context, ReadAloudCurrentLyricIntent()),
-          ),
-        ),
-      if (notSearchMode)
-        IconButton.filledTonal(
-          onPressed: () {
-            setState(() {
-              _lrc = null;
-              _tlrc = null;
-            });
-          },
-          tooltip: '清除歌词',
-          icon: Icon(Icons.subtitles_off),
-        ),
-    ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
-  }
-
-  void _updateLyricPosition() {
-    _lyricController.setProgress(_playController.positionNotifier.value);
-  }
-
-  Future<void> _createTranslate() async {
-    _tlrc = await GeminiService.i.translate(_lrc!);
-
-    await File(_project.path.lyricT).writeAsString(_tlrc!);
-
-    _updateLyric();
   }
 
   Future<void> _openLocalLyric() async {
+    final lyricPath = await _getLyricPath();
+    if (lyricPath == null) return;
+
+    onLocalPathSelected(lyricPath);
+  }
+
+  Future<String?> _getLyricPath() async {
     const XTypeGroup audioTypeGroup = XTypeGroup(
       label: '歌词文件',
       extensions: <String>['lrc'],
@@ -234,49 +355,12 @@ class _ProjectLyricSectionState extends State<ProjectLyricSection> {
     final XFile? picked = await openFile(
       acceptedTypeGroups: const <XTypeGroup>[audioTypeGroup],
     );
-    if (picked == null) return;
 
-    _lrc = await File(picked.path).readAsString();
-    await File(_project.path.lyric).writeAsString(_lrc!);
-
-    setState(() {
-      _updateLyric();
-    });
-  }
-
-  void _searchLyric() {
-    setState(() {
-      _lrc = '';
-      final m = _project.metadata;
-      _searchKeyword = '${m.title} ${m.artist ?? ""}'.trim();
-    });
-  }
-
-  Future<void> _loadLyric() async {
-    final lrcFile = File(_project.path.lyric);
-    if (await lrcFile.exists()) {
-      _lrc = await lrcFile.readAsString();
-    }
-
-    final tlrcFile = File(_project.path.lyricT);
-    if (await tlrcFile.exists()) {
-      _tlrc = await tlrcFile.readAsString();
-    }
-
-    _lyricController.lyricOffset = _project.lyricOffset.inMilliseconds;
-
-    _updateLyric();
-    _updateLyricPosition();
-    setState(() {});
-  }
-
-  void _updateLyric() {
-    if (_lrc == null) return;
-    _lyricController.loadLyric(_lrc!, translationLyric: _tlrc);
+    return picked?.path;
   }
 }
 
-class _LoadingButton extends StatefulWidget {
+class _LoadingButton extends HookWidget {
   final Future<void> Function()? onPressed;
   final Widget icon;
   final String? tooltip;
@@ -284,33 +368,29 @@ class _LoadingButton extends StatefulWidget {
   const _LoadingButton({this.onPressed, required this.icon, this.tooltip});
 
   @override
-  State<_LoadingButton> createState() => _LoadingButtonState();
-}
-
-class _LoadingButtonState extends State<_LoadingButton> {
-  bool _isBusy = false;
-
-  @override
   Widget build(BuildContext context) {
-    return _BusyButton(
-      isBusy: _isBusy,
-      icon: widget.icon,
-      tooltip: widget.tooltip,
-      onPressed: () async {
-        setState(() {
-          _isBusy = true;
-        });
-        try {
-          await widget.onPressed?.call();
-        } catch (e) {
-          if (context.mounted) {
-            context.showSnackBarText('失败：$e');
-          }
-        } finally {
-          setState(() {
-            _isBusy = false;
-          });
-        }
+    final isBusyNotifier = useValueNotifier<bool>(false);
+
+    return ValueListenableBuilder(
+      valueListenable: isBusyNotifier,
+      builder: (context, isBusy, child) {
+        return _BusyButton(
+          isBusy: isBusy,
+          icon: icon,
+          tooltip: tooltip,
+          onPressed: () async {
+            isBusyNotifier.value = true;
+            try {
+              await onPressed?.call();
+            } catch (e) {
+              if (context.mounted) {
+                context.showSnackBarText('失败：$e');
+              }
+            } finally {
+              isBusyNotifier.value = false;
+            }
+          },
+        );
       },
     );
   }
@@ -344,43 +424,23 @@ class _BusyButton extends StatelessWidget {
   }
 }
 
-class _OffsetButton extends StatefulWidget {
-  const _OffsetButton();
+class _OffsetButton extends HookConsumerWidget {
+  const _OffsetButton({required this.onChanged});
+
+  final ValueSetter<int> onChanged;
 
   @override
-  State<_OffsetButton> createState() => _OffsetButtonState();
-}
-
-class _OffsetButtonState extends State<_OffsetButton> {
-  late final _controller = context.read<LyricController>();
-  late final _project = context.read<Project>();
-
-  bool _isOpen = false;
-
-  final _offsetNotifier = ValueNotifier<int>(0);
-
-  @override
-  void initState() {
-    super.initState();
-    _offsetNotifier.addListener(
-      () => _controller.lyricOffset = _offsetNotifier.value,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offsetNotifier = useValueNotifier<int>(
+      ref.project!.lyricOffset.inMilliseconds,
     );
-    _offsetNotifier.value = _project.lyricOffset.inMilliseconds;
-  }
+    final isOpen = useState<bool>(false);
 
-  @override
-  void dispose() {
-    _offsetNotifier.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final link = LayerLink();
     return PopupWidget(
-      showing: _isOpen,
+      showing: isOpen.value,
       popupBuilder: (context) => ValueListenableBuilder(
-        valueListenable: _offsetNotifier,
+        valueListenable: offsetNotifier,
         builder: (context, offset, child) {
           return [
                 Slider(
@@ -388,12 +448,14 @@ class _OffsetButtonState extends State<_OffsetButton> {
                   max: 10_000.0,
                   divisions: 200,
                   onChanged: (value) {
-                    _offsetNotifier.value = value.round();
+                    offsetNotifier.value = value.round();
+                    onChanged(offsetNotifier.value);
                   },
-                  onChangeEnd: (value) => _project.lyricOffset = Duration(
-                    milliseconds: value.round(),
+                  onChangeEnd: (value) => ref.projectNotifier!.updateAndSave(
+                    (old) =>
+                        old.copyWith(lyricOffset: value.round().milliseconds),
                   ),
-                  value: _offsetNotifier.value.toDouble(),
+                  value: offsetNotifier.value.toDouble(),
                 ),
                 Text(
                   '${offset / 1000} s',
@@ -406,7 +468,7 @@ class _OffsetButtonState extends State<_OffsetButton> {
       ),
       layoutBuilder: (context, popup) => GestureDetector(
         behavior: .opaque,
-        onTap: () => _setVisible(false),
+        onTap: () => isOpen.value = false,
         child: UnconstrainedBox(
           child: CompositedTransformFollower(
             link: link,
@@ -420,129 +482,19 @@ class _OffsetButtonState extends State<_OffsetButton> {
       child: CompositedTransformTarget(
         link: link,
         child: IconButton.filledTonal(
-          onPressed: () => _setVisible(true),
+          onPressed: () => isOpen.value = !isOpen.value,
           tooltip: '调整歌词延迟',
           icon: Icon(Icons.timer),
         ),
       ),
     );
   }
-
-  void _setVisible(bool visible) {
-    setState(() {
-      _isOpen = visible;
-    });
-  }
 }
 
-class _SearchPanel extends StatefulWidget {
-  final String initKeyword;
-  final ValueSetter<String> onLyricSelected;
-  final ValueSetter<String?> onConfirm;
-
-  const _SearchPanel({
-    required this.initKeyword,
-    required this.onLyricSelected,
-    required this.onConfirm,
-  });
-
-  @override
-  State<_SearchPanel> createState() => _SearchPanelState();
-}
-
-class _SearchPanelState extends State<_SearchPanel> {
-  final _textController = TextEditingController();
-  bool _isBusy = false;
-  List<LrcLibLyric> _data = [];
-
-  int? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _textController.text = widget.initKeyword;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _search();
-    });
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return [
-          SearchBar(
-            controller: _textController,
-            onSubmitted: (value) => _search(),
-            trailing: [
-              _isBusy
-                  ? const SizedBox.square(
-                      dimension: 16.0,
-                      child: CircularProgressIndicator(strokeWidth: 2.0),
-                    ).padding(right: 12.0)
-                  : IconButton(onPressed: _search, icon: Icon(Icons.search)),
-            ],
-          ),
-          Material(
-            color: Colors.transparent,
-            child: RadioGroup(
-              groupValue: _selected,
-              onChanged: (value) {
-                setState(() {
-                  _selected = value;
-                });
-
-                if (value != null) {
-                  final lyric = _data[value].syncedLyrics;
-                  widget.onLyricSelected(lyric);
-                }
-              },
-              child: ListView(
-                children: _data.indexed
-                    .map(
-                      (e) => RadioListTile(
-                        value: e.$1,
-                        title: Text(
-                          '[${e.$1}] ${e.$2.trackName} - ${e.$2.artistName}',
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-          ).expanded(),
-          Material(
-            color: Colors.transparent,
-            child: ListTile(
-              onTap: () => widget.onConfirm(
-                _selected == null ? null : _data[_selected!].syncedLyrics,
-              ),
-              title: Text(
-                _selected == null ? '取消' : '确定',
-              ).textColor(colors.primary).center(),
-            ),
-          ),
-        ]
-        .toColumn()
-        .backgroundColor(colors.surfaceContainerHigh.withAlpha(220))
-        .clipRRect(all: 30.0);
-  }
-
-  Future<void> _search() async {
-    setState(() {
-      _isBusy = true;
-    });
-
-    try {
-      _data = await LrcLibService().search(_textController.text);
-    } finally {
-      if (mounted) setState(() => _isBusy = false);
-    }
-  }
+Future<void> _setProjectLyricAndGenerateSummary(
+  ProjectDetail notifier,
+  String lrc,
+) async {
+  await notifier.updateLyric(lrc);
+  await notifier.generateSummary();
 }

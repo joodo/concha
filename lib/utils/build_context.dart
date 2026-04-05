@@ -17,5 +17,10 @@ extension BuildContextExtension on BuildContext {
     bool clear = true,
   }) => showSnackBar(SnackBar(content: text.asText()), clear: clear);
 
-  ColorScheme get colors => Theme.of(this).colorScheme;
+  ThemeData get theme => Theme.of(this);
+  TextTheme get textStyles => theme.textTheme;
+  ColorScheme get colors => theme.colorScheme;
+
+  Map get routeArguments =>
+      ModalRoute.of(this)?.settings.arguments as Map? ?? {};
 }

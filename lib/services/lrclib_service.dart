@@ -23,7 +23,8 @@ class LrcLibLyric {
 }
 
 class LrcLibService {
-  const LrcLibService();
+  const LrcLibService._internal();
+  static final i = LrcLibService._internal();
 
   Future<List<LrcLibLyric>> search(String keyword) async {
     final query = keyword.trim();

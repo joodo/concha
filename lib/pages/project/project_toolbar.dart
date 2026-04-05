@@ -1,72 +1,79 @@
-import 'package:concha/pages/project/providers.dart';
-import 'package:concha/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lyric/core/lyric_controller.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../../services/mvsep_separation_service.dart';
-import '../../services/play_controller.dart';
-import '../../widgets/popup_widget.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
+import '/widgets/popup_widget.dart';
+
 import 'actions.dart';
 import 'expansible_button.dart';
+import 'riverpod.dart';
 
 class ProjectToolbar extends StatelessWidget {
-  const ProjectToolbar({super.key});
+  const ProjectToolbar({super.key, required this.playController});
+
+  final PlayController playController;
 
   @override
   Widget build(BuildContext context) {
-    final playController = context.read<PlayController>();
-    final loopNotifier = context.read<LoopNotifier>();
-    final attachNotifier = context.read<AttachToLyricNotifier>();
-    final lyricController = context.read<LyricController>();
-
-    final toggleButton = ListenableBuilder(
-      listenable: Listenable.merge([
-        playController.isPlayNotifier,
-        loopNotifier,
-      ]),
-      builder: (context, child) => IconButton.filled(
-        onPressed: Actions.handler(context, const TogglePlayIntent()),
-        icon: Icon(
-          playController.isPlayNotifier.value
-              ? Icons.pause_rounded
-              : loopNotifier.value
-              ? Icons.slow_motion_video
-              : Icons.play_arrow,
-          size: 32,
-        ),
-        tooltip: playController.isPlayNotifier.value
-            ? '暂停'
-            : loopNotifier.value
-            ? '从起点播放'
-            : '播放',
-      ),
+    final toggleButton = Consumer(
+      builder: (context, ref, child) {
+        final isLoop = ref.watch(loopProvider);
+        return ValueListenableBuilder(
+          valueListenable: playController.isPlayNotifier,
+          builder: (context, isPlaying, child) => IconButton.filled(
+            onPressed: Actions.handler(context, const TogglePlayIntent()),
+            icon: Icon(
+              playController.isPlayNotifier.value
+                  ? Icons.pause_rounded
+                  : isLoop
+                  ? Icons.slow_motion_video
+                  : Icons.play_arrow,
+              size: 32,
+            ),
+            tooltip: playController.isPlayNotifier.value
+                ? '暂停'
+                : isLoop
+                ? '从起点播放'
+                : '播放',
+          ),
+        );
+      },
     );
 
-    final loopButton = ValueListenableBuilder(
-      valueListenable: loopNotifier,
-      builder: (context, value, child) => IconButton.outlined(
-        onPressed: () => loopNotifier.value = !value,
-        isSelected: value,
-        tooltip: '从起点播放',
-        icon: const Icon(Icons.repeat),
-      ),
+    final loopButton = Consumer(
+      builder: (context, ref, child) {
+        return IconButton.outlined(
+          isSelected: ref.watch(loopProvider),
+          onPressed: ref.read(loopProvider.notifier).toggle,
+          tooltip: '从起点播放',
+          icon: const Icon(Icons.repeat),
+        );
+      },
     );
 
-    final attachButton = ListenableBuilder(
-      listenable: Listenable.merge([
-        attachNotifier,
-        lyricController.lyricNotifier,
-      ]),
-      builder: (context, child) => IconButton.outlined(
-        onPressed: lyricController.lyricNotifier.value == null
-            ? null
-            : () => attachNotifier.value = !attachNotifier.value,
-        tooltip: '位置吸附到歌词',
-        isSelected: attachNotifier.value,
-        icon: const Icon(Icons.my_location),
-      ),
+    final attachButton = Consumer(
+      builder: (context, ref, child) {
+        final lyricController = ref
+            .watch(lyricControllerProvider(ref.projectId!))
+            .value;
+        if (lyricController == null) return const SizedBox.shrink();
+
+        final attachNotifier = ref.watch(attachToLyricProvider);
+        return ValueListenableBuilder(
+          valueListenable: lyricController.lyricNotifier,
+          builder: (context, lyrics, child) => IconButton.outlined(
+            onPressed: lyrics == null
+                ? null
+                : ref.read(attachToLyricProvider.notifier).toggle,
+            tooltip: '位置吸附到歌词',
+            isSelected: attachNotifier,
+            icon: const Icon(Icons.my_location),
+          ),
+        );
+      },
     );
 
     final stopButton = IconButton(
@@ -148,11 +155,11 @@ class ProjectToolbar extends StatelessWidget {
       stopButton,
       8.0.asWidth(),
       tunings.flexible(),
-      _createDurationLabel(playController: playController),
+      _createDurationLabel(),
     ].toRow(separator: 8.0.asWidth());
   }
 
-  Widget _createDurationLabel({required PlayController playController}) {
+  Widget _createDurationLabel() {
     String formatDuration(Duration duration) {
       final minutes = duration.inMinutes
           .remainder(60)
@@ -181,37 +188,28 @@ class ProjectToolbar extends StatelessWidget {
   }
 }
 
-class _MixTableButton extends StatefulWidget {
+class _MixTableButton extends HookWidget {
   const _MixTableButton({required this.playController});
 
   final PlayController playController;
 
   @override
-  State<_MixTableButton> createState() => _MixTableButtonState();
-}
-
-class _MixTableButtonState extends State<_MixTableButton> {
-  bool _isShowing = false;
-
-  @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final isShowing = useState(false);
 
     final link = LayerLink();
     return PopupWidget(
-      showing: _isShowing,
+      showing: isShowing.value,
       popupBuilder: (context) => Material(
-        color: colors.surfaceContainer,
+        color: context.colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12.0),
-        child: Consumer<Stream<MvsepTaskEvent>?>(
+        child: Consumer(
           builder: _popupContentBuilder,
-        ).constrained(width: 240.0, height: 160.0),
+        ).constrained(width: 240.0, height: 160.0).padding(vertical: 12.0),
       ),
       layoutBuilder: (context, popup) => GestureDetector(
         behavior: .opaque,
-        onTap: () => setState(() {
-          _isShowing = false;
-        }),
+        onTap: () => isShowing.value = false,
         child: UnconstrainedBox(
           child: CompositedTransformFollower(
             link: link,
@@ -225,22 +223,20 @@ class _MixTableButtonState extends State<_MixTableButton> {
       child: CompositedTransformTarget(
         link: link,
         child: ValueListenableBuilder(
-          valueListenable: widget.playController.separateModeNotifier,
+          valueListenable: playController.separateModeNotifier,
           builder: (context, isSep, child) {
             return IconButton.outlined(
-              onPressed: () => setState(() {
-                _isShowing = true;
-              }),
+              onPressed: () => isShowing.value = true,
               isSelected: isSep,
               icon: Image.asset(
                 'assets/icons/mixing-table.png',
                 width: 20.0,
-                color: colors.onSurfaceVariant,
+                color: context.colors.onSurfaceVariant,
               ),
               selectedIcon: Image.asset(
                 'assets/icons/mixing-table-fill.png',
                 width: 20.0,
-                color: colors.onInverseSurface,
+                color: context.colors.onInverseSurface,
               ),
             );
           },
@@ -251,13 +247,14 @@ class _MixTableButtonState extends State<_MixTableButton> {
 
   Widget _popupContentBuilder(
     BuildContext context,
-    Stream<MvsepTaskEvent>? taskStream,
+    WidgetRef ref,
     Widget? child,
   ) {
-    final colors = Theme.of(context).colorScheme;
-    final separateModeNotifier = widget.playController.separateModeNotifier;
+    final event = ref.watch(sepAudioEventProvider(ref.projectId!)).value;
 
-    final isSepFileReady = taskStream == null;
+    final separateModeNotifier = playController.separateModeNotifier;
+
+    final isSepFileReady = event is MvsepCompletedEvent;
     return ValueListenableBuilder(
       valueListenable: separateModeNotifier,
       builder: (context, isSeparated, child) {
@@ -270,58 +267,53 @@ class _MixTableButtonState extends State<_MixTableButton> {
                 : null,
           ),
           isSepFileReady
-              ? [
-                  [
-                    Image.asset(
-                      'assets/icons/singing.png',
-                      width: 24.0,
-                      color: colors.onSurfaceVariant,
-                    ).padding(left: 12.0),
-                    ValueListenableBuilder(
-                      valueListenable:
-                          widget.playController.vocalVolumeNotifier,
-                      builder: (context, volume, child) => Slider(
-                        value: volume,
-                        onChanged: isSeparated
-                            ? widget.playController.setVocalVolume
-                            : null,
-                      ),
-                    ),
-                  ].toRow(mainAxisAlignment: .center),
-                  [
-                    Image.asset(
-                      'assets/icons/drum.png',
-                      width: 24.0,
-                      color: colors.onSurfaceVariant,
-                    ).padding(left: 12.0),
-                    ValueListenableBuilder(
-                      valueListenable:
-                          widget.playController.instruVolumeNotifier,
-                      builder: (context, volume, child) => Slider(
-                        value: volume,
-                        onChanged: isSeparated
-                            ? widget.playController.setInstruVolume
-                            : null,
-                      ),
-                    ),
-                  ].toRow(mainAxisAlignment: .center),
-                ].toColumn()
-              : [
-                      '处理中'.asText(),
-                      StreamBuilder(
-                        stream: taskStream,
-                        builder: (context, snapshot) =>
-                            _getMessage(snapshot.data).asText(),
-                      ),
-                    ]
-                    .toColumn(
-                      mainAxisAlignment: .center,
-                      separator: const SizedBox(height: 8.0),
-                    )
-                    .expanded(),
+              ? _buildContent(context, isSeparated: isSeparated)
+              : _buildProgressingContent(_getMessage(event)),
         ].toColumn(separator: const SizedBox(height: 16.0));
       },
     );
+  }
+
+  Widget _buildContent(BuildContext context, {required bool isSeparated}) {
+    return [
+      [
+        Image.asset(
+          'assets/icons/singing.png',
+          width: 24.0,
+          color: context.colors.onSurfaceVariant,
+        ).padding(left: 12.0),
+        ValueListenableBuilder(
+          valueListenable: playController.vocalVolumeNotifier,
+          builder: (context, volume, child) => Slider(
+            value: volume,
+            onChanged: isSeparated ? playController.setVocalVolume : null,
+          ),
+        ),
+      ].toRow(mainAxisAlignment: .center),
+      [
+        Image.asset(
+          'assets/icons/drum.png',
+          width: 24.0,
+          color: context.colors.onSurfaceVariant,
+        ).padding(left: 12.0),
+        ValueListenableBuilder(
+          valueListenable: playController.instruVolumeNotifier,
+          builder: (context, volume, child) => Slider(
+            value: volume,
+            onChanged: isSeparated ? playController.setInstruVolume : null,
+          ),
+        ),
+      ].toRow(mainAxisAlignment: .center),
+    ].toColumn();
+  }
+
+  Widget _buildProgressingContent(String message) {
+    return ['处理中'.asText(), message.asText()]
+        .toColumn(
+          mainAxisAlignment: .center,
+          separator: const SizedBox(height: 8.0),
+        )
+        .expanded();
   }
 
   String _getMessage(MvsepTaskEvent? event) {

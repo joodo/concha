@@ -26,7 +26,7 @@ class Waveform extends StatefulWidget {
   });
 
   final PlayController playController;
-  final WavefromController waveformController;
+  final WaveformController waveformController;
 
   @override
   State<Waveform> createState() => _WaveformState();
@@ -56,7 +56,7 @@ class _WaveformState extends State<Waveform> {
   late final WaveformChunkLoader _chunkLoader = WaveformChunkLoader(
     chunkSeconds: _chunkSeconds,
     tickPixelSpan: _tickPixelSpan,
-    minSecondsPerTick: WavefromController.minSecondsPerTick,
+    minSecondsPerTick: WaveformController.minSecondsPerTick,
   );
 
   double get _secondsPerTick => widget.waveformController.scale;

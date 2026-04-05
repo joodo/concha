@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '/services/services.dart';
+import '/tts/tts.dart';
 import '/utils/utils.dart';
 
 import 'riverpod.dart' hide LyricController;
@@ -223,11 +223,16 @@ class ProjectActions extends HookConsumerWidget {
                   final currentLyric = lyricController.currentText;
                   if (currentLyric == null) return;
 
-                  final voiceBytes = await GeminiTtsService.i.getVoice(
-                    currentLyric,
+                  final voiceBytes = await ref.read(
+                    textVoiceProvider(currentLyric).future,
                   );
                   await playController.insertInterlude(voiceBytes);
                   return null;
+                } catch (e) {
+                  if (context.mounted) {
+                    context.showSnackBarText('获取语音失败，请重试');
+                  }
+                  rethrow;
                 } finally {
                   busyNotifier.set(false);
                 }

@@ -33,7 +33,7 @@ final class ProjectListProvider
   ProjectList create() => ProjectList();
 }
 
-String _$projectListHash() => r'e9a4464e48602e0f88e5f0394fd21696dde0ce3b';
+String _$projectListHash() => r'72e4bf5212c9ead9e26a54b98a2a47460aa7370a';
 
 abstract class _$ProjectList extends $AsyncNotifier<List<String>> {
   FutureOr<List<String>> build();
@@ -94,7 +94,7 @@ final class ProjectDetailProvider
   }
 }
 
-String _$projectDetailHash() => r'd36e3951781d7383be5c698cdd19976d9056b879';
+String _$projectDetailHash() => r'431670e9de669506cb0c3dabbe60b8c692b4ea1c';
 
 final class ProjectDetailFamily extends $Family
     with

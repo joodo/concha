@@ -64,7 +64,7 @@ final class PlayControllerProvider
   }
 }
 
-String _$playControllerHash() => r'953f6b483b136844c955bc2aae092bfe803a51c4';
+String _$playControllerHash() => r'44b998866de4dabc090b9d923f6572356799a6d7';
 
 final class PlayControllerFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PlayController>, String> {
@@ -173,7 +173,7 @@ final class LyricControllerProvider
   }
 }
 
-String _$lyricControllerHash() => r'95125b9fbf723148ef475b9e5d84b77bf74b9cdd';
+String _$lyricControllerHash() => r'2c435ea63e6f8c7dc898856f2ffc8f04429106b2';
 
 final class LyricControllerFamily extends $Family
     with

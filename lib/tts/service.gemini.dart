@@ -1,53 +1,35 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
+import '/utils/http.dart' as app_http;
 
-import '../preferences/preferences.dart';
-import '../utils/http.dart' as app_http;
+import 'service.dart';
 
-class GeminiTtsService {
-  static const int _maxCacheEntries = 10;
-  static final LinkedHashMap<String, Uint8List> _voiceCache =
-      LinkedHashMap<String, Uint8List>();
-
+class GeminiTtsService extends TtsService {
   static const String modelName = 'gemini-2.5-flash-preview-tts';
-  static const String voiceName = 'Kora';
+  static const String voiceName = 'kora';
   static const String? languageCode = null;
+  static const Duration requestTimeLimit = Duration(seconds: 5);
 
-  const GeminiTtsService._internal();
-  static final i = GeminiTtsService._internal();
-
-  Future<Uint8List> getVoice(String text) async {
+  @override
+  Future<Uint8List> getVoice(
+    String text, {
+    required String prompt,
+    dynamic apiKey,
+    String? proxy,
+  }) async {
     final normalizedText = text.trim();
     if (normalizedText.isEmpty) {
       throw ArgumentError.value(text, 'text', '不能为空');
     }
 
-    final cached = _getCachedVoice(normalizedText);
-    if (cached != null) {
-      return cached;
+    if (apiKey is! String) {
+      throw ArgumentError.value(apiKey, 'geminiKey', '必须为 String');
     }
 
-    final apiKeyValue = Pref.i.get(PrefKeys.geminiKey.value);
-    final apiKey = apiKeyValue is String ? apiKeyValue.trim() : '';
-    if (apiKey.isEmpty) {
-      throw ArgumentError.value(apiKeyValue, 'geminiKey', '不能为空');
-    }
+    final inputText = '$prompt\n\n$normalizedText';
 
-    final promptValue = Pref.i.get(PrefKeys.speakPrompt.value);
-    final prompt = promptValue is String ? promptValue.trim() : '';
-    final inputText = prompt.isEmpty
-        ? normalizedText
-        : '$prompt\n\n$normalizedText';
-
-    final proxy = Pref.normalizedProxy;
-    final http.Client? proxyClient = proxy == null
-        ? null
-        : app_http.Http.createClient(proxy: proxy);
-    final client = proxyClient ?? http.Client();
-    final shouldCloseClient = proxyClient == null;
+    final client = app_http.Http.createClient(proxy: proxy);
 
     try {
       final uri = Uri.parse(
@@ -64,23 +46,25 @@ class GeminiTtsService {
         speechConfig['languageCode'] = normalizedLanguageCode;
       }
 
-      final response = await client.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': inputText},
+      final response = await client
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'contents': [
+                {
+                  'parts': [
+                    {'text': inputText},
+                  ],
+                },
               ],
-            },
-          ],
-          'generationConfig': {
-            'responseModalities': ['AUDIO'],
-            'speechConfig': speechConfig,
-          },
-        }),
-      );
+              'generationConfig': {
+                'responseModalities': ['AUDIO'],
+                'speechConfig': speechConfig,
+              },
+            }),
+          )
+          .timeout(requestTimeLimit);
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         final body = response.body.trim();
@@ -142,13 +126,9 @@ class GeminiTtsService {
 
       final audioBytes = base64Decode(audioBase64);
       final wavBytes = _toWavBytes(audioBytes, audioMimeType: audioMimeType);
-      _cacheVoice(normalizedText, wavBytes);
       return Uint8List.fromList(wavBytes);
     } finally {
-      proxyClient?.close();
-      if (shouldCloseClient) {
-        client.close();
-      }
+      client.close();
     }
   }
 
@@ -203,26 +183,5 @@ class GeminiTtsService {
     for (var i = 0; i < text.length; i++) {
       data.setUint8(offset + i, text.codeUnitAt(i));
     }
-  }
-
-  Uint8List? _getCachedVoice(String text) {
-    final cached = _voiceCache.remove(text);
-    if (cached == null) {
-      return null;
-    }
-
-    _voiceCache[text] = cached;
-    return Uint8List.fromList(cached);
-  }
-
-  void _cacheVoice(String text, Uint8List bytes) {
-    _voiceCache.remove(text);
-    _voiceCache[text] = Uint8List.fromList(bytes);
-
-    if (_voiceCache.length <= _maxCacheEntries) {
-      return;
-    }
-
-    _voiceCache.remove(_voiceCache.keys.first);
   }
 }

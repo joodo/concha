@@ -35,3 +35,7 @@ class Preference<T> extends _$Preference<T> {
     }
   }
 }
+
+extension PrefExtension on Ref {
+  T? getPref<T>(PrefKeys key) => read(preferenceProvider<T>(key.value));
+}

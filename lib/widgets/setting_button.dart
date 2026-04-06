@@ -93,7 +93,7 @@ class _SettingDialog extends StatelessWidget {
             ),
           ),
           _PrefTextField(
-            PrefKeys.translatePrompt.value,
+            PrefKeys.translateLang.value,
             decoration: const InputDecoration(
               hintText: '翻译语言',
               prefixText: '将歌词翻译成：',

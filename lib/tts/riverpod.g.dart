@@ -24,7 +24,7 @@ final class TextVoiceProvider
     required TextVoiceFamily super.from,
     required String super.argument,
   }) : super(
-         retry: noRetry,
+         retry: disableRetry,
          name: r'textVoiceProvider',
          isAutoDispose: false,
          dependencies: null,
@@ -63,13 +63,13 @@ final class TextVoiceProvider
   }
 }
 
-String _$textVoiceHash() => r'8a3339b2290d06f7bdafd5bc7238a265a0f644ff';
+String _$textVoiceHash() => r'927b1ecf49641a362f556c1b4fc18fb1a039ae10';
 
 final class TextVoiceFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Uint8List>, String> {
   TextVoiceFamily._()
     : super(
-        retry: noRetry,
+        retry: disableRetry,
         name: r'textVoiceProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

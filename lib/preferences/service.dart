@@ -5,7 +5,7 @@ enum PrefKeys {
   acoustKey('acoust_key'),
   autoFillMetadata('auto_fill_metadata'),
   geminiKey('gemini_key'),
-  translatePrompt('translate_prompt'),
+  translateLang('translate_prompt'),
   speakPrompt('read_aloud_prompt'),
   mvsepKey('mvsep_key'),
   playLoop('play_loop'),
@@ -26,9 +26,11 @@ class Pref {
       if (!i.containsKey(key.value)) i.setString(key.value, value);
     }
 
-    setIfEmpty(.translatePrompt, '中文');
+    setIfEmpty(.translateLang, '中文');
     setIfEmpty(.speakPrompt, '缓慢而清晰地大声读出');
   }
+
+  static T? get<T>(PrefKeys key) => i.get(key.value) as T?;
 
   static String? get normalizedProxy {
     try {

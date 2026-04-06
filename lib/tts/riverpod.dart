@@ -3,14 +3,13 @@ import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/preferences/preferences.dart';
+import '/utils/utils.dart';
 
 import 'service.gemini.dart';
 
 part 'riverpod.g.dart';
 
-Duration? noRetry(_, _) => null;
-
-@Riverpod(keepAlive: true, retry: noRetry)
+@Riverpod(keepAlive: true, retry: disableRetry)
 Future<Uint8List> textVoice(Ref ref, String text) async {
   final token = ref.getPref<String>(.geminiKey);
   final proxy = ref.getPref<String>(.proxy);

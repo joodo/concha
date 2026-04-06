@@ -7,9 +7,9 @@ import 'service.dart';
 
 class GeminiTtsService extends TtsService {
   static const String modelName = 'gemini-2.5-flash-preview-tts';
-  static const String voiceName = 'kora';
+  static const String voiceName = 'kore';
   static const String? languageCode = null;
-  static const Duration requestTimeLimit = Duration(seconds: 5);
+  static const Duration requestTimeLimit = Duration(seconds: 30);
 
   @override
   Future<Uint8List> getVoice(

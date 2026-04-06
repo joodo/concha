@@ -7,6 +7,8 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/llm/llm.dart';
+import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -50,7 +52,7 @@ class ProjectLyricSection extends HookConsumerWidget {
   }
 }
 
-class _Content extends ConsumerWidget {
+class _Content extends HookConsumerWidget {
   const _Content({required this.isSearchingNotifier});
   final ValueNotifier<bool> isSearchingNotifier;
 
@@ -58,14 +60,38 @@ class _Content extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lyricController = ref.lyricController!;
 
+    final wordByWordNotifier = useValueNotifier<String?>(null);
+    useEffect(() {
+      lyricController.lyricNotifier.addListener(wordByWordNotifier.clear);
+      return () => lyricController.lyricNotifier.removeListener(
+        wordByWordNotifier.clear,
+      );
+    }, []);
+
     return [
-      _buildLyricView(context, lyricController),
       ValueListenableBuilder(
         valueListenable: isSearchingNotifier,
-        builder: (context, isSearching, child) {
-          return _LyricToolbar(isSearching: isSearching);
-        },
+        builder: (context, isSearching, child) => _LyricView(
+          controller: lyricController,
+          onWordForWord: wordByWordNotifier.set,
+          isPreview: isSearching,
+        ),
+      ),
+      ValueListenableBuilder(
+        valueListenable: isSearchingNotifier,
+        builder: (context, isSearching, child) =>
+            _LyricToolbar(isPreview: isSearching),
       ).positioned(top: 12.0, left: 12.0),
+      ValueListenableBuilder(
+        valueListenable: wordByWordNotifier,
+        builder: (context, sentense, child) {
+          if (sentense == null) return const SizedBox.shrink();
+          return _WordForWordPanel(
+            sentense: sentense.trim(),
+            onClose: wordByWordNotifier.clear,
+          ).positioned(top: 16.0, bottom: 16.0, right: 16.0, width: 300.0);
+        },
+      ),
       ValueListenableBuilder(
         valueListenable: isSearchingNotifier,
         builder: (context, isSearching, child) {
@@ -83,8 +109,21 @@ class _Content extends ConsumerWidget {
       ),
     ].toStack();
   }
+}
 
-  Widget _buildLyricView(BuildContext context, LyricController controller) {
+class _LyricView extends StatelessWidget {
+  const _LyricView({
+    required this.controller,
+    required this.onWordForWord,
+    required this.isPreview,
+  });
+
+  final LyricController controller;
+  final bool isPreview;
+  final ValueSetter<String> onWordForWord;
+
+  @override
+  Widget build(BuildContext context) {
     final lyricView = LyricView(
       controller: controller,
       style: LyricStyles.default1.copyWith(
@@ -120,7 +159,13 @@ class _Content extends ConsumerWidget {
 
         final current = controller.currentText;
 
-        context.showPopupMenu(details.globalPosition, [
+        context.showPopupMenu(details.globalPosition, <PopupMenuEntry>[
+          if (!isPreview)
+            PopupMenuItem(
+              onTap: current == null ? null : () => onWordForWord(current),
+              child: '分词解释'.asText(),
+            ),
+          if (!isPreview) const PopupMenuDivider(),
           PopupMenuItem(
             onTap: current == null
                 ? null
@@ -147,24 +192,23 @@ class _Content extends ConsumerWidget {
 }
 
 class _LyricToolbar extends ConsumerWidget {
-  const _LyricToolbar({required this.isSearching});
+  const _LyricToolbar({required this.isPreview});
 
-  final bool isSearching;
+  final bool isPreview;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lyricController = ref.lyricController!;
 
     return [
-      if (!isSearching)
+      if (!isPreview)
         _LoadingButton(
           icon: Icon(Icons.translate),
           tooltip: '翻译歌词',
           onPressed: () async {
-            final lrc = lyricController.lyricText;
-            if (lrc == null) return;
+            final lrc = await File(ref.project!.path.lyric).readAsString();
 
-            final tlrc = await GeminiService.i.translate(lrc);
+            final tlrc = await createTranslatedLyric(lrc);
 
             lyricController.loadLyric(lrc, translationLyric: tlrc);
 
@@ -172,7 +216,7 @@ class _LyricToolbar extends ConsumerWidget {
           },
         ),
       _OffsetButton(onChanged: (value) => lyricController.lyricOffset = value),
-      if (!isSearching)
+      if (!isPreview)
         Consumer(
           builder: (context, ref, child) {
             final readAloudPending = ref.watch(readAloudPendingProvider);
@@ -182,14 +226,14 @@ class _LyricToolbar extends ConsumerWidget {
               tooltip: '朗读当前歌词',
               onPressed: Actions.handler(
                 context,
-                ReadAloudCurrentLyricIntent(),
+                ReadAloudIntent.currentLyric(),
               ),
             );
           },
         ),
-      if (!isSearching)
+      if (!isPreview)
         IconButton.filledTonal(
-          onPressed: () => lyricController.lyricNotifier.value = null,
+          onPressed: lyricController.lyricNotifier.clear,
           tooltip: '清除歌词',
           icon: Icon(Icons.subtitles_off),
         ),
@@ -284,6 +328,123 @@ class _SearchPanel extends HookConsumerWidget {
         .toColumn()
         .backgroundColor(context.colors.surfaceContainerHigh.withAlpha(220))
         .clipRRect(all: 30.0);
+  }
+}
+
+class _WordForWordPanel extends HookConsumerWidget {
+  const _WordForWordPanel({required this.sentense, required this.onClose});
+
+  final String sentense;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dataAsync = ref.watch(wordForWordProvider(sentense));
+
+    final header = [
+      Consumer(
+        builder: (context, ref, child) {
+          final readAloudPending = ref.watch(readAloudPendingProvider);
+          return IconButton.outlined(
+            icon: Icon(Icons.record_voice_over),
+            tooltip: '朗读歌词',
+            onPressed: readAloudPending
+                ? null
+                : Actions.handler(context, ReadAloudIntent(sentense)),
+          );
+        },
+      ),
+      IconButton.outlined(
+        icon: Icon(Icons.refresh),
+        tooltip: '重新解释',
+        onPressed:
+            dataAsync.hasValue &&
+                !dataAsync.isRefreshing &&
+                !dataAsync.isLoading
+            ? () => ref.refresh(wordForWordProvider(sentense))
+            : null,
+      ),
+      const Spacer(),
+      CloseButton(onPressed: onClose),
+    ].toRow(separator: 8.0.asWidth());
+
+    final content = [
+      header.padding(horizontal: 16.0, vertical: 12.0),
+      if (dataAsync.isRefreshing) LinearProgressIndicator(),
+      dataAsync
+          .when(
+            data: (data) => _buildContent(data),
+            error: (error, stackTrace) => error.toString().asText().center(),
+            loading: () => CircularProgressIndicator().center(),
+          )
+          .padding(horizontal: 16.0, bottom: 12.0, top: 4.0)
+          .expanded(),
+    ].toColumn();
+
+    return content.backgroundColor(context.colors.surface).clipRRect(all: 30.0);
+  }
+
+  Widget _buildContent(TranslationResult data) {
+    final context = useContext();
+
+    final words = ListView.separated(
+      padding: EdgeInsets.symmetric(vertical: 12.0),
+      itemCount: data.detail.length,
+      itemBuilder: (context, index) {
+        final detail = data.detail[index];
+        return [
+              [
+                detail.word
+                    .asText()
+                    .fontWeight(.bold)
+                    .textColor(context.colors.primary),
+                detail.translate.asText().textColor(context.colors.onSurface),
+              ].toWrap(spacing: 12.0),
+              if (detail.explanation?.isNotEmpty == true)
+                detail.explanation!
+                    .asText()
+                    .textStyle(context.textStyles.bodySmall!)
+                    .textColor(context.colors.onSurfaceVariant),
+            ]
+            .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
+            .padding(horizontal: 12);
+      },
+      separatorBuilder: (context, index) => Divider(),
+    ).backgroundColor(context.colors.surfaceContainerLow).clipRRect(all: 12.0);
+
+    return [
+      _buildSentenceBlock(
+        data.sourceLang,
+        sentense,
+        context.colors.surfaceContainerLow,
+      ),
+      _buildSentenceBlock(
+        Pref.get(.translateLang),
+        data.translate,
+        context.colors.primaryContainer,
+      ),
+      [
+            '逐词翻译'.asText().textStyle(context.textStyles.titleMedium!),
+            words.expanded(),
+          ]
+          .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
+          .expanded(),
+    ].toColumn(crossAxisAlignment: .stretch, separator: 16.0.asHeight());
+  }
+
+  Widget _buildSentenceBlock(String title, String content, Color color) {
+    final context = useContext();
+    return [
+          title
+              .asText()
+              .textStyle(context.textStyles.labelSmall!)
+              .textColor(context.colors.onSurfaceVariant),
+          content.asText(),
+        ]
+        .toColumn(crossAxisAlignment: .start, separator: 4.0.asHeight())
+        .padding(horizontal: 16.0, vertical: 12.0)
+        .backgroundColor(color)
+        .clipRRect(all: 12.0);
   }
 }
 

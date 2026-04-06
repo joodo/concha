@@ -42,8 +42,10 @@ class MarkStartPoint extends Intent {
   const MarkStartPoint();
 }
 
-class ReadAloudCurrentLyricIntent extends Intent {
-  const ReadAloudCurrentLyricIntent();
+class ReadAloudIntent extends Intent {
+  final String? text;
+  const ReadAloudIntent(String this.text);
+  const ReadAloudIntent.currentLyric() : text = null;
 }
 
 class ProjectActions extends HookConsumerWidget {
@@ -208,36 +210,38 @@ class ProjectActions extends HookConsumerWidget {
             return null;
           },
         ),
-        ReadAloudCurrentLyricIntent:
-            CallbackAction<ReadAloudCurrentLyricIntent>(
-              onInvoke: (intent) async {
-                final playController = ref.playController!;
+        ReadAloudIntent: CallbackAction<ReadAloudIntent>(
+          onInvoke: (intent) async {
+            final playController = ref.playController!;
+
+            final busyNotifier = ref.read(readAloudPendingProvider.notifier);
+            busyNotifier.set(true);
+
+            try {
+              String? text = intent.text;
+              if (text == null) {
                 final lyricController = ref.lyricController!;
+                final currentLyric = lyricController.currentText;
+                if (currentLyric == null) return;
 
-                final busyNotifier = ref.read(
-                  readAloudPendingProvider.notifier,
-                );
-                busyNotifier.set(true);
+                text = currentLyric;
+              }
 
-                try {
-                  final currentLyric = lyricController.currentText;
-                  if (currentLyric == null) return;
-
-                  final voiceBytes = await ref.read(
-                    textVoiceProvider(currentLyric).future,
-                  );
-                  await playController.insertInterlude(voiceBytes);
-                  return null;
-                } catch (e) {
-                  if (context.mounted) {
-                    context.showSnackBarText('获取语音失败，请重试');
-                  }
-                  rethrow;
-                } finally {
-                  busyNotifier.set(false);
-                }
-              },
-            ),
+              final voiceBytes = await ref.read(
+                textVoiceProvider(text.trim()).future,
+              );
+              await playController.insertInterlude(voiceBytes);
+              return null;
+            } catch (e) {
+              if (context.mounted) {
+                context.showSnackBarText('获取语音失败，请重试');
+              }
+              rethrow;
+            } finally {
+              busyNotifier.set(false);
+            }
+          },
+        ),
       },
       child: Shortcuts(
         shortcuts: {
@@ -274,7 +278,7 @@ class ProjectActions extends HookConsumerWidget {
           ),
           SingleActivator(LogicalKeyboardKey.keyZ): MarkStartPoint(),
           SingleActivator(LogicalKeyboardKey.keyS):
-              ReadAloudCurrentLyricIntent(),
+              ReadAloudIntent.currentLyric(),
         },
         child: FocusScope(
           node: scopeNode,

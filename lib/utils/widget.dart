@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 extension WidgetExtension on String {
-  Widget asText() => Text(this);
+  Text asText() => Text(this);
 }
 
 extension TooltipExtension on Widget {

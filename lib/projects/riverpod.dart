@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '/llm/llm.dart';
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -116,8 +117,7 @@ class ProjectDetail extends _$ProjectDetail {
     _isGeneratingSummary = true;
     try {
       final lrc = await file.readAsString();
-      final summary = await GeminiService.i.summary(lrc);
-      if (summary.isEmpty) return;
+      final summary = await createSummary(lrc);
 
       await updateAndSave((old) => old.copyWith(summary: summary));
     } finally {

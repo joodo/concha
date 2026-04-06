@@ -5,7 +5,7 @@ extension LyricControllerHelpersExtension on LyricController {
     final model = lyricNotifier.value;
     if (model == null || model.lines.isEmpty) return null;
 
-    return model.lines.join('\n');
+    return model.lines.map((e) => e.text).join('\n');
   }
 
   String? get currentText {

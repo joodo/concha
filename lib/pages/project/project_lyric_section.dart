@@ -331,7 +331,7 @@ class _SearchPanel extends HookConsumerWidget {
   }
 }
 
-class _WordForWordPanel extends HookConsumerWidget {
+class _WordForWordPanel extends ConsumerWidget {
   const _WordForWordPanel({required this.sentense, required this.onClose});
 
   final String sentense;
@@ -370,21 +370,19 @@ class _WordForWordPanel extends HookConsumerWidget {
       if (dataAsync.isRefreshing) LinearProgressIndicator(),
       dataAsync
           .when(
-            data: (data) => _buildContent(data),
+            data: (data) => _buildContent(context, data),
             error: (error, stackTrace) =>
                 SelectableText(error.toString()).center(),
             loading: () => CircularProgressIndicator().center(),
           )
           .padding(horizontal: 16.0, bottom: 12.0, top: 4.0)
           .expanded(),
-    ].toColumn();
+    ].toColumn(crossAxisAlignment: .stretch);
 
     return content.backgroundColor(context.colors.surface).clipRRect(all: 30.0);
   }
 
-  Widget _buildContent(TranslationResult data) {
-    final context = useContext();
-
+  Widget _buildContent(BuildContext context, TranslationResult data) {
     final words = ListView.separated(
       padding: EdgeInsets.symmetric(vertical: 12.0),
       itemCount: data.detail.length,
@@ -410,28 +408,40 @@ class _WordForWordPanel extends HookConsumerWidget {
       separatorBuilder: (context, index) => Divider(),
     ).backgroundColor(context.colors.surfaceContainerLow).clipRRect(all: 12.0);
 
-    return [
-      _buildSentenceBlock(
-        data.sourceLang,
-        sentense,
-        context.colors.surfaceContainerLow,
-      ),
-      _buildSentenceBlock(
-        Pref.get(.translateLang),
-        data.translate,
-        context.colors.primaryContainer,
-      ),
-      [
-            '逐词翻译'.asText().textStyle(context.textStyles.titleMedium!),
-            words.expanded(),
-          ]
-          .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
-          .expanded(),
-    ].toColumn(crossAxisAlignment: .stretch, separator: 16.0.asHeight());
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight < 300) return words;
+
+        return [
+          _buildSentenceBlock(
+            context,
+            data.sourceLang,
+            sentense,
+            context.colors.surfaceContainerLow,
+          ),
+          _buildSentenceBlock(
+            context,
+            Pref.get(.translateLang),
+            data.translate,
+            context.colors.primaryContainer,
+          ),
+          [
+                '逐词解释'.asText().textStyle(context.textStyles.titleMedium!),
+                words.expanded(),
+              ]
+              .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
+              .expanded(),
+        ].toColumn(crossAxisAlignment: .stretch, separator: 16.0.asHeight());
+      },
+    );
   }
 
-  Widget _buildSentenceBlock(String title, String content, Color color) {
-    final context = useContext();
+  Widget _buildSentenceBlock(
+    BuildContext context,
+    String title,
+    String content,
+    Color color,
+  ) {
     return [
           title
               .asText()

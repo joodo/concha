@@ -53,29 +53,27 @@ class TranslationDetail {
 @Riverpod(retry: disableRetry)
 @JsonPersist()
 class WordForWord extends _$WordForWord {
-  bool _fromCache = true;
+  bool _disableCache = false;
 
   @override
   Future<TranslationResult> build(String sentence) async {
-    if (_fromCache) {
-      await persist(
-        ref.watch(storageProvider.future),
-        options: const StorageOptions(
-          cacheTime: StorageCacheTime.unsafe_forever,
-        ),
-      ).future;
-      if (state.value != null) return state.value!;
-    }
+    await persist(
+      ref.watch(storageProvider.future),
+      options: const StorageOptions(cacheTime: StorageCacheTime.unsafe_forever),
+    ).future;
+
+    final cached = state.value;
+    if (cached != null && !_disableCache) return cached;
 
     final json = await createWordTranslation(sentence);
     final result = TranslationResult.fromJson(json);
-    _fromCache = true;
     return result;
   }
 
-  Future<void> refresh() {
-    _fromCache = false;
+  Future<void> refresh() async {
+    _disableCache = true;
     ref.invalidateSelf();
-    return future;
+    await future;
+    _disableCache = false;
   }
 }

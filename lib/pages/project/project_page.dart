@@ -108,7 +108,7 @@ class ProjectPage extends HookConsumerWidget {
         },
       ),
       centerTitle: false,
-      actions: [const _HelpButton(), const SettingButton()],
+      actions: [const _HelpButton(), const SettingButton(), 8.0.asWidth()],
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,

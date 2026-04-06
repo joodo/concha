@@ -322,9 +322,6 @@ class _MixTableButton extends HookWidget {
       case MvsepInitEvent():
         return '正在初始化服务';
 
-      case MvsepLocalQueuedEvent(:final localQueuePosition):
-        return '正在等待其他歌曲 (还有 $localQueuePosition 项';
-
       case MvsepLocalRunningEvent():
         return '正在执行';
 

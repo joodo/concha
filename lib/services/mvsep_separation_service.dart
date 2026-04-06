@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -8,8 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import '../preferences/preferences.dart';
-import '../utils/http.dart';
+import '/preferences/preferences.dart';
+import '/utils/utils.dart';
 
 sealed class MvsepTaskEvent {
   const MvsepTaskEvent();
@@ -17,20 +16,6 @@ sealed class MvsepTaskEvent {
 
 class MvsepInitEvent extends MvsepTaskEvent {
   const MvsepInitEvent();
-}
-
-class MvsepLocalQueuedEvent extends MvsepTaskEvent {
-  const MvsepLocalQueuedEvent({
-    required this.audioPath,
-    required this.localQueuePosition,
-    required this.localQueueSize,
-    required this.attachedToExistingTask,
-  });
-
-  final String audioPath;
-  final int localQueuePosition;
-  final int localQueueSize;
-  final bool attachedToExistingTask;
 }
 
 class MvsepLocalRunningEvent extends MvsepTaskEvent {
@@ -167,10 +152,8 @@ class MvsepSeparationService {
     return token;
   }
 
-  final Queue<_SeparationJob> _localQueue = Queue<_SeparationJob>();
   final Map<String, _SeparationJob> _activeByAudioPath =
       <String, _SeparationJob>{};
-  bool _isWorkerRunning = false;
   bool _isDisposed = false;
 
   final Map<String, _TaskRecord> _records = <String, _TaskRecord>{};
@@ -269,13 +252,12 @@ class MvsepSeparationService {
       final existingJob = _activeByAudioPath[audioPathKey];
       if (existingJob != null) {
         existingJob.listeners.add(listener);
-        _emitLocalPosition(existingJob);
         return;
       }
 
       final record =
           existingRecord ?? _TaskRecord.empty(audioPath: audioPathKey);
-      record.touch(status: _TaskRecordStatus.localQueued);
+      record.touch(status: .localRunning);
       _records[audioPathKey] = record;
       await _persistStore();
 
@@ -284,10 +266,7 @@ class MvsepSeparationService {
         listeners: <_JobListener>[listener],
       );
       _activeByAudioPath[audioPathKey] = job;
-      _localQueue.add(job);
-      _notifyQueuePositionChanged();
-
-      unawaited(_runWorker());
+      await _processJob(job);
     } catch (e) {
       _emitToController(
         controller,
@@ -305,21 +284,7 @@ class MvsepSeparationService {
     await _ensureStoreLoaded();
     final key = _normalizePath(audioPath);
 
-    final active = _activeByAudioPath.remove(key);
-    if (active != null) {
-      _localQueue.remove(active);
-      for (final listener in active.listeners) {
-        _emitToController(
-          listener.stream,
-          MvsepFailedEvent(
-            audioPath: key,
-            error: 'Task canceled due to cache deletion.',
-            phase: 'local_queue_cancelled',
-          ),
-        );
-        await listener.stream.close();
-      }
-    }
+    _activeByAudioPath.remove(key);
 
     final record = _records.remove(key);
     if (record != null) {
@@ -327,8 +292,6 @@ class MvsepSeparationService {
       await _deleteFileIfExists(record.instruCachePath);
       await _persistStore();
     }
-
-    _notifyQueuePositionChanged();
   }
 
   Future<void> dispose() async {
@@ -341,24 +304,6 @@ class MvsepSeparationService {
       }
     }
     _activeByAudioPath.clear();
-    _localQueue.clear();
-  }
-
-  Future<void> _runWorker() async {
-    if (_isWorkerRunning || _isDisposed) {
-      return;
-    }
-
-    _isWorkerRunning = true;
-    try {
-      while (_localQueue.isNotEmpty && !_isDisposed) {
-        final job = _localQueue.removeFirst();
-        _notifyQueuePositionChanged();
-        await _processJob(job);
-      }
-    } finally {
-      _isWorkerRunning = false;
-    }
   }
 
   Future<void> _processJob(_SeparationJob job) async {
@@ -368,7 +313,6 @@ class MvsepSeparationService {
 
     try {
       final token = _mvsepToken;
-      record.touch(status: _TaskRecordStatus.localRunning);
       await _persistStore();
       _emitToJob(
         job,
@@ -1235,45 +1179,6 @@ class MvsepSeparationService {
         status == 'cancelled';
   }
 
-  void _notifyQueuePositionChanged() {
-    final indexedQueue = _localQueue.toList(growable: false);
-    for (var i = 0; i < indexedQueue.length; i++) {
-      final job = indexedQueue[i];
-      for (final listener in job.listeners) {
-        _emitToController(
-          listener.stream,
-          MvsepLocalQueuedEvent(
-            audioPath: job.audioPath,
-            localQueuePosition: i + 1,
-            localQueueSize: indexedQueue.length,
-            attachedToExistingTask: false,
-          ),
-        );
-      }
-    }
-  }
-
-  void _emitLocalPosition(_SeparationJob job) {
-    final index = _localQueue.toList(growable: false).indexOf(job);
-    final inQueue = index >= 0;
-    final position = inQueue ? index + 1 : 0;
-
-    _emitToJob(
-      job,
-      inQueue
-          ? MvsepLocalQueuedEvent(
-              audioPath: job.audioPath,
-              localQueuePosition: position,
-              localQueueSize: _localQueue.length,
-              attachedToExistingTask: true,
-            )
-          : MvsepLocalRunningEvent(
-              audioPath: job.audioPath,
-              attachedToExistingTask: true,
-            ),
-    );
-  }
-
   int? _extractIntByKeys(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
       final value = data[key];
@@ -1485,7 +1390,6 @@ class _CachePaths {
 }
 
 enum _TaskRecordStatus {
-  localQueued,
   localRunning,
   remoteWaiting,
   remoteProcessing,
@@ -1511,7 +1415,7 @@ class _TaskRecord {
   factory _TaskRecord.empty({required String audioPath}) {
     return _TaskRecord(
       audioPath: audioPath,
-      status: _TaskRecordStatus.localQueued,
+      status: .localRunning,
       updatedAtMs: DateTime.now().millisecondsSinceEpoch,
     );
   }
@@ -1582,7 +1486,7 @@ class _TaskRecord {
   static _TaskRecordStatus _parseStatus(String? value) {
     return _TaskRecordStatus.values.firstWhere(
       (status) => status.name == value,
-      orElse: () => _TaskRecordStatus.localQueued,
+      orElse: () => .localRunning,
     );
   }
 }

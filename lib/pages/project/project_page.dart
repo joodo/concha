@@ -6,6 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/audio_sep/audio_sep.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';

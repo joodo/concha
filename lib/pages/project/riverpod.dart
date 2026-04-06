@@ -115,29 +115,6 @@ class LyricController extends _$LyricController {
 }
 
 @riverpod
-Stream<MvsepTaskEvent> sepAudioEvent(Ref ref, String id) async* {
-  final project = ref.read(projectDetailProvider(id)).value;
-  if (project == null) throw Exception('Project $id not exist');
-
-  final paths = project.path;
-  if (await File(paths.audioInstru).exists() &&
-      await File(paths.audioVocals).exists()) {
-    yield MvsepCompletedEvent(
-      audioPath: project.path.audio,
-      vocalPath: paths.audioVocals,
-      instruPath: paths.audioInstru,
-    );
-    return;
-  }
-
-  yield* MvsepSeparationService.i.separate(
-    audioPath: paths.audio,
-    saveVocalPath: paths.audioVocals,
-    saveInstruPath: paths.audioInstru,
-  );
-}
-
-@riverpod
 class ReadAloudPending extends _$ReadAloudPending {
   @override
   bool build() => false;

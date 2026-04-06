@@ -5,7 +5,7 @@ import '/utils/utils.dart';
 import 'service.dart';
 
 class GeminiService extends LlmService {
-  static const modelName = 'gemini-2.5-flash';
+  static const modelName = 'gemini-3-flash-preview';
 
   @override
   Future<String> generate(

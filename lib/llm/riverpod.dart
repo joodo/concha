@@ -1,6 +1,9 @@
+import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:riverpod_annotation/experimental/json_persist.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '/persistence/persistence.dart';
 import '/utils/utils.dart';
 
 import 'word_for_word.dart';
@@ -47,13 +50,32 @@ class TranslationDetail {
   Map<String, dynamic> toJson() => _$TranslationDetailToJson(this);
 }
 
-@Riverpod(keepAlive: true, retry: disableRetry)
-Future<TranslationResult> wordForWord(Ref ref, String sentence) async {
-  try {
+@Riverpod(retry: disableRetry)
+@JsonPersist()
+class WordForWord extends _$WordForWord {
+  bool _fromCache = true;
+
+  @override
+  Future<TranslationResult> build(String sentence) async {
+    if (_fromCache) {
+      await persist(
+        ref.watch(storageProvider.future),
+        options: const StorageOptions(
+          cacheTime: StorageCacheTime.unsafe_forever,
+        ),
+      ).future;
+      if (state.value != null) return state.value!;
+    }
+
     final json = await createWordTranslation(sentence);
-    return TranslationResult.fromJson(json);
-  } catch (e) {
-    Future.microtask(ref.invalidateSelf);
-    rethrow;
+    final result = TranslationResult.fromJson(json);
+    _fromCache = true;
+    return result;
+  }
+
+  Future<void> refresh() {
+    _fromCache = false;
+    ref.invalidateSelf();
+    return future;
   }
 }

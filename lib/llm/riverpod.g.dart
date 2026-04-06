@@ -45,26 +45,20 @@ Map<String, dynamic> _$TranslationDetailToJson(TranslationDetail instance) =>
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(wordForWord)
+@ProviderFor(WordForWord)
+@JsonPersist()
 final wordForWordProvider = WordForWordFamily._();
 
+@JsonPersist()
 final class WordForWordProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<TranslationResult>,
-          TranslationResult,
-          FutureOr<TranslationResult>
-        >
-    with
-        $FutureModifier<TranslationResult>,
-        $FutureProvider<TranslationResult> {
+    extends $AsyncNotifierProvider<WordForWord, TranslationResult> {
   WordForWordProvider._({
     required WordForWordFamily super.from,
     required String super.argument,
   }) : super(
          retry: disableRetry,
          name: r'wordForWordProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -81,15 +75,7 @@ final class WordForWordProvider
 
   @$internal
   @override
-  $FutureProviderElement<TranslationResult> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<TranslationResult> create(Ref ref) {
-    final argument = this.argument as String;
-    return wordForWord(ref, argument);
-  }
+  WordForWord create() => WordForWord();
 
   @override
   bool operator ==(Object other) {
@@ -102,22 +88,93 @@ final class WordForWordProvider
   }
 }
 
-String _$wordForWordHash() => r'055b99cbb7b20d005753d79a3724789c9c1c7a15';
+String _$wordForWordHash() => r'7d6f035b1cabe18818cd0cf4b753e09fa953f31c';
 
+@JsonPersist()
 final class WordForWordFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<TranslationResult>, String> {
+    with
+        $ClassFamilyOverride<
+          WordForWord,
+          AsyncValue<TranslationResult>,
+          TranslationResult,
+          FutureOr<TranslationResult>,
+          String
+        > {
   WordForWordFamily._()
     : super(
         retry: disableRetry,
         name: r'wordForWordProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: false,
+        isAutoDispose: true,
       );
 
+  @JsonPersist()
   WordForWordProvider call(String sentence) =>
       WordForWordProvider._(argument: sentence, from: this);
 
   @override
   String toString() => r'wordForWordProvider';
+}
+
+@JsonPersist()
+abstract class _$WordForWordBase extends $AsyncNotifier<TranslationResult> {
+  late final _$args = ref.$arg as String;
+  String get sentence => _$args;
+
+  FutureOr<TranslationResult> build(String sentence);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<TranslationResult>, TranslationResult>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<TranslationResult>, TranslationResult>,
+              AsyncValue<TranslationResult>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+// **************************************************************************
+// JsonGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+abstract class _$WordForWord extends _$WordForWordBase {
+  /// The default key used by [persist].
+  String get key {
+    late final args = sentence;
+    late final resolvedKey = 'WordForWord($args)';
+
+    return resolvedKey;
+  }
+
+  /// A variant of [persist], for JSON-specific encoding.
+  ///
+  /// You can override [key] to customize the key used for storage.
+  PersistResult persist(
+    FutureOr<Storage<String, String>> storage, {
+    String? key,
+    String Function(TranslationResult state)? encode,
+    TranslationResult Function(String encoded)? decode,
+    StorageOptions options = const StorageOptions(),
+  }) {
+    return NotifierPersistX(this).persist<String, String>(
+      storage,
+      key: key ?? this.key,
+      encode: encode ?? $jsonCodex.encode,
+      decode:
+          decode ??
+          (encoded) {
+            final e = $jsonCodex.decode(encoded);
+            return TranslationResult.fromJson(e as Map<String, Object?>);
+          },
+      options: options,
+    );
+  }
 }

@@ -9,17 +9,11 @@ part of 'riverpod.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(textVoice)
+@ProviderFor(TextVoice)
 final textVoiceProvider = TextVoiceFamily._();
 
 final class TextVoiceProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<Uint8List>,
-          Uint8List,
-          FutureOr<Uint8List>
-        >
-    with $FutureModifier<Uint8List>, $FutureProvider<Uint8List> {
+    extends $AsyncNotifierProvider<TextVoice, Uint8List> {
   TextVoiceProvider._({
     required TextVoiceFamily super.from,
     required String super.argument,
@@ -43,14 +37,7 @@ final class TextVoiceProvider
 
   @$internal
   @override
-  $FutureProviderElement<Uint8List> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<Uint8List> create(Ref ref) {
-    final argument = this.argument as String;
-    return textVoice(ref, argument);
-  }
+  TextVoice create() => TextVoice();
 
   @override
   bool operator ==(Object other) {
@@ -63,10 +50,17 @@ final class TextVoiceProvider
   }
 }
 
-String _$textVoiceHash() => r'927b1ecf49641a362f556c1b4fc18fb1a039ae10';
+String _$textVoiceHash() => r'9ceacd3760e36f4ff9b4d4de5c4b7c4246b22ae7';
 
 final class TextVoiceFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Uint8List>, String> {
+    with
+        $ClassFamilyOverride<
+          TextVoice,
+          AsyncValue<Uint8List>,
+          Uint8List,
+          FutureOr<Uint8List>,
+          String
+        > {
   TextVoiceFamily._()
     : super(
         retry: disableRetry,
@@ -81,4 +75,25 @@ final class TextVoiceFamily extends $Family
 
   @override
   String toString() => r'textVoiceProvider';
+}
+
+abstract class _$TextVoice extends $AsyncNotifier<Uint8List> {
+  late final _$args = ref.$arg as String;
+  String get text => _$args;
+
+  FutureOr<Uint8List> build(String text);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<Uint8List>, Uint8List>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<Uint8List>, Uint8List>,
+              AsyncValue<Uint8List>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
 }

@@ -357,11 +357,8 @@ class _WordForWordPanel extends HookConsumerWidget {
       IconButton.outlined(
         icon: Icon(Icons.refresh),
         tooltip: '重新解释',
-        onPressed:
-            dataAsync.hasValue &&
-                !dataAsync.isRefreshing &&
-                !dataAsync.isLoading
-            ? () => ref.refresh(wordForWordProvider(sentense))
+        onPressed: !dataAsync.isRefreshing && !dataAsync.isLoading
+            ? ref.read(wordForWordProvider(sentense).notifier).refresh
             : null,
       ),
       const Spacer(),
@@ -374,7 +371,8 @@ class _WordForWordPanel extends HookConsumerWidget {
       dataAsync
           .when(
             data: (data) => _buildContent(data),
-            error: (error, stackTrace) => error.toString().asText().center(),
+            error: (error, stackTrace) =>
+                SelectableText(error.toString()).center(),
             loading: () => CircularProgressIndicator().center(),
           )
           .padding(horizontal: 16.0, bottom: 12.0, top: 4.0)

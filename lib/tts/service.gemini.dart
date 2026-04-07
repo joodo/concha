@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import '/utils/http.dart' as app_http;
+import '/utils/utils.dart';
 
 import 'service.dart';
 
@@ -18,33 +18,16 @@ class GeminiTtsService extends TtsService {
     dynamic apiKey,
     String? proxy,
   }) async {
-    final normalizedText = text.trim();
-    if (normalizedText.isEmpty) {
-      throw ArgumentError.value(text, 'text', '不能为空');
-    }
-
     if (apiKey is! String) {
       throw ArgumentError.value(apiKey, 'geminiKey', '必须为 String');
     }
 
-    final inputText = '$prompt\n\n$normalizedText';
-
-    final client = app_http.Http.createClient(proxy: proxy);
+    final client = Http.createClient(proxy: proxy);
 
     try {
       final uri = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey',
       );
-
-      final speechConfig = <String, dynamic>{
-        'voiceConfig': {
-          'prebuiltVoiceConfig': {'voiceName': voiceName},
-        },
-      };
-      final normalizedLanguageCode = languageCode?.trim() ?? '';
-      if (normalizedLanguageCode.isNotEmpty) {
-        speechConfig['languageCode'] = normalizedLanguageCode;
-      }
 
       final response = await client
           .post(
@@ -54,13 +37,18 @@ class GeminiTtsService extends TtsService {
               'contents': [
                 {
                   'parts': [
-                    {'text': inputText},
+                    {'text': '$prompt:\n$text'},
                   ],
                 },
               ],
               'generationConfig': {
                 'responseModalities': ['AUDIO'],
-                'speechConfig': speechConfig,
+                'speechConfig': {
+                  'voiceConfig': {
+                    'prebuiltVoiceConfig': {'voiceName': voiceName},
+                  },
+                  if (languageCode != null) 'languageCode': languageCode,
+                },
               },
             }),
           )

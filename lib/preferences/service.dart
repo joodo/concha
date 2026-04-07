@@ -6,7 +6,6 @@ enum PrefKey {
   autoFillMetadata(defaultValue: true),
   geminiKey(),
   translateLang(defaultValue: '中文'),
-  speakPrompt(defaultValue: '缓慢而清晰地大声读出'),
   mvsepKey(),
   playLoop(defaultValue: false),
   attachToLyric(defaultValue: true);

@@ -12,10 +12,12 @@ import 'service.gemini.dart';
 
 part 'riverpod.g.dart';
 
-@Riverpod(keepAlive: true, retry: disableRetry)
+@Riverpod(retry: disableRetry)
 class TextVoice extends _$TextVoice {
+  static const _prompt = 'Read aloud slowly and clearly';
   @override
   Future<Uint8List> build(String text) async {
+    final link = ref.keepAlive();
     await persist(
       ref.watch(storageProvider.future),
       key: 'TextVoice($text)',
@@ -23,18 +25,24 @@ class TextVoice extends _$TextVoice {
       decode: (encoded) => base64Decode(encoded),
       options: const StorageOptions(cacheTime: StorageCacheTime.unsafe_forever),
     ).future;
-    if (state.value != null) return state.value!;
 
-    return await _fetch();
+    if (state.hasValue) {
+      link.close();
+      return state.requireValue;
+    }
+
+    final result = await _fetch();
+
+    link.close();
+    return result;
   }
 
   Future<Uint8List> _fetch() {
     final token = ref.getPref<String>(.geminiKey);
     final proxy = ref.getPref<String>(.proxy);
-    final prompt = ref.getPref<String>(.speakPrompt);
     return GeminiTtsService().getVoice(
       text,
-      prompt: prompt!,
+      prompt: _prompt,
       proxy: proxy,
       apiKey: token,
     );

@@ -101,13 +101,6 @@ class _SettingDialog extends StatelessWidget {
               prefixText: '将歌词翻译成：',
             ),
           ),
-          _PrefTextField(
-            .speakPrompt,
-            decoration: const InputDecoration(
-              hintText: '朗读歌词要求',
-              suffixText: '[单句歌词]',
-            ),
-          ),
 
           Text(
             '关于',

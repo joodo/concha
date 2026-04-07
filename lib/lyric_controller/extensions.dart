@@ -14,7 +14,7 @@ extension LyricControllerExtension on WidgetRef {
 }
 
 extension MultiLineLyricExtension on LyricController {
-  static const lineSeparator = '###';
+  static const lineSeparator = '\$\$\$';
   void loadMultiLineLyric(String lyric, {String? translationLyric}) {
     final lyricModel = LyricParse.parse(
       lyric,

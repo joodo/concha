@@ -63,7 +63,7 @@ final class PreferenceProvider<T> extends $NotifierProvider<Preference<T>, T?> {
   }
 }
 
-String _$preferenceHash() => r'f05d4e3f72a03d07e45e647f393f1aff7d9595f1';
+String _$preferenceHash() => r'7a9acd10b8c8c4e315a6d8bc514989763985f13a';
 
 final class PreferenceFamily extends $Family {
   PreferenceFamily._()

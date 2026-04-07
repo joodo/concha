@@ -144,7 +144,7 @@ class MvsepSeparationService {
   String? get _proxy => Pref.normalizedProxy;
 
   String get _mvsepToken {
-    final raw = Pref.get(PrefKey.mvsepKey);
+    final raw = Pref.get<String>(PrefKey.mvsepKey);
     final token = raw is String ? raw.trim() : '';
     if (token.isEmpty) {
       throw StateError('MVSEP API key is empty.');

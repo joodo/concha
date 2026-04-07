@@ -1,3 +1,4 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,14 +10,7 @@ part 'service.dart';
 @riverpod
 class Preference<T> extends _$Preference<T> {
   @override
-  T? build(PrefKey key) {
-    final data = Pref.get(key);
-    if (data.runtimeType == T) {
-      return data as T;
-    }
-
-    return null;
-  }
+  T? build(PrefKey key) => Pref.get<T>(key);
 
   void set(T value) {
     state = value;
@@ -44,6 +38,10 @@ extension ToggleExtension on Preference<bool> {
   void toggle() => set(!(state ?? false));
 }
 
-extension PrefExtension on Ref {
+extension RefPrefExtension on Ref {
+  T? getPref<T>(PrefKey key) => read(preferenceProvider<T>(key));
+}
+
+extension WidgetRefPrefExtension on WidgetRef {
   T? getPref<T>(PrefKey key) => read(preferenceProvider<T>(key));
 }

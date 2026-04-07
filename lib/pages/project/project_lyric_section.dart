@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:animations/animations.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -208,6 +209,13 @@ class _LyricToolbar extends ConsumerWidget {
           tooltip: '翻译歌词',
           onPressed: () async {
             final lrc = await File(ref.project!.path.lyric).readAsString();
+
+            if (!context.mounted) return;
+            final targetLangs = await showModal<List<String>?>(
+              context: context,
+              builder: (context) => _LyricTranslateDialog(),
+            );
+            if (targetLangs == null) return;
 
             final tlrc = await createTranslatedLyric(lrc);
 
@@ -422,7 +430,7 @@ class _WordForWordPanel extends ConsumerWidget {
           ),
           _buildSentenceBlock(
             context,
-            Pref.get(.translateLang),
+            Pref.get<String>(.translateLang)!,
             data.translate,
             context.colors.primaryContainer,
           ),
@@ -454,6 +462,74 @@ class _WordForWordPanel extends ConsumerWidget {
         .padding(horizontal: 16.0, vertical: 12.0)
         .backgroundColor(color)
         .clipRRect(all: 12.0);
+  }
+}
+
+class _LyricTranslateDialog extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final langs = useState<List<String>>(
+      ref.getPref<List<String>>(.lyricTranslateLangs) ??
+          [ref.getPref<String>(.translateLang)!],
+    );
+    final controller = useTextEditingController();
+    final focusNode = useFocusNode();
+    final addLang = useCallback(() {
+      if (controller.text.isEmpty) return;
+      langs.value = List.from(langs.value)..add(controller.text);
+      controller.clear();
+      focusNode.requestFocus();
+    });
+
+    final tagField = TextField(
+      controller: controller,
+      focusNode: focusNode,
+      decoration: InputDecoration(
+        prefixIcon: langs.value.isNotEmpty
+            ? langs.value.indexed
+                  .map(
+                    (e) => InputChip(
+                      label: e.$2.asText(),
+                      onDeleted: () {
+                        langs.value = List.from(langs.value)..removeAt(e.$1);
+                      },
+                    ),
+                  )
+                  .toList()
+                  .toWrap(spacing: 4.0)
+                  .constrained(maxWidth: 400.0)
+            : null,
+        hintText: '添加内容……',
+        helperText: '可以添加多种内容，比如中文、罗马音',
+      ),
+      onSubmitted: (_) => addLang(),
+    );
+
+    return AlertDialog(
+      icon: const Icon(Icons.translate),
+      content: tagField.constrained(width: 500),
+      actions: [
+        ListenableBuilder(
+          listenable: controller,
+          builder: (context, child) => FilledButton(
+            onPressed: langs.value.isNotEmpty && controller.text.isEmpty
+                ? () {
+                    ref
+                        .read(
+                          preferenceProvider<List<String>>(
+                            .lyricTranslateLangs,
+                          ).notifier,
+                        )
+                        .set(langs.value);
+                    Navigator.of(context).pop(langs.value);
+                  }
+                : null,
+            child: '翻译'.asText(),
+          ),
+        ),
+        TextButton(onPressed: Navigator.of(context).pop, child: '取消'.asText()),
+      ],
+    );
   }
 }
 

@@ -50,7 +50,7 @@ final class LyricControllerProvider
   }
 }
 
-String _$lyricControllerHash() => r'2c435ea63e6f8c7dc898856f2ffc8f04429106b2';
+String _$lyricControllerHash() => r'e1d32fd7090083b8b7a0d1d149d279c2a5d3a0d3';
 
 final class LyricControllerFamily extends $Family
     with

@@ -42,7 +42,7 @@ class ProjectLyricSection extends HookConsumerWidget {
                 onLocalPathSelected: (lyricPath) async {
                   final lrc = await File(lyricPath).readAsString();
 
-                  controller.loadLyric(lrc);
+                  controller.loadMultiLineLyric(lrc);
 
                   _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
                 },
@@ -98,7 +98,7 @@ class _Content extends HookConsumerWidget {
         builder: (context, isSearching, child) {
           if (!isSearching) return const SizedBox.shrink();
           return _SearchPanel(
-            onLyricSelected: lyricController.loadLyric,
+            onLyricSelected: lyricController.loadMultiLineLyric,
             onConfirm: (lrc) async {
               if (lrc != null) {
                 _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
@@ -211,7 +211,7 @@ class _LyricToolbar extends ConsumerWidget {
 
             final tlrc = await createTranslatedLyric(lrc);
 
-            lyricController.loadLyric(lrc, translationLyric: tlrc);
+            lyricController.loadMultiLineLyric(lrc, translationLyric: tlrc);
 
             await ref.projectNotifier!.updateLyric(tlrc, isTranslate: true);
           },

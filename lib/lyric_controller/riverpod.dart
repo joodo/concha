@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_lyric/core/lyric_controller.dart' as fl;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '/lyric_controller/lyric_controller.dart';
 import '/play_controller/play_controller.dart';
 import '/projects/projects.dart';
 
@@ -54,7 +55,7 @@ class LyricController extends _$LyricController {
       tlrc = await tlrcFile.readAsString();
     }
 
-    controller.loadLyric(lrc, translationLyric: tlrc);
+    controller.loadMultiLineLyric(lrc, translationLyric: tlrc);
   }
 
   void _updatePosition() {

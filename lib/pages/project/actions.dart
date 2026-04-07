@@ -3,11 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '/lyric_controller/lyric_controller.dart';
+import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/tts/tts.dart';
 import '/utils/utils.dart';
 
-import 'riverpod.dart' hide LyricController;
+import 'riverpod.dart';
 
 class TogglePlayIntent extends Intent {
   const TogglePlayIntent();

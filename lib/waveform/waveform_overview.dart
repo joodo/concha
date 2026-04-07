@@ -5,7 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../services/play_controller.dart';
+import '/play_controller/play_controller.dart';
+
 import 'waveform_controller.dart';
 import 'waveform_math.dart';
 

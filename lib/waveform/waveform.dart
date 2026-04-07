@@ -5,12 +5,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '../services/play_controller.dart';
+import '/play_controller/play_controller.dart';
+
 import 'chunk_cache_state.dart';
 import 'playback_binding_state.dart';
 import 'progress_line_lock_state.dart';
-import 'waveform_controller.dart';
 import 'waveform_chunk_loader.dart';
+import 'waveform_controller.dart';
 import 'waveform_math.dart';
 import 'waveform_overlay_lines.dart';
 import 'waveform_overview.dart';

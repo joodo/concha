@@ -4,14 +4,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
+import '/lyric_controller/lyric_controller.dart';
+import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
-import '/services/services.dart';
+import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
 
 import 'actions.dart';
 import 'expansible_button.dart';
-import 'riverpod.dart';
 
 class ProjectToolbar extends StatelessWidget {
   const ProjectToolbar({super.key, required this.playController});

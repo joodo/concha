@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/llm/llm.dart';
+import '/lyric_controller/lyric_controller.dart' hide LyricController;
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
@@ -15,7 +16,7 @@ import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
 
 import 'actions.dart';
-import 'riverpod.dart' hide LyricController;
+import 'riverpod.dart';
 
 class ProjectLyricSection extends HookConsumerWidget {
   const ProjectLyricSection({super.key});

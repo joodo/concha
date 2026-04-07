@@ -10,8 +10,7 @@ part 'riverpod.g.dart';
 
 @riverpod
 Stream<MvsepTaskEvent> sepAudioEvent(Ref ref, String id) async* {
-  final project = ref.read(projectDetailProvider(id)).value;
-  if (project == null) throw Exception('Project $id not exist');
+  final project = await ref.read(projectDetailProvider(id).future);
 
   final paths = project.path;
   if (await File(paths.audioInstru).exists() &&

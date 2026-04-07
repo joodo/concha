@@ -4,74 +4,76 @@ import 'dart:typed_data';
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:styled_widget/styled_widget.dart';
 
 import '/preferences/preferences.dart';
+import '/projects/projects.dart';
+import '/services/services.dart';
+import '/utils/utils.dart';
+import '/widgets/setting_button.dart';
 
-import '../../projects/models.dart';
-import '../../services/media_match_service.dart';
-import '../../services/youtube_download_service.dart';
-import '../../utils/utils.dart';
-import '../../widgets/setting_button.dart';
-
-class NewDialog extends StatefulWidget {
+class NewDialog extends HookWidget {
   const NewDialog({super.key});
 
   @override
-  State<NewDialog> createState() => _NewDialogState();
-}
-
-class _NewDialogState extends State<NewDialog> {
-  final _mediaMatchService = MediaMatchService();
-  final _youtubeDownloadService = YoutubeDownloadService();
-  final _audioFieldController = TextEditingController();
-
-  final _fillDataNotifier = PreferenceValueNotifier<bool>(
-    true,
-    key: PrefKeys.autoFillMetadata.value,
-  );
-
-  bool _isSubmitting = false;
-  String? _errorMessage;
-  String _shellOutput = '';
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _audioFieldController.dispose();
-    _fillDataNotifier.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final errorMessage = useState<String?>(null);
+    final isSubmitting = useState<bool>(false);
+
+    final shellOutput = useState<String>('');
+    final appendLog = useCallback((String line) {
+      if (!context.mounted) return;
+      shellOutput.value += '$line\n';
+    });
+
+    final audioFieldController = useTextEditingController();
+    final submit = useCallback(() async {
+      shellOutput.value = '';
+      errorMessage.value = null;
+      isSubmitting.value = true;
+      try {
+        await _submit(
+          context,
+          audioFieldController.text.trim(),
+          appendLog: appendLog,
+        );
+      } catch (e) {
+        errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      } finally {
+        isSubmitting.value = false;
+      }
+    });
+
     final audioField = TextField(
-      controller: _audioFieldController,
+      controller: audioFieldController,
       decoration: InputDecoration(
         labelText: '选择音频文件',
         hintText: '支持 Youtube 链接或本地文件',
-        errorText: _errorMessage,
+        errorText: errorMessage.value,
         suffix: IconButton(
-          onPressed: _openLocal,
+          onPressed: () async {
+            final path = await _getLocalPath();
+            if (path != null) audioFieldController.text = path;
+          },
           icon: Icon(Icons.folder_open),
         ),
       ),
-      onSubmitted: (_) => _submit(),
+      onSubmitted: (_) => submit(),
     );
 
-    final fillDataTile = ListenableBuilder(
-      listenable: _fillDataNotifier,
-      builder: (context, _) => CheckboxListTile(
-        title: const Text('补全音乐信息'),
-        controlAffinity: ListTileControlAffinity.leading,
-        value: _fillDataNotifier.value,
-        onChanged: (value) => _fillDataNotifier.value = value!,
-      ),
+    final fillDataTile = Consumer(
+      builder: (context, ref, child) {
+        final provider = preferenceProvider<bool>(.autoFillMetadata);
+        return CheckboxListTile(
+          title: const Text('补全音乐信息'),
+          controlAffinity: ListTileControlAffinity.leading,
+          value: ref.watch(provider)!,
+          onChanged: (value) => ref.read(provider.notifier).set(value!),
+        );
+      },
     );
 
     return Scaffold(
@@ -85,10 +87,10 @@ class _NewDialogState extends State<NewDialog> {
                 audioField,
                 fillDataTile,
                 FilledButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  child: Text(_isSubmitting ? '处理中...' : '添加'),
+                  onPressed: isSubmitting.value ? null : submit,
+                  child: Text(isSubmitting.value ? '处理中...' : '添加'),
                 ),
-                _ConsoleArea(output: _shellOutput).expanded(),
+                _ConsoleArea(output: shellOutput.value).expanded(),
               ]
               .toColumn(
                 crossAxisAlignment: .start,
@@ -98,7 +100,7 @@ class _NewDialogState extends State<NewDialog> {
     );
   }
 
-  Future<void> _openLocal() async {
+  Future<String?> _getLocalPath() async {
     const XTypeGroup audioTypeGroup = XTypeGroup(
       label: 'audio',
       extensions: <String>['mp3', 'm4a', 'wav', 'flac', 'aac', 'ogg'],
@@ -107,73 +109,46 @@ class _NewDialogState extends State<NewDialog> {
     final XFile? picked = await openFile(
       acceptedTypeGroups: const <XTypeGroup>[audioTypeGroup],
     );
-    if (picked == null) return;
-
-    _audioFieldController.text = picked.path;
+    return picked?.path;
   }
 
-  Future<void> _submit() async {
-    if (_isSubmitting) return;
-
-    final path = _audioFieldController.text.trim();
-
+  Future<void> _submit(
+    BuildContext context,
+    String path, {
+    required ValueSetter<String> appendLog,
+  }) async {
+    path = path.trim();
     final isYoutubeLink = _isYoutubeLink(path);
     final isLocalFile = path.isNotEmpty && File(path).existsSync();
     if (!isYoutubeLink && !isLocalFile) {
-      setState(() => _errorMessage = '请输入本地音频文件路径或有效的 YouTube 链接');
-      return;
+      throw (Exception('请输入本地音频文件路径或有效的 YouTube 链接'));
     }
 
-    setState(() {
-      _isSubmitting = true;
-      _shellOutput = '';
-      _errorMessage = null;
-    });
-
-    try {
-      String audioPath = path;
-      if (isYoutubeLink) {
-        _appendLog('[progress] Start downloading from YouTube...');
-        audioPath = await _youtubeDownloadService.downloadAudio(
-          url: path,
-          onLog: _appendLog,
-        );
-      }
-
-      MediaMatchResult? mediaData;
-      if (_fillDataNotifier.value) {
-        _appendLog('[progress] Start matching metadata...');
-        mediaData = await _getMatchedMedia(audioPath);
-      }
-
-      if (!mounted) return;
-      _appendLog('[progress] Start creating project...');
-      final project = await _createProject(
-        audioPath: audioPath,
-        matchedMediaInfo: mediaData,
+    String audioPath = path;
+    if (isYoutubeLink) {
+      appendLog('[progress] Start downloading from YouTube...');
+      audioPath = await YoutubeDownloadService().downloadAudio(
+        url: path,
+        onLog: appendLog,
       );
-
-      _appendLog('[progress] All finished! Ready to leave.');
-      if (mounted) Navigator.of(context).pop(project);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
     }
-  }
 
-  Future<MediaMatchResult?> _getMatchedMedia(String path) async {
-    return _mediaMatchService.identifyByAudioPath(
-      audioPath: path,
-      onLog: _appendLog,
+    MediaMatchResult? mediaData;
+    appendLog('[progress] Start matching metadata...');
+    mediaData = await MediaMatchService().identifyByAudioPath(
+      audioPath: audioPath,
+      onLog: appendLog,
     );
+
+    if (!context.mounted) return;
+    appendLog('[progress] Start creating project...');
+    final project = await _createProject(
+      audioPath: audioPath,
+      matchedMediaInfo: mediaData,
+    );
+
+    appendLog('[progress] All finished! Ready to leave.');
+    if (context.mounted) Navigator.of(context).pop(project);
   }
 
   Future<Project> _createProject({
@@ -216,13 +191,6 @@ class _NewDialogState extends State<NewDialog> {
     }
 
     return project;
-  }
-
-  void _appendLog(String line) {
-    if (!mounted) return;
-    setState(() {
-      _shellOutput = _shellOutput.isEmpty ? '$line\n' : '$_shellOutput$line\n';
-    });
   }
 
   bool _isYoutubeLink(String value) {

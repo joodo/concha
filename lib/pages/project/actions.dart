@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '/preferences/preferences.dart';
 import '/tts/tts.dart';
 import '/utils/utils.dart';
 
@@ -104,7 +105,7 @@ class ProjectActions extends HookConsumerWidget {
     }, []);
 
     final play = useCallback(() {
-      final fromStart = ref.read(loopProvider);
+      final fromStart = ref.read(preferenceProvider<bool>(.playLoop))!;
       return fromStart
           ? ref.playController!.playFromStartPoint()
           : ref.playController!.play();
@@ -142,7 +143,7 @@ class ProjectActions extends HookConsumerWidget {
             final playController = ref.playController!;
             if (!playController.isPlayNotifier.value) return play();
 
-            final attach = ref.read(attachToLyricProvider);
+            final attach = ref.read(preferenceProvider<bool>(.attachToLyric))!;
             return attach ? pauseToLyricStart() : playController.pause();
           },
         ),
@@ -150,7 +151,7 @@ class ProjectActions extends HookConsumerWidget {
           onInvoke: (intent) {
             final playController = ref.playController!;
 
-            final attach = ref.read(attachToLyricProvider);
+            final attach = ref.read(preferenceProvider<bool>(.attachToLyric))!;
             final lyricStart = getCurrentLyricStart(offset: intent.delta);
 
             if (!attach || lyricStart == null) {

@@ -4,7 +4,6 @@ import 'package:flutter_lyric/flutter_lyric.dart' as fl;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -121,28 +120,4 @@ class ReadAloudPending extends _$ReadAloudPending {
 
   void toggle() => state = !state;
   void set(bool value) => state = value;
-}
-
-@riverpod
-class AttachToLyric extends _$AttachToLyric {
-  @override
-  bool build() => ref.watch(_pref) ?? true;
-
-  void toggle() => set(!state);
-  void set(bool value) => ref.read(_pref.notifier).set(value);
-
-  PreferenceProvider<bool> get _pref =>
-      preferenceProvider<bool>(PrefKeys.attachToLyric.value);
-}
-
-@riverpod
-class Loop extends _$Loop {
-  @override
-  bool build() => ref.watch(_pref) ?? false;
-
-  void toggle() => set(!state);
-  void set(bool value) => ref.read(_pref.notifier).set(value);
-
-  PreferenceProvider<bool> get _pref =>
-      preferenceProvider<bool>(PrefKeys.playLoop.value);
 }

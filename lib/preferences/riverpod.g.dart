@@ -15,7 +15,7 @@ final preferenceProvider = PreferenceFamily._();
 final class PreferenceProvider<T> extends $NotifierProvider<Preference<T>, T?> {
   PreferenceProvider._({
     required PreferenceFamily super.from,
-    required String super.argument,
+    required PrefKey super.argument,
   }) : super(
          retry: null,
          name: r'preferenceProvider',
@@ -63,7 +63,7 @@ final class PreferenceProvider<T> extends $NotifierProvider<Preference<T>, T?> {
   }
 }
 
-String _$preferenceHash() => r'40b669ca62f17428f6f5310b5a04f719bd7d4094';
+String _$preferenceHash() => r'f05d4e3f72a03d07e45e647f393f1aff7d9595f1';
 
 final class PreferenceFamily extends $Family {
   PreferenceFamily._()
@@ -75,7 +75,7 @@ final class PreferenceFamily extends $Family {
         isAutoDispose: true,
       );
 
-  PreferenceProvider<T> call<T>(String key) =>
+  PreferenceProvider<T> call<T>(PrefKey key) =>
       PreferenceProvider<T>._(argument: key, from: this);
 
   @override
@@ -111,10 +111,10 @@ final class PreferenceFamily extends $Family {
 }
 
 abstract class _$Preference<T> extends $Notifier<T?> {
-  late final _$args = ref.$arg as String;
-  String get key => _$args;
+  late final _$args = ref.$arg as PrefKey;
+  PrefKey get key => _$args;
 
-  T? build(String key);
+  T? build(PrefKey key);
   @$mustCallSuper
   @override
   void runBuild() {

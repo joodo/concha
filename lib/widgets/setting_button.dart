@@ -1,5 +1,7 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -47,14 +49,14 @@ class _SettingDialog extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 16.0),
         children: [
           _PrefTextField(
-            PrefKeys.proxy.value,
+            .proxy,
             decoration: const InputDecoration(
               labelText: '网络代理',
               prefixText: 'http://',
             ),
           ),
           _PrefTextField(
-            PrefKeys.acoustKey.value,
+            .acoustKey,
             decoration: InputDecoration(
               labelText: 'AcoustID API Key',
               helperText: '用于补全音乐信息',
@@ -66,7 +68,7 @@ class _SettingDialog extends StatelessWidget {
             ),
           ),
           _PrefTextField(
-            PrefKeys.mvsepKey.value,
+            .mvsepKey,
             decoration: InputDecoration(
               labelText: 'MVSEP API Key',
               helperText: '用于生成伴奏',
@@ -82,7 +84,7 @@ class _SettingDialog extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge,
           ).padding(bottom: 12.0, top: 24.0),
           _PrefTextField(
-            PrefKeys.geminiKey.value,
+            .geminiKey,
             decoration: InputDecoration(
               labelText: 'Gemini Key',
               suffix: TextButton(
@@ -93,14 +95,14 @@ class _SettingDialog extends StatelessWidget {
             ),
           ),
           _PrefTextField(
-            PrefKeys.translateLang.value,
+            .translateLang,
             decoration: const InputDecoration(
               hintText: '翻译语言',
               prefixText: '将歌词翻译成：',
             ),
           ),
           _PrefTextField(
-            PrefKeys.speakPrompt.value,
+            .speakPrompt,
             decoration: const InputDecoration(
               hintText: '朗读歌词要求',
               suffixText: '[单句歌词]',
@@ -133,49 +135,29 @@ class _SettingDialog extends StatelessWidget {
               label: '本地存储目录'.asText(),
               icon: Icon(Icons.open_in_browser),
             ),
-          ].toRow().padding(top: 12.0),
+          ].toRow().padding(vertical: 12.0),
         ],
       ),
     );
   }
 }
 
-class _PrefTextField extends StatefulWidget {
-  final String prefKey;
+class _PrefTextField extends HookConsumerWidget {
+  final PrefKey prefKey;
   final InputDecoration? decoration;
 
   const _PrefTextField(this.prefKey, {this.decoration});
 
   @override
-  State<_PrefTextField> createState() => _PrefTextFieldState();
-}
-
-class _PrefTextFieldState extends State<_PrefTextField> {
-  late final _notifier = PreferenceValueNotifier<String>(
-    '',
-    key: widget.prefKey,
-  );
-  final _textController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _textController.text = _notifier.value;
-  }
-
-  @override
-  void dispose() {
-    _notifier.dispose();
-    _textController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = useTextEditingController(text: ref.read(_provider));
     return TextField(
-      controller: _textController,
-      decoration: widget.decoration,
-      onChanged: (value) => _notifier.value = value,
+      controller: controller,
+      decoration: decoration,
+      onChanged: (value) => ref.read(_provider.notifier).set(value),
     ).constrained(maxWidth: 400.0).alignment(.centerLeft).padding(bottom: 12.0);
   }
+
+  PreferenceProvider<String> get _provider =>
+      preferenceProvider<String>(prefKey);
 }

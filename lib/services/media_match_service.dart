@@ -107,7 +107,7 @@ class MediaMatchService {
     try {
       onLog?.call('[pipeline] channel=acoustid start');
 
-      final acoustIdApiKey = Pref.i.get(PrefKeys.acoustKey.value) as String;
+      final acoustIdApiKey = Pref.get<String>(PrefKey.acoustKey) ?? '';
       acoustResult = await _acoustIdService.recognizeLocalFile(
         audioFilePath: audioPath,
         apiKey: acoustIdApiKey,

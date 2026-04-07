@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
+import '/preferences/preferences.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
@@ -19,9 +20,10 @@ class ProjectToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loopProvider = preferenceProvider<bool>(.playLoop);
     final toggleButton = Consumer(
       builder: (context, ref, child) {
-        final isLoop = ref.watch(loopProvider);
+        final isLoop = ref.watch(loopProvider)!;
         return ValueListenableBuilder(
           valueListenable: playController.isPlayNotifier,
           builder: (context, isPlaying, child) => IconButton.filled(
@@ -47,7 +49,7 @@ class ProjectToolbar extends StatelessWidget {
     final loopButton = Consumer(
       builder: (context, ref, child) {
         return IconButton.outlined(
-          isSelected: ref.watch(loopProvider),
+          isSelected: ref.watch(loopProvider)!,
           onPressed: ref.read(loopProvider.notifier).toggle,
           tooltip: '从起点播放',
           icon: const Icon(Icons.repeat),
@@ -57,6 +59,8 @@ class ProjectToolbar extends StatelessWidget {
 
     final attachButton = Consumer(
       builder: (context, ref, child) {
+        final attachToLyricProvider = preferenceProvider<bool>(.attachToLyric);
+
         final lyricController = ref
             .watch(lyricControllerProvider(ref.projectId!))
             .value;

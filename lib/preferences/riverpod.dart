@@ -1,14 +1,16 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'service.dart';
+import '/utils/utils.dart';
 
 part 'riverpod.g.dart';
+part 'service.dart';
 
 @riverpod
 class Preference<T> extends _$Preference<T> {
   @override
-  T? build(String key) {
-    final data = Pref.i.get(key);
+  T? build(PrefKey key) {
+    final data = Pref.get(key);
     if (data.runtimeType == T) {
       return data as T;
     }
@@ -19,23 +21,29 @@ class Preference<T> extends _$Preference<T> {
   void set(T value) {
     state = value;
 
+    final k = key.toString();
     switch (T) {
       case const (int):
-        Pref.i.setInt(key, value as int);
+        Pref._i.setInt(k, value as int);
       case const (double):
-        Pref.i.setDouble(key, value as double);
+        Pref._i.setDouble(k, value as double);
       case const (bool):
-        Pref.i.setBool(key, value as bool);
+        Pref._i.setBool(k, value as bool);
       case const (String):
-        Pref.i.setString(key, value as String);
+        Pref._i.setString(k, value as String);
       case const (List<String>):
-        Pref.i.setStringList(key, value as List<String>);
+        Pref._i.setStringList(k, value as List<String>);
       default:
         throw TypeError();
     }
   }
 }
 
+extension ToggleExtension on Preference<bool> {
+  // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+  void toggle() => set(!(state ?? false));
+}
+
 extension PrefExtension on Ref {
-  T? getPref<T>(PrefKeys key) => read(preferenceProvider<T>(key.value));
+  T? getPref<T>(PrefKey key) => read(preferenceProvider<T>(key));
 }

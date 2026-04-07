@@ -64,7 +64,7 @@ final class SepAudioEventProvider
   }
 }
 
-String _$sepAudioEventHash() => r'a4347f5ebdd79a0dd7b112623ba6941f97abc9c7';
+String _$sepAudioEventHash() => r'b939ef5f6dfb15eda18804f62abd794572054290';
 
 final class SepAudioEventFamily extends $Family
     with $FunctionalFamilyOverride<Stream<MvsepTaskEvent>, String> {

@@ -134,11 +134,13 @@ class NewDialog extends HookWidget {
     }
 
     MediaMatchResult? mediaData;
-    appendLog('[progress] Start matching metadata...');
-    mediaData = await MediaMatchService().identifyByAudioPath(
-      audioPath: audioPath,
-      onLog: appendLog,
-    );
+    if (Pref.get<bool>(.autoFillMetadata)!) {
+      appendLog('[progress] Start matching metadata...');
+      mediaData = await MediaMatchService().identifyByAudioPath(
+        audioPath: audioPath,
+        onLog: appendLog,
+      );
+    }
 
     if (!context.mounted) return;
     appendLog('[progress] Start creating project...');

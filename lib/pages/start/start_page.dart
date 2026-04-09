@@ -222,7 +222,9 @@ class _AppBar extends StatelessWidget {
               start: 16.0,
               bottom: 16.0,
             ),
-            title: Opacity(opacity: titleOpacity, child: Text('我的曲库')),
+            title: IgnorePointer(
+              child: Opacity(opacity: titleOpacity, child: Text('我的曲库')),
+            ),
             collapseMode: .pin,
             background: SafeArea(
               bottom: false,

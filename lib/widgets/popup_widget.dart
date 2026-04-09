@@ -1,90 +1,60 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'package:nested/nested.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-import '../utils/run_after_build.dart';
+import '/utils/utils.dart';
 
-class PopupWidget extends SingleChildStatefulWidget {
-  final bool showing;
-  final Widget Function(BuildContext context, Widget popup)? layoutBuilder;
-  final WidgetBuilder popupBuilder;
-
+class PopupWidget extends HookWidget {
   const PopupWidget({
     super.key,
-    super.child,
+    this.child,
     this.showing = false,
     this.layoutBuilder,
     required this.popupBuilder,
   });
 
-  @override
-  State<PopupWidget> createState() => _PopupWidgetState();
-}
-
-class _PopupWidgetState extends SingleChildState<PopupWidget>
-    with SingleTickerProviderStateMixin {
-  late final _animationController = AnimationController(
-    value: 0.0,
-    duration: const Duration(milliseconds: 150),
-    reverseDuration: const Duration(milliseconds: 75),
-    vsync: this,
-  );
-
-  final OverlayPortalController _portalController = OverlayPortalController();
+  final bool showing;
+  final Widget Function(BuildContext context, Widget popup)? layoutBuilder;
+  final WidgetBuilder popupBuilder;
+  final Widget? child;
 
   @override
-  void initState() {
-    super.initState();
-    _animationController;
-    _updateShowing();
-  }
+  Widget build(BuildContext context) {
+    final animationController = useAnimationController(
+      duration: const Duration(milliseconds: 150),
+      reverseDuration: const Duration(milliseconds: 75),
+    );
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+    final portalController = useOverlayPortalController();
+    useEffect(() {
+      if (showing) {
+        runAfterBuild(portalController.show);
+        animationController.forward();
+      } else {
+        animationController.reverse().then((_) => portalController.hide());
+      }
+      return null;
+    }, [showing]);
 
-  @override
-  Widget buildWithChild(BuildContext context, Widget? child) {
     return OverlayPortal(
-      controller: _portalController,
+      controller: portalController,
       overlayChildBuilder: (context) => AnimatedBuilder(
-        animation: _animationController,
+        animation: animationController,
         builder: (BuildContext context, Widget? child) {
           final animatedChild = FadeScaleTransition(
-            animation: _animationController,
+            animation: animationController,
             child: child,
           );
 
-          if (widget.layoutBuilder != null) {
-            return widget.layoutBuilder!(context, animatedChild);
+          if (layoutBuilder != null) {
+            return layoutBuilder!(context, animatedChild);
           } else {
             return Center(child: animatedChild);
           }
         },
-        child: Builder(builder: widget.popupBuilder),
+        child: Builder(builder: popupBuilder),
       ),
       child: child,
     );
-  }
-
-  @override
-  void didUpdateWidget(covariant PopupWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.showing == widget.showing) return;
-    _updateShowing();
-  }
-
-  void _updateShowing() {
-    if (widget.showing) {
-      runAfterBuild(() {
-        _portalController.show();
-        _animationController.forward();
-      });
-    } else {
-      _animationController.reverse().then((_) => _portalController.hide());
-    }
   }
 }

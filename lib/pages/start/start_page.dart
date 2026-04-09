@@ -9,6 +9,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '/projects/projects.dart';
 import '/utils/utils.dart';
+import '/widgets/settings.dart';
 
 import 'new_dialog.dart';
 import 'project_grid_tile.dart';
@@ -192,6 +193,7 @@ class _AppBar extends StatelessWidget {
       pinned: true,
       automaticallyImplyLeading: false,
       expandedHeight: expandedHeight,
+      actions: [const SettingButton().padding(right: 8.0)],
       titleSpacing: 16.0,
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {

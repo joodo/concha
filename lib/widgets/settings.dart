@@ -40,164 +40,193 @@ class SettingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: const SizedBox.shrink(),
-        leadingWidth: 0,
-        title: const Text('设置'),
-        actions: [CloseButton()],
-        actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
-      ),
-      body: ListView(
-        padding: EdgeInsets.symmetric(horizontal: 16.0),
-        children: [
-          _PrefTextField(
-            .proxy,
-            decoration: const InputDecoration(
-              labelText: '网络代理',
-              prefixText: 'http://',
-            ),
-          ),
-          _PrefTextField(
-            .acoustKey,
-            decoration: InputDecoration(
-              labelText: 'AcoustID API Key',
-              helperText: '用于补全音乐信息',
-              suffix: TextButton(
-                onPressed: () =>
-                    launchUrlString('https://acoustid.org/new-application'),
-                child: '申请'.asText(),
-              ),
-            ),
-          ),
-          _PrefTextField(
-            .mvsepKey,
-            decoration: InputDecoration(
-              labelText: 'MVSEP API Key',
-              helperText: '用于生成伴奏',
-              suffix: TextButton(
-                onPressed: () => launchUrlString('https://mvsep.com/user-api'),
-                child: '申请'.asText(),
-              ),
-            ),
-          ),
-
-          _SettingTitle('AI - 文字处理'),
-          _PrefDropdownMenu(
-            .llmService,
-            labelText: '选择服务',
-            helperText: '用于理解和翻译歌词',
-            data:
-                {
-                  for (final p in LLMProviderRegistry.getAllProviderInfo())
-                    p.id: p,
-                }..removeWhere(
-                  (key, value) =>
-                      !value.supportedCapabilities.contains(LLMCapability.chat),
-                ),
-            entryBuilder: (key, value) =>
-                DropdownMenuEntry(value: key, label: value.displayName),
-          ),
-          _PrefTextField(
-            .translateLang,
-            decoration: const InputDecoration(
-              hintText: '目标语言',
-              prefixText: '翻译语言：',
-            ),
-          ),
-          _PrefTextField(
-            .llmKey,
-            decoration: InputDecoration(labelText: 'API Key'),
-          ),
-          _PrefTextField(
-            .ttsUrl,
-            decoration: InputDecoration(labelText: '服务 URL（可选）'),
-          ),
-          _PrefTextField(
-            .llmModel,
-            decoration: InputDecoration(
-              labelText: '模型名称',
-              hintText: '比如 “gemini-3-flash-preview”',
-            ),
-          ),
-          _TestButton(() => LlmService.fromPref().test(), testName: '文字处理测试'),
-
-          _SettingTitle('AI - 语音生成'),
-          _PrefDropdownMenu(
-            .ttsService,
-            labelText: '选择服务',
-            data:
-                {
-                  for (final p in LLMProviderRegistry.getAllProviderInfo())
-                    p.id: p,
-                }..removeWhere(
-                  (key, value) =>
-                      key != 'google' &&
-                      key != 'openrouter' &&
-                      !value.supportedCapabilities.contains(
-                        LLMCapability.textToSpeech,
-                      ),
-                ),
-            entryBuilder: (key, value) =>
-                DropdownMenuEntry(value: key, label: value.displayName),
-          ),
-          _PrefTextField(
-            .ttsKey,
-            decoration: InputDecoration(labelText: 'API Key'),
-          ),
-          _PrefTextField(
-            .ttsUrl,
-            decoration: InputDecoration(labelText: '服务 URL（可选）'),
-          ),
-          _PrefTextField(
-            .ttsModel,
-            decoration: InputDecoration(
-              labelText: '模型名称',
-              hintText: '比如 “gemini-2.5-flash-preview-tts”',
-            ),
-          ),
-          _TestButton(() => TtsService.fromPref().test(), testName: '语音测试'),
-
-          _SettingTitle('关于'),
-          FutureBuilder(
-            future: PackageInfo.fromPlatform(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox.shrink();
-
-              final data = snapshot.data!;
-              return Text('${data.appName}，版本 ${data.version}');
-            },
-          ),
-          'Copyright 2026 Joodo. Licensed under GPLv3 License.'.asText(),
-          [
-            TextButton.icon(
-              onPressed: () =>
-                  launchUrlString('https://github.com/joodo/concha'),
-              label: 'Github'.asText(),
-              icon: Icon(Icons.open_in_browser),
-            ),
-            TextButton.icon(
-              onPressed: () => launchUrl(Uri.file(Project.savedDir)),
-              label: '本地存储目录'.asText(),
-              icon: Icon(Icons.open_in_browser),
-            ),
-          ].toRow().padding(vertical: 12.0),
-        ],
-      ),
+    final appBar = AppBar(
+      leading: const SizedBox.shrink(),
+      leadingWidth: 0,
+      title: const Text('设置'),
+      actions: [CloseButton()],
+      actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
     );
+
+    final body = ListView(
+      padding: EdgeInsets.all(16.0),
+      children: [
+        _SettingSection(
+          children: [
+            _PrefTextField(
+              .proxy,
+              decoration: const InputDecoration(
+                labelText: '网络代理',
+                prefixText: 'http://',
+              ),
+            ),
+            _PrefTextField(
+              .acoustKey,
+              decoration: InputDecoration(
+                labelText: 'AcoustID API Key',
+                helperText: '用于补全音乐信息',
+                suffix: TextButton(
+                  onPressed: () =>
+                      launchUrlString('https://acoustid.org/new-application'),
+                  child: '申请'.asText(),
+                ),
+              ),
+            ),
+            _PrefTextField(
+              .mvsepKey,
+              decoration: InputDecoration(
+                labelText: 'MVSEP API Key',
+                helperText: '用于生成伴奏',
+                suffix: TextButton(
+                  onPressed: () =>
+                      launchUrlString('https://mvsep.com/user-api'),
+                  child: '申请'.asText(),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        _SettingSection(
+          title: 'AI - 文字处理',
+          children: [
+            _PrefDropdownMenu(
+              .llmService,
+              labelText: '选择服务',
+              helperText: '用于理解和翻译歌词',
+              data:
+                  {
+                    for (final p in LLMProviderRegistry.getAllProviderInfo())
+                      p.id: p,
+                  }..removeWhere(
+                    (key, value) => !value.supportedCapabilities.contains(
+                      LLMCapability.chat,
+                    ),
+                  ),
+              entryBuilder: (key, value) =>
+                  DropdownMenuEntry(value: key, label: value.displayName),
+            ),
+            _PrefTextField(
+              .translateLang,
+              decoration: const InputDecoration(
+                hintText: '目标语言',
+                prefixText: '翻译语言：',
+              ),
+            ),
+            _PrefTextField(
+              .llmKey,
+              decoration: InputDecoration(labelText: 'API Key'),
+            ),
+            _PrefTextField(
+              .ttsUrl,
+              decoration: InputDecoration(labelText: '服务 URL（可选）'),
+            ),
+            _PrefTextField(
+              .llmModel,
+              decoration: InputDecoration(
+                labelText: '模型名称',
+                hintText: '比如 “gemini-3-flash-preview”',
+              ),
+            ),
+            _TestButton(() => LlmService.fromPref().test(), testName: '文字处理测试'),
+          ],
+        ),
+
+        _SettingSection(
+          title: 'AI - 语音生成',
+          children: [
+            _PrefDropdownMenu(
+              .ttsService,
+              labelText: '选择服务',
+              data:
+                  {
+                    for (final p in LLMProviderRegistry.getAllProviderInfo())
+                      p.id: p,
+                  }..removeWhere(
+                    (key, value) =>
+                        key != 'google' &&
+                        key != 'openrouter' &&
+                        !value.supportedCapabilities.contains(
+                          LLMCapability.textToSpeech,
+                        ),
+                  ),
+              entryBuilder: (key, value) =>
+                  DropdownMenuEntry(value: key, label: value.displayName),
+            ),
+            _PrefTextField(
+              .ttsKey,
+              decoration: InputDecoration(labelText: 'API Key'),
+            ),
+            _PrefTextField(
+              .ttsUrl,
+              decoration: InputDecoration(labelText: '服务 URL（可选）'),
+            ),
+            _PrefTextField(
+              .ttsModel,
+              decoration: InputDecoration(
+                labelText: '模型名称',
+                hintText: '比如 “gemini-2.5-flash-preview-tts”',
+              ),
+            ),
+            _TestButton(() => TtsService.fromPref().test(), testName: '语音测试'),
+          ],
+        ),
+
+        _SettingSection(
+          title: '关于',
+          children: [
+            FutureBuilder(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox.shrink();
+
+                final data = snapshot.data!;
+                return Text('${data.appName}，版本 ${data.version}');
+              },
+            ),
+            'Copyright 2026 Joodo. Licensed under GPLv3 License.'.asText(),
+            12.0.asHeight(),
+            [
+              TextButton.icon(
+                onPressed: () =>
+                    launchUrlString('https://github.com/joodo/concha'),
+                label: 'Github'.asText(),
+                icon: Icon(Icons.open_in_browser),
+              ),
+              TextButton.icon(
+                onPressed: () => launchUrl(Uri.file(Project.savedDir)),
+                label: '本地存储目录'.asText(),
+                icon: Icon(Icons.open_in_browser),
+              ),
+            ].toRow(),
+          ],
+        ),
+      ],
+    );
+
+    return Scaffold(appBar: appBar, body: body);
   }
 }
 
-class _SettingTitle extends StatelessWidget {
-  const _SettingTitle(this.text);
-  final String text;
+class _SettingSection extends StatelessWidget {
+  const _SettingSection({this.title, required this.children});
+  final String? title;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.textStyles.titleLarge,
-    ).padding(bottom: 12.0, top: 24.0);
+    return [
+      title
+              ?.asText()
+              .textStyle(context.textStyles.titleLarge!)
+              .padding(top: 24.0, bottom: 12.0) ??
+          const SizedBox.shrink(),
+      children
+          .toColumn(crossAxisAlignment: .start)
+          .padding(all: 16.0)
+          .backgroundColor(context.colors.surfaceContainerLow)
+          .clipRRect(all: 16.0),
+    ].toColumn(crossAxisAlignment: .start);
   }
 }
 

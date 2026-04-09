@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '/pages/app.dart';
 import '/preferences/preferences.dart';
-import '/projects/models.dart';
+import '/projects/projects.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

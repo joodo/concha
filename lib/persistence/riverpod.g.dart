@@ -28,7 +28,7 @@ final class StorageProvider
         argument: null,
         retry: null,
         name: r'storageProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,4 +48,4 @@ final class StorageProvider
   }
 }
 
-String _$storageHash() => r'de251626d8f5200d0d2a7277f8de4139804c7c74';
+String _$storageHash() => r'e1b0cadb333caa476b909c2f5fa452adec421cc0';

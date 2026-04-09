@@ -217,7 +217,7 @@ class _LyricToolbar extends ConsumerWidget {
             );
             if (targetLangs == null) return;
 
-            final tlrc = await createTranslatedLyric(lrc);
+            final tlrc = await createLrcTranslation(lrc);
 
             lyricController.loadMultiLineLyric(lrc, translationLyric: tlrc);
 
@@ -380,8 +380,10 @@ class _WordForWordPanel extends ConsumerWidget {
       dataAsync
           .when(
             data: (data) => _buildContent(context, data),
-            error: (error, stackTrace) =>
-                SelectableText(error.toString()).center(),
+            error: (error, stackTrace) {
+              runAfterBuild(() => Error.throwWithStackTrace(error, stackTrace));
+              return SelectableText(error.toString()).center();
+            },
             loading: () => CircularProgressIndicator().center(),
           )
           .padding(horizontal: 16.0, bottom: 12.0, top: 4.0)

@@ -1,18 +1,15 @@
 import '/utils/utils.dart';
 
-abstract class LlmService {
-  Future<String> generate(
-    String prompt, {
-    dynamic apiKey,
-    String? systemPrompt,
-    String? proxy,
-  });
+import 'service.impl.dart';
 
+abstract class LlmService {
+  factory LlmService.fromPref() = LlmServiceImpl.fromPref;
+
+  Future<String> generate(String prompt, {String? systemPrompt});
   Future<JsonMap> generateJson(
     String prompt, {
     required JsonMap format,
-    dynamic apiKey,
     String? systemPrompt,
-    String? proxy,
   });
+  Future<void> test();
 }

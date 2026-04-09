@@ -11,7 +11,7 @@ import '/play_controller/play_controller.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
-import '/widgets/setting_button.dart';
+import '/widgets/settings.dart';
 
 import 'actions.dart';
 import 'project_lyric_section.dart';

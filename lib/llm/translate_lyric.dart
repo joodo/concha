@@ -1,7 +1,7 @@
 import '/lyric_controller/lyric_controller.dart';
 import '/preferences/preferences.dart';
 
-import 'service.gemini.dart';
+import 'service.dart';
 
 String get _systemPrompt {
   final targetLangs =
@@ -19,14 +19,7 @@ You are a professional music translator and linguist. Translate the following LR
 ''';
 }
 
-Future<String> createTranslatedLyric(String lrc) {
-  final proxy = Pref.normalizedProxy;
-  final apiKey = Pref.get<String>(.geminiKey);
-
-  return GeminiService().generate(
-    lrc,
-    systemPrompt: _systemPrompt,
-    apiKey: apiKey,
-    proxy: proxy,
-  );
+Future<String> createLrcTranslation(String lyric) {
+  final service = LlmService.fromPref();
+  return service.generate(lyric, systemPrompt: _systemPrompt);
 }

@@ -1,7 +1,7 @@
 import '/preferences/preferences.dart';
 import '/utils/utils.dart';
 
-import 'service.gemini.dart';
+import 'service.dart';
 
 String get _systemPrompt {
   final targetLang = Pref.get<String>(.translateLang)!;
@@ -17,45 +17,46 @@ String get _systemPrompt {
 JsonMap get _jsonFormat {
   final targetLang = Pref.get<String>(.translateLang)!;
   return {
-    "type": "object",
-    "properties": {
-      "sentence": {"type": "string"},
-      "source_lang": {
-        "type": "string",
-        "description":
-            "MUST provide the detected source language name written in $targetLang characters.",
-      },
-      "translate": {"type": "string"},
-      "detail": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "word": {"type": "string"},
-            "translate": {"type": "string"},
-            "explanation": {
-              "type": "string",
-              "description":
-                  "Brief usage notes, grammar points, or context in $targetLang(optional, Set to null if no explanation is needed).",
+    "name": "translation_response",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "sentence": {"type": "string"},
+        "source_lang": {
+          "type": "string",
+          "description":
+              "MUST provide the detected source language name written in $targetLang characters.",
+        },
+        "translate": {"type": "string"},
+        "detail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": {"type": "string"},
+              "translate": {"type": "string"},
+              "explanation": {
+                "type": "string",
+                "description":
+                    "Brief usage notes, grammar points, or context in $targetLang(optional, Set to null if no explanation is needed).",
+              },
             },
+            "required": ["word", "translate", "explanation"],
           },
-          "required": ["word", "translate"],
         },
       },
+      "required": ["source_lang", "sentence", "translate", "detail"],
+      "additionalProperties": false,
     },
-    "required": ["source_lang", "sentence", "translate", "detail"],
   };
 }
 
-Future<JsonMap> createWordTranslation(String sentence) {
-  final proxy = Pref.normalizedProxy;
-  final apiKey = Pref.get<String>(.geminiKey);
-
-  return GeminiService().generateJson(
-    sentence,
+Future<JsonMap> createSentenceTranslation(String lyric) {
+  final service = LlmService.fromPref();
+  return service.generateJson(
+    lyric,
     format: _jsonFormat,
     systemPrompt: _systemPrompt,
-    apiKey: apiKey,
-    proxy: proxy,
   );
 }

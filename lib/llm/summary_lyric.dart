@@ -1,6 +1,6 @@
 import '/preferences/preferences.dart';
 
-import 'service.gemini.dart';
+import 'service.dart';
 
 String get _systemPrompt {
   final targetLang = Pref.get<String>(.translateLang)!;
@@ -14,13 +14,6 @@ You are a music critic. Provide a subtitle for the song based on the following l
 }
 
 Future<String> createSummary(String lyric) {
-  final proxy = Pref.normalizedProxy;
-  final apiKey = Pref.get<String>(.geminiKey);
-
-  return GeminiService().generate(
-    lyric,
-    systemPrompt: _systemPrompt,
-    apiKey: apiKey,
-    proxy: proxy,
-  );
+  final service = LlmService.fromPref();
+  return service.generate(lyric, systemPrompt: _systemPrompt);
 }

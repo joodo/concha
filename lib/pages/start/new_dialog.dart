@@ -13,7 +13,7 @@ import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/widgets/setting_button.dart';
+import '/widgets/settings.dart';
 
 class NewDialog extends HookWidget {
   const NewDialog({super.key});

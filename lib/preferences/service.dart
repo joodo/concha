@@ -2,12 +2,24 @@ part of 'riverpod.dart';
 
 enum PrefKey {
   proxy,
+
   acoustKey,
+  mvsepKey,
   autoFillMetadata(defaultValue: true),
-  geminiKey,
+
+  llmService,
+  llmUrl,
+  llmKey,
+  llmModel,
+
+  ttsService,
+  ttsUrl,
+  ttsKey,
+  ttsModel,
+
   translateLang(defaultValue: '中文'),
   lyricTranslateLangs,
-  mvsepKey,
+
   playLoop(defaultValue: false),
   attachToLyric(defaultValue: true);
 
@@ -28,7 +40,7 @@ class Pref {
 
   static T? get<T>(PrefKey key) {
     final k = key.toString();
-    late final dynamic data;
+    late final Object? data;
     switch (T) {
       case const (int):
         data = _i.getInt(k);
@@ -41,9 +53,9 @@ class Pref {
       case const (List<String>):
         data = _i.getStringList(k);
       default:
-        data = _i.get(k) as T?;
+        data = _i.get(k);
     }
-    return data;
+    return data as T?;
   }
 
   static String? get normalizedProxy {

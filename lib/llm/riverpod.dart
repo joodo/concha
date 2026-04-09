@@ -65,7 +65,7 @@ class WordForWord extends _$WordForWord {
     final cached = state.value;
     if (cached != null && !_disableCache) return cached;
 
-    final json = await createWordTranslation(sentence);
+    final json = await createSentenceTranslation(sentence);
     final result = TranslationResult.fromJson(json);
     return result;
   }

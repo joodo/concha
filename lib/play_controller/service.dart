@@ -331,7 +331,7 @@ class PlayController implements TickerProvider {
 
     await _disposeInterludeSource();
 
-    final path = 'interlude_${_interludeCounter++}.wav';
+    final path = 'interlude_${_interludeCounter++}.pcm';
     final source = await _soloud.loadMem(path, voiceBytes);
     final handle = await _soloud.play(source, volume: volumeNotifier.value);
 

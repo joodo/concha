@@ -14,3 +14,4 @@ export 'riverpod.dart';
 export 'value_notifier.dart';
 export 'json.dart';
 export 'camel_to_snake.dart';
+export 'scope_function.dart';

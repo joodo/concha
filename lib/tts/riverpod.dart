@@ -5,10 +5,9 @@ import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/persistence/persistence.dart';
-import '/preferences/preferences.dart';
 import '/utils/utils.dart';
 
-import 'service.gemini.dart';
+import 'service.impl.dart';
 
 part 'riverpod.g.dart';
 
@@ -31,20 +30,15 @@ class TextVoice extends _$TextVoice {
       return state.requireValue;
     }
 
-    final result = await _fetch();
-
-    link.close();
-    return result;
+    try {
+      return await _fetch();
+    } finally {
+      link.close();
+    }
   }
 
-  Future<Uint8List> _fetch() {
-    final token = ref.getPref<String>(.geminiKey);
-    final proxy = ref.getPref<String>(.proxy);
-    return GeminiTtsService().getVoice(
-      text,
-      prompt: _prompt,
-      proxy: proxy,
-      apiKey: token,
-    );
+  Future<Uint8List> _fetch() async {
+    final client = TtsServiceImpl.fromPref();
+    return client.getVoice(text, prompt: _prompt);
   }
 }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
 
-class ExpansibleButton extends StatefulWidget {
+class ExpansibleButton extends HookWidget {
   const ExpansibleButton({
     super.key,
     this.isExpanded = false,
@@ -28,52 +29,41 @@ class ExpansibleButton extends StatefulWidget {
   final String Function(double value)? labelStringBuilder;
 
   @override
-  State<ExpansibleButton> createState() => _ExpansibleButtonState();
-}
-
-class _ExpansibleButtonState extends State<ExpansibleButton> {
-  bool _isShowPop = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.isExpanded) {
+    final isPopShowing = useState(false);
+
+    if (isExpanded) {
       return [
-        widget.icon.padding(left: 8.0),
+        icon.padding(left: 8.0),
         Slider(
-          min: widget.min,
-          max: widget.max,
-          value: widget.value,
-          label: widget.labelStringBuilder?.call(widget.value),
-          divisions: widget.divisions,
-          onChanged: widget.onChanged,
-          onChangeStart: widget.onchangeStart,
-          onChangeEnd: widget.onChangeEnd,
+          min: min,
+          max: max,
+          value: value,
+          label: labelStringBuilder?.call(value),
+          divisions: divisions,
+          onChanged: onChanged,
+          onChangeStart: onchangeStart,
+          onChangeEnd: onChangeEnd,
         ),
       ].toRow(mainAxisSize: .min);
     }
 
     final link = LayerLink();
     return PopupWidget(
-      showing: _isShowPop,
+      showing: isPopShowing.value,
       popupBuilder: (context) =>
           [
                 Slider(
-                  min: widget.min,
-                  max: widget.max,
-                  value: widget.value,
-                  divisions: widget.divisions,
-                  onChanged: widget.onChanged,
-                  onChangeStart: widget.onchangeStart,
-                  onChangeEnd: widget.onChangeEnd,
+                  min: min,
+                  max: max,
+                  value: value,
+                  divisions: divisions,
+                  onChanged: onChanged,
+                  onChangeStart: onchangeStart,
+                  onChangeEnd: onChangeEnd,
                 ),
                 Text(
-                  widget.labelStringBuilder?.call(widget.value) ??
-                      widget.value.toString(),
+                  labelStringBuilder?.call(value) ?? value.toString(),
                   maxLines: 1,
                 ).constrained(width: 48.0).padding(right: 16.0),
               ]
@@ -82,9 +72,7 @@ class _ExpansibleButtonState extends State<ExpansibleButton> {
               .clipRRect(all: 16.0),
       layoutBuilder: (context, popup) => GestureDetector(
         behavior: .opaque,
-        onTap: () => setState(() {
-          _isShowPop = false;
-        }),
+        onTap: () => isPopShowing.value = false,
         child: UnconstrainedBox(
           child: CompositedTransformFollower(
             link: link,
@@ -98,10 +86,8 @@ class _ExpansibleButtonState extends State<ExpansibleButton> {
       child: CompositedTransformTarget(
         link: link,
         child: IconButton.filledTonal(
-          onPressed: () => setState(() {
-            _isShowPop = true;
-          }),
-          icon: widget.icon,
+          onPressed: () => isPopShowing.value = true,
+          icon: icon,
         ),
       ),
     );

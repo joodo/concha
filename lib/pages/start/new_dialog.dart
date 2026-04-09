@@ -210,46 +210,31 @@ class NewDialog extends HookWidget {
   }
 }
 
-class _ConsoleArea extends StatefulWidget {
+class _ConsoleArea extends HookWidget {
   const _ConsoleArea({required this.output});
 
   final String output;
 
   @override
-  State<_ConsoleArea> createState() => _ConsoleAreaState();
-}
-
-class _ConsoleAreaState extends State<_ConsoleArea> {
-  final _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant _ConsoleArea oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.output == oldWidget.output) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    useEffect(() {
+      runAfterBuild(() {
+        if (!scrollController.hasClients) return;
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      });
+      return null;
+    }, [output]);
+
     return SingleChildScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           padding: const EdgeInsets.all(12),
           child: SelectableText(
-            widget.output.isEmpty ? '暂无输出' : widget.output,
+            output.isEmpty ? '暂无输出' : output,
             style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
           ),
         )
         .width(double.maxFinite)
-        .border(color: Theme.of(context).dividerColor, all: 1.0);
+        .border(color: context.theme.dividerColor, all: 1.0);
   }
 }

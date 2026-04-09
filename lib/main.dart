@@ -9,11 +9,7 @@ import '/projects/models.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final soLoud = SoLoud.instance;
-  if (soLoud.isInitialized) {
-    soLoud.deinit();
-  }
-  await soLoud.init();
+  await SoLoud.instance.init();
 
   await Pref.init();
 

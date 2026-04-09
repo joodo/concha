@@ -217,9 +217,6 @@ class ProjectActions extends HookConsumerWidget {
           onInvoke: (intent) async {
             final playController = ref.playController!;
 
-            final busyNotifier = ref.read(readAloudPendingProvider.notifier);
-            busyNotifier.set(true);
-
             try {
               String? text = intent.text;
               if (text == null) {
@@ -230,8 +227,13 @@ class ProjectActions extends HookConsumerWidget {
                 text = currentLyric;
               }
 
-              final voiceBytes = await ref.read(
-                textVoiceProvider(text.trim()).future,
+              text = text.trim();
+              if (text.isEmpty) return;
+
+              final voiceBytes = await readAloud.run(
+                ref,
+                (transaction) =>
+                    transaction.get(textVoiceProvider(text!).future),
               );
               await playController.insertInterlude(voiceBytes);
               return null;
@@ -241,7 +243,7 @@ class ProjectActions extends HookConsumerWidget {
               }
               rethrow;
             } finally {
-              busyNotifier.set(false);
+              readAloud.reset(ref);
             }
           },
         ),

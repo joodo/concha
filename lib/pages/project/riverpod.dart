@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter_riverpod/experimental/mutation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/waveform/waveform_controller.dart';
@@ -11,11 +14,4 @@ Raw<WaveformController> waveformController(Ref ref) {
   return controller;
 }
 
-@riverpod
-class ReadAloudPending extends _$ReadAloudPending {
-  @override
-  bool build() => false;
-
-  void toggle() => state = !state;
-  void set(bool value) => state = value;
-}
+final readAloud = Mutation<Uint8List>();

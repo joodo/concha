@@ -50,7 +50,7 @@ final class TextVoiceProvider
   }
 }
 
-String _$textVoiceHash() => r'11cce0d80f63c56dec5731f3946b8711fd8a84c4';
+String _$textVoiceHash() => r'210555460aef7adcfd64d9242f37e11e893da979';
 
 final class TextVoiceFamily extends $Family
     with

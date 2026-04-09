@@ -88,7 +88,7 @@ final class WordForWordProvider
   }
 }
 
-String _$wordForWordHash() => r'd280182d207ad313ebb1ca3bee9df4bb494db2a7';
+String _$wordForWordHash() => r'fafeb3d92018385f8925ad8859201c1329ad999b';
 
 @JsonPersist()
 final class WordForWordFamily extends $Family

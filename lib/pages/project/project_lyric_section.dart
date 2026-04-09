@@ -228,10 +228,10 @@ class _LyricToolbar extends ConsumerWidget {
       if (!isPreview)
         Consumer(
           builder: (context, ref, child) {
-            final readAloudPending = ref.watch(readAloudPendingProvider);
+            final readAloudState = ref.watch(readAloud);
             return _BusyButton(
               icon: Icon(Icons.record_voice_over),
-              isBusy: readAloudPending,
+              isBusy: readAloudState.isPending,
               tooltip: '朗读当前歌词',
               onPressed: Actions.handler(
                 context,
@@ -353,11 +353,11 @@ class _WordForWordPanel extends ConsumerWidget {
     final header = [
       Consumer(
         builder: (context, ref, child) {
-          final readAloudPending = ref.watch(readAloudPendingProvider);
+          final readAloudState = ref.watch(readAloud);
           return IconButton.outlined(
             icon: Icon(Icons.record_voice_over),
             tooltip: '朗读歌词',
-            onPressed: readAloudPending
+            onPressed: readAloudState.isPending
                 ? null
                 : Actions.handler(context, ReadAloudIntent(sentense)),
           );

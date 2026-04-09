@@ -58,7 +58,7 @@ class WordForWord extends _$WordForWord {
   @override
   Future<TranslationResult> build(String sentence) async {
     await persist(
-      ref.watch(storageProvider.future),
+      ref.watch(persistStorageProvider.future),
       options: const StorageOptions(cacheTime: StorageCacheTime.unsafe_forever),
     ).future;
 

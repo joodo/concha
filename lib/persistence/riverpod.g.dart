@@ -9,43 +9,55 @@ part of 'riverpod.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(storage)
-final storageProvider = StorageProvider._();
+@ProviderFor(PersistStorage)
+final persistStorageProvider = PersistStorageProvider._();
 
-final class StorageProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<Storage<String, String>>,
-          Storage<String, String>,
-          FutureOr<Storage<String, String>>
-        >
-    with
-        $FutureModifier<Storage<String, String>>,
-        $FutureProvider<Storage<String, String>> {
-  StorageProvider._()
+final class PersistStorageProvider
+    extends $AsyncNotifierProvider<PersistStorage, Storage<String, String>> {
+  PersistStorageProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'storageProvider',
-        isAutoDispose: true,
+        name: r'persistStorageProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$storageHash();
+  String debugGetCreateSourceHash() => _$persistStorageHash();
 
   @$internal
   @override
-  $FutureProviderElement<Storage<String, String>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<Storage<String, String>> create(Ref ref) {
-    return storage(ref);
-  }
+  PersistStorage create() => PersistStorage();
 }
 
-String _$storageHash() => r'e1b0cadb333caa476b909c2f5fa452adec421cc0';
+String _$persistStorageHash() => r'881e17da084836c16ee1594fe664e9d9a05707e1';
+
+abstract class _$PersistStorage
+    extends $AsyncNotifier<Storage<String, String>> {
+  FutureOr<Storage<String, String>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<Storage<String, String>>,
+              Storage<String, String>
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<Storage<String, String>>,
+                Storage<String, String>
+              >,
+              AsyncValue<Storage<String, String>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

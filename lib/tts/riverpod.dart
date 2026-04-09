@@ -18,7 +18,7 @@ class TextVoice extends _$TextVoice {
   Future<Uint8List> build(String text) async {
     final link = ref.keepAlive();
     await persist(
-      ref.watch(storageProvider.future),
+      ref.watch(persistStorageProvider.future),
       key: 'TextVoice($text)',
       encode: (state) => base64Encode(state),
       decode: (encoded) => base64Decode(encoded),

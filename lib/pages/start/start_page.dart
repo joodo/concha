@@ -75,7 +75,7 @@ class StartPage extends HookConsumerWidget {
                     .toList(),
               ),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 220,
+                maxCrossAxisExtent: 180,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
               ),

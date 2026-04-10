@@ -127,12 +127,14 @@ class _LyricView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lyricView = LyricView(
+      // Avoid text layout not available on textStyle with shadow when brightness changed
+      key: ValueKey(context.theme.brightness),
       controller: controller,
       style: LyricStyles.default1.copyWith(
-        textStyle: context.textStyles.displaySmall!.copyWith(
+        textStyle: context.textStyles.displaySmall?.copyWith(
           color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
         ),
-        activeStyle: context.textStyles.displayMedium!.copyWith(
+        activeStyle: context.textStyles.displayMedium?.copyWith(
           shadows: [
             Shadow(
               blurRadius: 10,
@@ -140,7 +142,7 @@ class _LyricView extends StatelessWidget {
             ),
           ],
         ),
-        translationStyle: context.textStyles.titleMedium!.copyWith(
+        translationStyle: context.textStyles.titleMedium?.copyWith(
           color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
         ),
         activeHighlightColor: context.colors.primary,

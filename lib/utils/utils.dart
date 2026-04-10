@@ -14,3 +14,4 @@ export 'value_notifier.dart';
 export 'json.dart';
 export 'camel_to_snake.dart';
 export 'functional.dart';
+export 'list.dart';

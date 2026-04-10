@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:animations/animations.dart';
+import '/widgets/theme_from_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -133,16 +134,7 @@ class ProjectPage extends HookConsumerWidget {
               ref.projectProvider!.select((p) => p.value?.path.cover),
             ) ??
             '';
-        return FutureBuilder(
-          future: ColorScheme.fromImageProvider(
-            provider: FileImage(File(coverPath)),
-          ),
-          initialData: context.colors,
-          builder: (context, snapshot) => Theme(
-            data: context.theme.copyWith(colorScheme: snapshot.data),
-            child: child!,
-          ),
-        );
+        return ThemeFromImage(path: coverPath, child: child!);
       },
       child: scaffoldWrap,
     );

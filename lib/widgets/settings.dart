@@ -52,6 +52,27 @@ class SettingDialog extends StatelessWidget {
       padding: EdgeInsets.all(16.0),
       children: [
         _SettingSection(
+          title: '界面',
+          children: [
+            _PrefDropdownMenu(
+              .brightness,
+              labelText: '主题',
+              data: {
+                for (final mode in ThemeMode.values)
+                  mode.name: switch (mode) {
+                    .system => '跟随系统',
+                    .light => '浅色',
+                    .dark => '深色',
+                  },
+              },
+              entryBuilder: (key, value) =>
+                  DropdownMenuEntry(value: key, label: value),
+            ),
+          ],
+        ),
+
+        _SettingSection(
+          title: '网络',
           children: [
             _PrefTextField(
               .proxy,
@@ -294,7 +315,7 @@ class _PrefWidget<T> extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return builder(
-      ref.read(_provider),
+      ref.read(_provider) ?? (prefKey.defaultValue as T?),
       (value) => ref.read(_provider.notifier).set(value),
     );
   }

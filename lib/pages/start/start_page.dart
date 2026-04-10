@@ -10,6 +10,7 @@ import 'package:styled_widget/styled_widget.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/widgets/settings.dart';
+import '/widgets/theme_from_image.dart';
 
 import 'new_dialog.dart';
 import 'project_grid_tile.dart';
@@ -271,7 +272,7 @@ class _DisplayCard extends ConsumerWidget {
     final project = ref.watch(projectDetailProvider(projectId)).value;
     if (project == null) return const SizedBox.shrink();
 
-    final coverFile = File(project.path.cover);
+    final coverPath = project.path.cover;
     final metadata = project.metadata;
     final subtitle = [
       metadata.artist,
@@ -284,7 +285,7 @@ class _DisplayCard extends ConsumerWidget {
       elevation: 0,
       child: [
         Image.file(
-          coverFile,
+          File(coverPath),
           fit: .cover,
           errorBuilder: (context, error, stackTrace) =>
               Icon(Icons.music_note_rounded, size: 56.0).center(),
@@ -314,14 +315,7 @@ class _DisplayCard extends ConsumerWidget {
       ].toRow(),
     ).constrained(maxWidth: 600.0, height: 260.0);
 
-    final themeWrap = FutureBuilder(
-      future: ColorScheme.fromImageProvider(provider: FileImage(coverFile)),
-      initialData: context.colors,
-      builder: (context, snapshot) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: snapshot.data),
-        child: content,
-      ),
-    );
+    final themeWrap = ThemeFromImage(path: coverPath, child: content);
 
     return GestureDetector(
       onSecondaryTapDown: (details) =>

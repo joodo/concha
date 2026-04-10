@@ -1,6 +1,8 @@
 part of 'riverpod.dart';
 
 enum PrefKey {
+  brightness(defaultValue: 'system'),
+
   proxy,
 
   acoustKey,

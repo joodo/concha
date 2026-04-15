@@ -8,6 +8,7 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/generated/l10n.dart';
 import '/llm/llm.dart';
 import '/lyric_controller/lyric_controller.dart' hide LyricController;
 import '/preferences/preferences.dart';
@@ -167,7 +168,7 @@ class _LyricView extends StatelessWidget {
           if (!isPreview)
             PopupMenuItem(
               onTap: current == null ? null : () => onWordForWord(current),
-              child: '分词解释'.asText(),
+              child: S.of(context).wordByWordExplanation.asText(),
             ),
           if (!isPreview) const PopupMenuDivider(),
           PopupMenuItem(
@@ -176,17 +177,21 @@ class _LyricView extends StatelessWidget {
                 : () async {
                     await current.copyToClipboard();
                     if (context.mounted) {
-                      context.showSnackBarText('已复制当前歌词');
+                      context.showSnackBarText(
+                        S.of(context).currentLyricCopyed,
+                      );
                     }
                   },
-            child: '复制当前歌词'.asText(),
+            child: S.of(context).copyCurrentLyric.asText(),
           ),
           PopupMenuItem(
             onTap: () async {
               await total.copyToClipboard();
-              if (context.mounted) context.showSnackBarText('已复制全部歌词');
+              if (context.mounted) {
+                context.showSnackBarText(S.of(context).wholeLyricCopyed);
+              }
             },
-            child: '复制全部歌词'.asText(),
+            child: S.of(context).copyWholeLyric.asText(),
           ),
         ]);
       },
@@ -208,7 +213,7 @@ class _LyricToolbar extends ConsumerWidget {
       if (!isPreview)
         _LoadingButton(
           icon: Icon(Icons.translate),
-          tooltip: '翻译歌词',
+          tooltip: S.of(context).translateLyric,
           onPressed: () async {
             final lrc = await File(ref.project!.path.lyric).readAsString();
 
@@ -219,7 +224,10 @@ class _LyricToolbar extends ConsumerWidget {
             );
             if (targetLangs == null) return;
 
-            final tlrc = await createLrcTranslation(lrc);
+            final tlrc = await createLrcTranslation(
+              lrc,
+              ref.read(lyricTranslateLangsProvider),
+            );
 
             lyricController.loadMultiLineLyric(lrc, translationLyric: tlrc);
 
@@ -234,7 +242,7 @@ class _LyricToolbar extends ConsumerWidget {
             return _BusyButton(
               icon: Icon(Icons.record_voice_over),
               isBusy: readAloudState.isPending,
-              tooltip: '朗读当前歌词',
+              tooltip: S.of(context).readAloudCurrentLyric,
               onPressed: Actions.handler(
                 context,
                 ReadAloudIntent.currentLyric(),
@@ -245,7 +253,7 @@ class _LyricToolbar extends ConsumerWidget {
       if (!isPreview)
         IconButton.filledTonal(
           onPressed: lyricController.lyricNotifier.clear,
-          tooltip: '清除歌词',
+          tooltip: S.of(context).clearLyric,
           icon: Icon(Icons.subtitles_off),
         ),
     ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
@@ -331,7 +339,9 @@ class _SearchPanel extends HookConsumerWidget {
                 selected.value.mapOrNull((v) => data[v].syncedLyrics),
               ),
               title: Text(
-                selected.value == null ? '取消' : '确定',
+                selected.value == null
+                    ? S.of(context).cancel
+                    : S.of(context).confirm,
               ).textColor(context.colors.primary).center(),
             ),
           ),
@@ -358,7 +368,7 @@ class _WordForWordPanel extends ConsumerWidget {
           final readAloudState = ref.watch(readAloud);
           return IconButton.outlined(
             icon: Icon(Icons.record_voice_over),
-            tooltip: '朗读歌词',
+            tooltip: S.of(context).readAloudLyric,
             onPressed: readAloudState.isPending
                 ? null
                 : Actions.handler(context, ReadAloudIntent(sentense)),
@@ -367,7 +377,7 @@ class _WordForWordPanel extends ConsumerWidget {
       ),
       IconButton.outlined(
         icon: Icon(Icons.refresh),
-        tooltip: '重新解释',
+        tooltip: S.of(context).regenerateExplanation,
         onPressed: !dataAsync.isRefreshing && !dataAsync.isLoading
             ? ref.read(wordForWordProvider(sentense).notifier).refresh
             : null,
@@ -381,7 +391,7 @@ class _WordForWordPanel extends ConsumerWidget {
       if (dataAsync.isRefreshing) LinearProgressIndicator(),
       dataAsync
           .when(
-            data: (data) => _buildContent(context, data),
+            data: (data) => _buildContent(ref, data),
             error: (error, stackTrace) {
               runAfterBuild(() => Error.throwWithStackTrace(error, stackTrace));
               return SelectableText(error.toString()).center();
@@ -395,31 +405,39 @@ class _WordForWordPanel extends ConsumerWidget {
     return content.backgroundColor(context.colors.surface).clipRRect(all: 30.0);
   }
 
-  Widget _buildContent(BuildContext context, TranslationResult data) {
-    final words = ListView.separated(
-      padding: EdgeInsets.symmetric(vertical: 12.0),
-      itemCount: data.detail.length,
-      itemBuilder: (context, index) {
-        final detail = data.detail[index];
-        return [
-              [
-                detail.word
-                    .asText()
-                    .fontWeight(.bold)
-                    .textColor(context.colors.primary),
-                detail.translate.asText().textColor(context.colors.onSurface),
-              ].toWrap(spacing: 12.0),
-              if (detail.explanation?.isNotEmpty == true)
-                detail.explanation!
-                    .asText()
-                    .textStyle(context.textStyles.bodySmall!)
-                    .textColor(context.colors.onSurfaceVariant),
-            ]
-            .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
-            .padding(horizontal: 12);
-      },
-      separatorBuilder: (context, index) => Divider(),
-    ).backgroundColor(context.colors.surfaceContainerLow).clipRRect(all: 12.0);
+  Widget _buildContent(WidgetRef ref, TranslationResult data) {
+    final words =
+        ListView.separated(
+              padding: EdgeInsets.symmetric(vertical: 12.0),
+              itemCount: data.detail.length,
+              itemBuilder: (context, index) {
+                final detail = data.detail[index];
+                return [
+                      [
+                        detail.word
+                            .asText()
+                            .fontWeight(.bold)
+                            .textColor(context.colors.primary),
+                        detail.translate.asText().textColor(
+                          context.colors.onSurface,
+                        ),
+                      ].toWrap(spacing: 12.0),
+                      if (detail.explanation?.isNotEmpty == true)
+                        detail.explanation!
+                            .asText()
+                            .textStyle(context.textStyles.bodySmall!)
+                            .textColor(context.colors.onSurfaceVariant),
+                    ]
+                    .toColumn(
+                      crossAxisAlignment: .start,
+                      separator: 8.0.asHeight(),
+                    )
+                    .padding(horizontal: 12);
+              },
+              separatorBuilder: (context, index) => Divider(),
+            )
+            .backgroundColor(ref.context.colors.surfaceContainerLow)
+            .clipRRect(all: 12.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -434,12 +452,16 @@ class _WordForWordPanel extends ConsumerWidget {
           ),
           _buildSentenceBlock(
             context,
-            Pref.get<String>(.translateLang)!,
+            ref.read(translateLangProvider),
             data.translate,
             context.colors.primaryContainer,
           ),
           [
-                '逐词解释'.asText().textStyle(context.textStyles.titleMedium!),
+                S
+                    .of(context)
+                    .wordByWordExplanation
+                    .asText()
+                    .textStyle(context.textStyles.titleMedium!),
                 words.expanded(),
               ]
               .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
@@ -472,10 +494,7 @@ class _WordForWordPanel extends ConsumerWidget {
 class _LyricTranslateDialog extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final langs = useState<List<String>>(
-      ref.getPref<List<String>>(.lyricTranslateLangs) ??
-          [ref.getPref<String>(.translateLang)!],
-    );
+    final langs = useState<List<String>>(ref.read(lyricTranslateLangsProvider));
     final controller = useTextEditingController();
     final focusNode = useFocusNode();
     final addLang = useCallback(() {
@@ -503,8 +522,8 @@ class _LyricTranslateDialog extends HookConsumerWidget {
                   .toWrap(spacing: 4.0)
                   .constrained(maxWidth: 400.0)
             : null,
-        hintText: '添加内容……',
-        helperText: '可以添加多种内容，比如中文、罗马音',
+        hintText: S.of(context).addLanguage,
+        helperText: S.of(context).addLanguageHint,
       ),
       onSubmitted: (_) => addLang(),
     );
@@ -519,19 +538,18 @@ class _LyricTranslateDialog extends HookConsumerWidget {
             onPressed: langs.value.isNotEmpty && controller.text.isEmpty
                 ? () {
                     ref
-                        .read(
-                          preferenceProvider<List<String>>(
-                            .lyricTranslateLangs,
-                          ).notifier,
-                        )
+                        .read(lyricTranslateLangsProvider.notifier)
                         .set(langs.value);
                     Navigator.of(context).pop(langs.value);
                   }
                 : null,
-            child: '翻译'.asText(),
+            child: S.of(context).translate.asText(),
           ),
         ),
-        TextButton(onPressed: Navigator.of(context).pop, child: '取消'.asText()),
+        TextButton(
+          onPressed: Navigator.of(context).pop,
+          child: S.of(context).cancel.asText(),
+        ),
       ],
     );
   }
@@ -550,11 +568,15 @@ class _EmptyContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return [
           _buildBigButton(
-            onTap: _openLocalLyric,
-            title: '打开本地',
+            onTap: () => _openLocalLyric(context),
+            title: S.of(context).openLocal,
             icon: Icons.folder_open,
           ),
-          _buildBigButton(onTap: onSearch, title: '在线搜索', icon: Icons.search),
+          _buildBigButton(
+            onTap: onSearch,
+            title: S.of(context).searchOnline,
+            icon: Icons.search,
+          ),
         ]
         .toRow(mainAxisSize: .min, separator: const SizedBox(width: 32.0))
         .center();
@@ -588,23 +610,21 @@ class _EmptyContent extends StatelessWidget {
     );
   }
 
-  Future<void> _openLocalLyric() async {
-    final lyricPath = await _getLyricPath();
+  Future<void> _openLocalLyric(BuildContext context) async {
+    final lyricPath = await _getLyricPath(label: S.of(context).lyricFile);
     if (lyricPath == null) return;
 
     onLocalPathSelected(lyricPath);
   }
 
-  Future<String?> _getLyricPath() async {
-    const XTypeGroup audioTypeGroup = XTypeGroup(
-      label: '歌词文件',
+  Future<String?> _getLyricPath({String? label}) async {
+    final audioTypeGroup = XTypeGroup(
+      label: label,
       extensions: <String>['lrc'],
       mimeTypes: <String>['text/plain', 'application/octet-stream'],
     );
 
-    final XFile? picked = await openFile(
-      acceptedTypeGroups: const <XTypeGroup>[audioTypeGroup],
-    );
+    final XFile? picked = await openFile(acceptedTypeGroups: [audioTypeGroup]);
 
     return picked?.path;
   }
@@ -634,7 +654,7 @@ class _LoadingButton extends HookWidget {
               await onPressed?.call();
             } catch (e) {
               if (context.mounted) {
-                context.showSnackBarText('失败：$e');
+                context.showSnackBarText('${S.of(context).failed}: $e');
               }
             } finally {
               isBusyNotifier.value = false;
@@ -733,7 +753,7 @@ class _OffsetButton extends HookConsumerWidget {
         link: link,
         child: IconButton.filledTonal(
           onPressed: () => isOpen.value = !isOpen.value,
-          tooltip: '调整歌词延迟',
+          tooltip: S.of(context).adjustLyricOffset,
           icon: Icon(Icons.timer),
         ),
       ),

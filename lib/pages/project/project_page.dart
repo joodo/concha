@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:animations/animations.dart';
-import '/widgets/theme_from_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,6 +12,7 @@ import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
 import '/widgets/settings.dart';
+import '/widgets/theme_from_image.dart';
 
 import 'actions.dart';
 import 'project_lyric_section.dart';
@@ -144,6 +144,7 @@ class ProjectPage extends HookConsumerWidget {
 }
 
 class _HelpButton extends StatelessWidget {
+  // TODO: Change to tooltips
   static const List<(String, String)> _shortcutItems = [
     ('Space', '播放/暂停'),
     ('← / →', '后退/前进'),

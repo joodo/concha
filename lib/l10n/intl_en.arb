@@ -1,0 +1,122 @@
+{
+  "@@locale": "en",
+  "settings": "Settings",
+  "interface": "Interface",
+  "theme": "Theme",
+  "followSystem": "Follow System",
+  "light": "Light",
+  "dark": "Dark",
+  "language": "Language",
+  "network": "Network",
+  "networkProxy": "Network Proxy",
+  "functionOfAcoustID": "Used for completing music information",
+  "apply": "Apply",
+  "functionOfMvsep": "Used for generating accompaniments",
+  "textProcessing": "Text Processing",
+  "selectService": "Select Service",
+  "functionOfLlm": "Used for understanding and translating lyrics",
+  "targetLanguage": "Target Language",
+  "translateTo": "Translate to: ",
+  "optionalServiceUrl": "Service URL (Optional)",
+  "modelName": "Model Name",
+  "llmModelExample": "e.g., \"gemini-3-flash-preview\"",
+  "textProcessingTest": "Text Processing Test",
+  "voiceGeneration": "Voice Generation",
+  "ttsModelExample": "e.g., \"gemini-2.5-flash-preview-tts\"",
+  "voiceTest": "Voice Test",
+  "about": "About",
+  "localStorageDir": "Local Storage Directory",
+  "test": "Test",
+  "successOfTest": " Success",
+  "failureOfTest": " Failure:",
+  "testing": "Testing",
+  "confirm": "Confirm",
+  "version": "version",
+  "copyright2026": "Copyright 2026 Joodo. Licensed under GPLv3 License.",
+  "wordByWordExplanation": "Word-by-word Breakdown",
+  "currentLyricCopyed": "Current lyric copied",
+  "wholeLyricCopyed": "All lyrics copied",
+  "copyCurrentLyric": "Copy Current Lyric",
+  "copyWholeLyric": "Copy All Lyrics",
+  "translate": "Translate",
+  "cancel": "Cancel",
+  "addLanguage": "Add Language",
+  "addLanguageHint": "Add auxiliary content, such as phonetics, Romaji, or Pinyin",
+  "regenerateExplanation": "Regenerate Explanation",
+  "readAloudLyric": "Read Lyrics Aloud",
+  "clearLyric": "Clear Lyrics",
+  "readAloudCurrentLyric": "Read Current Lyric Aloud",
+  "translateLyric": "Translate Lyrics",
+  "failed": "Failed",
+  "openLocal": "Open Local",
+  "searchOnline": "Search Online",
+  "lyricFile": "Lyric File",
+  "adjustLyricOffset": "Adjust Lyric Offset",
+  "pause": "Pause",
+  "playFromStartPoint": "Play from Start",
+  "play": "Play",
+  "attachToLyric": "Snap to Lyrics",
+  "stop": "Stop",
+  "volume": "Volume",
+  "playbackRate": "Speed",
+  "pitch": "Pitch",
+  "vocalIsolation": "Vocal Isolation Mode",
+  "initiatingService": "Initializing service",
+  "startingProgress": "In progress",
+  "uploading": "Uploading",
+  "queueStatus": "In queue ({count} remaining)",
+  "@queueStatus": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "compact"
+      }
+    }
+  },
+  "separatingStatus": "Separating vocals and accompaniment",
+  "downloadingStatus": "Downloading",
+  "downloadedBytes": "({bytes} downloaded)",
+  "@downloadedBytes": {
+    "placeholders": {
+      "bytes": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingAfterSeparatedStatus": "Generated successfully! Loading",
+  "phaseFailedStatus": "Failed at: {phase}\\nReason: {reason}",
+  "@phaseFailedStatus": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "processing": "Processing",
+  "delete": "Delete",
+  "failedToReadAloudPleaseRetry": "Failed to get audio, please retry",
+  "selectAudioFile": "Select Audio File",
+  "supportAudioInputsHint": "Supports YouTube links or local files",
+  "autoFillMetadata": "Auto-fill music info",
+  "createNewProject": "New Project",
+  "add": "Add",
+  "audioPathInvalidHint": "Please enter a local file path or a valid YouTube link",
+  "failedToLoad": "Failed to load",
+  "noProject": "No projects",
+  "projectDeletedHint": "Deleted ${project}",
+  "@projectDeletedHint": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "undo": "Undo",
+  "addAudio": "Add Track",
+  "myLibrary": "My Library",
+  "continuePracticing": "Continue",
+  "regenerateSubtitle": "Regenerate Subtitles"
+}

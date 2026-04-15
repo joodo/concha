@@ -1,7 +1,9 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '/generated/l10n.dart';
 import '/preferences/preferences.dart';
 import '/utils/utils.dart';
 
@@ -17,11 +19,27 @@ class ConchaApp extends ConsumerWidget {
         ThemeMode.values.firstWhereOrNull((e) => e.name == themeModeString) ??
         ThemeMode.system;
 
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'Concha',
+
+      // I18n
+      localizationsDelegates: [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
+      locale: locale,
+
+      // Theme
       theme: _buildThemeData(.light),
       darkTheme: _buildThemeData(.dark),
       themeMode: themeMode,
+
+      // Routing
       initialRoute: '/',
       routes: {
         '/': (context) => StartPage(),

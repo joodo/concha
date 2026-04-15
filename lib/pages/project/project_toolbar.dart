@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
+import '/generated/l10n.dart';
 import '/lyric_controller/lyric_controller.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
@@ -38,10 +39,10 @@ class ProjectToolbar extends StatelessWidget {
               size: 32,
             ),
             tooltip: playController.isPlayNotifier.value
-                ? '暂停'
+                ? S.of(context).pause
                 : isLoop
-                ? '从起点播放'
-                : '播放',
+                ? S.of(context).playFromStartPoint
+                : S.of(context).play,
           ),
         );
       },
@@ -52,7 +53,7 @@ class ProjectToolbar extends StatelessWidget {
         return IconButton.outlined(
           isSelected: ref.watch(loopProvider)!,
           onPressed: ref.read(loopProvider.notifier).toggle,
-          tooltip: '从起点播放',
+          tooltip: S.of(context).playFromStartPoint,
           icon: const Icon(Icons.repeat),
         );
       },
@@ -74,7 +75,7 @@ class ProjectToolbar extends StatelessWidget {
             onPressed: lyrics == null
                 ? null
                 : ref.read(attachToLyricProvider.notifier).toggle,
-            tooltip: '位置吸附到歌词',
+            tooltip: S.of(context).attachToLyric,
             isSelected: attachNotifier,
             icon: const Icon(Icons.my_location),
           ),
@@ -84,7 +85,7 @@ class ProjectToolbar extends StatelessWidget {
 
     final stopButton = IconButton(
       onPressed: playController.stop,
-      tooltip: '停止',
+      tooltip: S.of(context).stop,
       icon: const Icon(Icons.stop_rounded),
     );
 
@@ -105,7 +106,7 @@ class ProjectToolbar extends StatelessWidget {
               divisions: 100,
               onChanged: playController.setVolume,
             ),
-          ).tooltip('音量'),
+          ).tooltip(S.of(context).volume),
           ValueListenableBuilder(
             valueListenable: playController.speedNotifier,
             builder: (context, speed, child) => ExpansibleButton(
@@ -122,7 +123,7 @@ class ProjectToolbar extends StatelessWidget {
               divisions: 7,
               onChanged: playController.setSpeed,
             ),
-          ).tooltip('速度'),
+          ).tooltip(S.of(context).playbackRate),
           ValueListenableBuilder(
             valueListenable: playController.pitchNotifier,
             builder: (context, pitch, child) => ExpansibleButton(
@@ -147,7 +148,7 @@ class ProjectToolbar extends StatelessWidget {
               },
               divisions: 14,
               onChanged: (value) => playController.setPitch(value.round()),
-            ).tooltip('音调'),
+            ).tooltip(S.of(context).pitch),
           ),
           _MixTableButton(playController: playController),
         ].toRow(separator: 12.0.asWidth());
@@ -267,14 +268,14 @@ class _MixTableButton extends HookWidget {
         return [
           SwitchListTile(
             value: isSeparated,
-            title: '人声分离模式'.asText(),
+            title: S.of(context).vocalIsolation.asText(),
             onChanged: isSepFileReady
                 ? (value) => separateModeNotifier.value = value
                 : null,
           ),
           isSepFileReady
               ? _buildContent(context, isSeparated: isSeparated)
-              : _buildProgressingContent(_getMessage(event)),
+              : _buildProgressingContent(context, _getMessage(context, event)),
         ].toColumn(separator: const SizedBox(height: 16.0));
       },
     );
@@ -313,8 +314,8 @@ class _MixTableButton extends HookWidget {
     ].toColumn();
   }
 
-  Widget _buildProgressingContent(String message) {
-    return ['处理中'.asText(), message.asText()]
+  Widget _buildProgressingContent(BuildContext context, String message) {
+    return [S.of(context).processing.asText(), message.asText()]
         .toColumn(
           mainAxisAlignment: .center,
           separator: const SizedBox(height: 8.0),
@@ -322,25 +323,25 @@ class _MixTableButton extends HookWidget {
         .expanded();
   }
 
-  String _getMessage(MvsepTaskEvent? event) {
+  String _getMessage(BuildContext context, MvsepTaskEvent? event) {
     switch (event) {
       case null:
       case MvsepInitEvent():
-        return '正在初始化服务';
+        return S.of(context).initiatingService;
 
       case MvsepLocalRunningEvent():
-        return '正在执行';
+        return S.of(context).startingProgress;
 
       case MvsepUploadingEvent(:final uploadedBytes, :final totalBytes):
         final percent = (uploadedBytes / totalBytes).asPercent;
-        return '正在上传 ($percent%)\n'
+        return '${S.of(context).uploading} ($percent%)\n'
             '${uploadedBytes.asByteSize} / ${totalBytes.asByteSize}';
 
       case MvsepRemoteQueuedEvent(:final remoteCurrentOrder):
-        return '正在排队 (还有 $remoteCurrentOrder 人)';
+        return S.of(context).queueStatus(remoteCurrentOrder ?? 0);
 
       case MvsepRemoteProcessingEvent():
-        return '正在分离人声和伴奏';
+        return S.of(context).separatingStatus;
 
       case MvsepDownloadingEvent(
         :final vocalDownloadedBytes,
@@ -350,19 +351,19 @@ class _MixTableButton extends HookWidget {
       ):
         final downloaded = instruDownloadedBytes + vocalDownloadedBytes;
         if (instruFileBytes == null || vocalFileBytes == null) {
-          return '正在下载 (已下载${downloaded.asByteSize})';
+          return '${S.of(context).downloadingStatus} ${S.of(context).downloadedBytes(downloaded.asByteSize)}';
         }
 
         final total = instruFileBytes + vocalFileBytes;
         final percent = (downloaded / total).asPercent;
-        return '正在下载 ($percent%)\n'
+        return '${S.of(context).downloadingStatus} ($percent%)\n'
             '${vocalDownloadedBytes.asByteSize} / ${vocalFileBytes.asByteSize}\n'
             '${instruDownloadedBytes.asByteSize} / ${instruFileBytes.asByteSize}';
 
       case MvsepCompletedEvent():
-        return '生成成功！正在加载';
+        return S.of(context).loadingAfterSeparatedStatus;
       case MvsepFailedEvent(:final phase, :final error):
-        return '失败阶段：$phase\n原因：$error';
+        return S.of(context).phaseFailedStatus(phase, error);
     }
   }
 }

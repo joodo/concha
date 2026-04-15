@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:llm_dart/llm_dart.dart';
+import 'package:locale_names/locale_names.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '/generated/l10n.dart';
 import '/llm/llm.dart';
-import '/preferences/preferences.dart';
-import '/projects/models.dart';
+import '/preferences/preferences.dart' hide Locale;
+import '/projects/projects.dart';
 import '/tts/tts.dart';
 import '/utils/utils.dart';
 
@@ -43,7 +45,7 @@ class SettingDialog extends StatelessWidget {
     final appBar = AppBar(
       leading: const SizedBox.shrink(),
       leadingWidth: 0,
-      title: const Text('设置'),
+      title: S.of(context).settings.asText(),
       actions: [CloseButton()],
       actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
     );
@@ -52,32 +54,56 @@ class SettingDialog extends StatelessWidget {
       padding: EdgeInsets.all(16.0),
       children: [
         _SettingSection(
-          title: '界面',
+          title: S.of(context).interface,
           children: [
             _PrefDropdownMenu(
               .brightness,
-              labelText: '主题',
+              labelText: S.of(context).theme,
               data: {
                 for (final mode in ThemeMode.values)
                   mode.name: switch (mode) {
-                    .system => '跟随系统',
-                    .light => '浅色',
-                    .dark => '深色',
+                    .system => S.of(context).followSystem,
+                    .light => S.of(context).light,
+                    .dark => S.of(context).dark,
                   },
               },
               entryBuilder: (key, value) =>
                   DropdownMenuEntry(value: key, label: value),
             ),
+            Consumer(
+              builder: (context, ref, child) {
+                return DropdownMenu<String>(
+                  label: S.of(context).language.asText(),
+                  initialSelection: ref.read(localeProvider).languageCode,
+                  onSelected: (value) {
+                    final locale = S.delegate.supportedLocales.firstWhereOrNull(
+                      (e) => e.languageCode == value,
+                    );
+                    if (locale == null) return;
+
+                    ref.read(localeProvider.notifier).set(locale);
+                  },
+                  dropdownMenuEntries: S.delegate.supportedLocales
+                      .map(
+                        (e) => DropdownMenuEntry(
+                          value: e.languageCode,
+                          label: e.nativeDisplayLanguage,
+                        ),
+                      )
+                      .toList(),
+                ).alignment(.centerLeft).padding(vertical: 12.0);
+              },
+            ),
           ],
         ),
 
         _SettingSection(
-          title: '网络',
+          title: S.of(context).network,
           children: [
             _PrefTextField(
               .proxy,
-              decoration: const InputDecoration(
-                labelText: '网络代理',
+              decoration: InputDecoration(
+                labelText: S.of(context).networkProxy,
                 prefixText: 'http://',
               ),
             ),
@@ -85,11 +111,11 @@ class SettingDialog extends StatelessWidget {
               .acoustKey,
               decoration: InputDecoration(
                 labelText: 'AcoustID API Key',
-                helperText: '用于补全音乐信息',
+                helperText: S.of(context).functionOfAcoustID,
                 suffix: TextButton(
                   onPressed: () =>
                       launchUrlString('https://acoustid.org/new-application'),
-                  child: '申请'.asText(),
+                  child: S.of(context).apply.asText(),
                 ),
               ),
             ),
@@ -97,11 +123,11 @@ class SettingDialog extends StatelessWidget {
               .mvsepKey,
               decoration: InputDecoration(
                 labelText: 'MVSEP API Key',
-                helperText: '用于生成伴奏',
+                helperText: S.of(context).functionOfMvsep,
                 suffix: TextButton(
                   onPressed: () =>
                       launchUrlString('https://mvsep.com/user-api'),
-                  child: '申请'.asText(),
+                  child: S.of(context).apply.asText(),
                 ),
               ),
             ),
@@ -109,12 +135,12 @@ class SettingDialog extends StatelessWidget {
         ),
 
         _SettingSection(
-          title: 'AI - 文字处理',
+          title: 'AI - ${S.of(context).textProcessing}',
           children: [
             _PrefDropdownMenu(
               .llmService,
-              labelText: '选择服务',
-              helperText: '用于理解和翻译歌词',
+              labelText: S.of(context).selectService,
+              helperText: S.of(context).functionOfLlm,
               data:
                   {
                     for (final p in LLMProviderRegistry.getAllProviderInfo())
@@ -127,12 +153,20 @@ class SettingDialog extends StatelessWidget {
               entryBuilder: (key, value) =>
                   DropdownMenuEntry(value: key, label: value.displayName),
             ),
-            _PrefTextField(
-              .translateLang,
-              decoration: const InputDecoration(
-                hintText: '目标语言',
-                prefixText: '翻译语言：',
-              ),
+            Consumer(
+              builder: (context, ref, child) {
+                return _InitializableTextField(
+                      initValue: ref.watch(translateLangProvider),
+                      decoration: InputDecoration(
+                        hintText: S.of(context).targetLanguage,
+                        prefixText: S.of(context).translateTo,
+                      ),
+                      onChanged: ref.read(translateLangProvider.notifier).set,
+                    )
+                    .constrained(maxWidth: 400.0)
+                    .alignment(.centerLeft)
+                    .padding(bottom: 12.0);
+              },
             ),
             _PrefTextField(
               .llmKey,
@@ -140,25 +174,30 @@ class SettingDialog extends StatelessWidget {
             ),
             _PrefTextField(
               .ttsUrl,
-              decoration: InputDecoration(labelText: '服务 URL（可选）'),
+              decoration: InputDecoration(
+                labelText: S.of(context).optionalServiceUrl,
+              ),
             ),
             _PrefTextField(
               .llmModel,
               decoration: InputDecoration(
-                labelText: '模型名称',
-                hintText: '比如 “gemini-3-flash-preview”',
+                labelText: S.of(context).modelName,
+                hintText: S.of(context).llmModelExample,
               ),
             ),
-            _TestButton(() => LlmService.fromPref().test(), testName: '文字处理测试'),
+            _TestButton(
+              () => LlmService.fromPref().test(),
+              testName: S.of(context).textProcessingTest,
+            ),
           ],
         ),
 
         _SettingSection(
-          title: 'AI - 语音生成',
+          title: 'AI - ${S.of(context).voiceGeneration}',
           children: [
             _PrefDropdownMenu(
               .ttsService,
-              labelText: '选择服务',
+              labelText: S.of(context).selectService,
               data:
                   {
                     for (final p in LLMProviderRegistry.getAllProviderInfo())
@@ -180,21 +219,26 @@ class SettingDialog extends StatelessWidget {
             ),
             _PrefTextField(
               .ttsUrl,
-              decoration: InputDecoration(labelText: '服务 URL（可选）'),
+              decoration: InputDecoration(
+                labelText: S.of(context).optionalServiceUrl,
+              ),
             ),
             _PrefTextField(
               .ttsModel,
               decoration: InputDecoration(
-                labelText: '模型名称',
-                hintText: '比如 “gemini-2.5-flash-preview-tts”',
+                labelText: S.of(context).modelName,
+                hintText: S.of(context).ttsModelExample,
               ),
             ),
-            _TestButton(() => TtsService.fromPref().test(), testName: '语音测试'),
+            _TestButton(
+              () => TtsService.fromPref().test(),
+              testName: S.of(context).voiceTest,
+            ),
           ],
         ),
 
         _SettingSection(
-          title: '关于',
+          title: S.of(context).about,
           children: [
             FutureBuilder(
               future: PackageInfo.fromPlatform(),
@@ -202,10 +246,12 @@ class SettingDialog extends StatelessWidget {
                 if (!snapshot.hasData) return const SizedBox.shrink();
 
                 final data = snapshot.data!;
-                return Text('${data.appName}，版本 ${data.version}');
+                return Text(
+                  '${data.appName}，${S.of(context).version} ${data.version}',
+                );
               },
             ),
-            'Copyright 2026 Joodo. Licensed under GPLv3 License.'.asText(),
+            S.of(context).copyright2026.asText(),
             12.0.asHeight(),
             [
               TextButton.icon(
@@ -216,7 +262,7 @@ class SettingDialog extends StatelessWidget {
               ),
               TextButton.icon(
                 onPressed: () => launchUrl(Uri.file(Project.savedDir)),
-                label: '本地存储目录'.asText(),
+                label: S.of(context).localStorageDir.asText(),
                 icon: Icon(Icons.open_in_browser),
               ),
             ].toRow(),
@@ -315,7 +361,7 @@ class _PrefWidget<T> extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return builder(
-      ref.read(_provider) ?? (prefKey.defaultValue as T?),
+      ref.read(_provider),
       (value) => ref.read(_provider.notifier).set(value),
     );
   }
@@ -336,6 +382,12 @@ class _InitializableTextField extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final controller = useTextEditingController(text: initValue);
+    useEffect(() {
+      if (initValue != controller.text) {
+        controller.text = initValue ?? '';
+      }
+      return null;
+    }, [initValue]);
     return TextField(
       controller: controller,
       decoration: decoration,
@@ -362,16 +414,26 @@ class _TestButton extends HookWidget {
               try {
                 await test();
                 if (!context.mounted) return;
-                await _showResult(context, '${testName ?? "测试"}成功', true);
+                await _showResult(
+                  context,
+                  '${testName ?? S.of(context).test}${S.of(context).successOfTest}',
+                  true,
+                );
               } catch (e) {
                 if (!context.mounted) return;
-                await _showResult(context, '${testName ?? "测试"}失败：\n$e', false);
+                await _showResult(
+                  context,
+                  '${testName ?? S.of(context).test}${S.of(context).failureOfTest}\n$e',
+                  false,
+                );
                 rethrow;
               } finally {
                 isTesting.value = false;
               }
             },
-      child: isTesting.value ? '正在测试'.asText() : '测试'.asText(),
+      child: isTesting.value
+          ? S.of(context).testing.asText()
+          : S.of(context).test.asText(),
     ).alignment(.centerLeft);
   }
 
@@ -384,7 +446,7 @@ class _TestButton extends HookWidget {
         actions: [
           TextButton(
             onPressed: Navigator.of(context).pop,
-            child: const Text('确定'),
+            child: S.of(context).confirm.asText(),
           ),
         ],
       ),

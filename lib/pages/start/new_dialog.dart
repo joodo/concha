@@ -9,6 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:styled_widget/styled_widget.dart';
 
+import '/generated/l10n.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
@@ -50,8 +51,8 @@ class NewDialog extends HookWidget {
     final audioField = TextField(
       controller: audioFieldController,
       decoration: InputDecoration(
-        labelText: '选择音频文件',
-        hintText: '支持 Youtube 链接或本地文件',
+        labelText: S.of(context).selectAudioFile,
+        hintText: S.of(context).supportAudioInputsHint,
         errorText: errorMessage.value,
         suffix: IconButton(
           onPressed: () async {
@@ -68,8 +69,8 @@ class NewDialog extends HookWidget {
       builder: (context, ref, child) {
         final provider = preferenceProvider<bool>(.autoFillMetadata);
         return CheckboxListTile(
-          title: const Text('补全音乐信息'),
-          controlAffinity: ListTileControlAffinity.leading,
+          title: S.of(context).autoFillMetadata.asText(),
+          controlAffinity: .leading,
           value: ref.watch(provider)!,
           onChanged: (value) => ref.read(provider.notifier).set(value!),
         );
@@ -78,7 +79,7 @@ class NewDialog extends HookWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('新建项目'),
+        title: S.of(context).createNewProject.asText(),
         actions: [const SettingButton()],
         actionsPadding: EdgeInsets.symmetric(horizontal: 8.0),
       ),
@@ -88,7 +89,11 @@ class NewDialog extends HookWidget {
                 fillDataTile,
                 FilledButton(
                   onPressed: isSubmitting.value ? null : submit,
-                  child: Text(isSubmitting.value ? '处理中...' : '添加'),
+                  child: Text(
+                    isSubmitting.value
+                        ? S.of(context).processing
+                        : S.of(context).add,
+                  ),
                 ),
                 _ConsoleArea(output: shellOutput.value).expanded(),
               ]
@@ -121,7 +126,7 @@ class NewDialog extends HookWidget {
     final isYoutubeLink = _isYoutubeLink(path);
     final isLocalFile = path.isNotEmpty && File(path).existsSync();
     if (!isYoutubeLink && !isLocalFile) {
-      throw (Exception('请输入本地音频文件路径或有效的 YouTube 链接'));
+      throw (Exception(S.of(context).audioPathInvalidHint));
     }
 
     String audioPath = path;
@@ -230,7 +235,7 @@ class _ConsoleArea extends HookWidget {
           controller: scrollController,
           padding: const EdgeInsets.all(12),
           child: SelectableText(
-            output.isEmpty ? '暂无输出' : output,
+            output.isEmpty ? 'Ready' : output,
             style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
           ),
         )

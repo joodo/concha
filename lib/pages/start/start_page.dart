@@ -7,6 +7,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/generated/l10n.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/widgets/settings.dart';
@@ -26,7 +27,7 @@ class StartPage extends HookConsumerWidget {
       case AsyncData(:final value):
         projectIds = value;
       case AsyncError(:final error):
-        return '加载错误：\n$error'.asText().center();
+        return '${S.of(context).failedToLoad}: \n$error'.asText().center();
       case _:
         return CircularProgressIndicator().center();
     }
@@ -53,7 +54,7 @@ class StartPage extends HookConsumerWidget {
         if (projectIds.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: '暂无项目'.asText().center(),
+            child: S.of(context).noProject.asText().center(),
           )
         else if (gridProjects.isNotEmpty)
           SliverPadding(
@@ -136,9 +137,15 @@ class StartPage extends HookConsumerWidget {
 
     final controller = context.showSnackBar(
       SnackBar(
-        content: '已删除 ${action.value.metadata.title}'.asText(),
+        content: S
+            .of(context)
+            .projectDeletedHint(action.value.metadata.title)
+            .asText(),
         persist: false,
-        action: SnackBarAction(label: '撤销', onPressed: action.undo),
+        action: SnackBarAction(
+          label: S.of(context).undo,
+          onPressed: action.undo,
+        ),
       ),
     );
 
@@ -164,14 +171,14 @@ class _FAB extends StatelessWidget {
         onProjectCreated(project.id);
       },
       closedShape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(16.0)), // M3 默认是 16.0
+        borderRadius: BorderRadius.all(Radius.circular(16.0)),
       ),
       closedColor: Colors.transparent,
       openColor: context.theme.scaffoldBackgroundColor,
       closedBuilder: (context, openContainer) => FloatingActionButton.extended(
         isExtended: isExpanded,
         onPressed: openContainer,
-        label: '添加曲目'.asText(),
+        label: S.of(context).addAudio.asText(),
         icon: const Icon(Icons.add),
       ),
     );
@@ -224,7 +231,10 @@ class _AppBar extends StatelessWidget {
               bottom: 16.0,
             ),
             title: IgnorePointer(
-              child: Opacity(opacity: titleOpacity, child: Text('我的曲库')),
+              child: Opacity(
+                opacity: titleOpacity,
+                child: S.of(context).myLibrary.asText(),
+              ),
             ),
             collapseMode: .pin,
             background: SafeArea(
@@ -233,7 +243,7 @@ class _AppBar extends StatelessWidget {
                 Opacity(
                   opacity: backgroundOpacity,
                   child: Text(
-                    '我的曲库',
+                    S.of(context).myLibrary,
                     style: context.textStyles.displayMedium?.copyWith(
                       color: context.colors.onSurfaceVariant,
                     ),
@@ -306,7 +316,7 @@ class _DisplayCard extends ConsumerWidget {
               const Spacer(),
               FilledButton.tonal(
                 onPressed: () => onSelected(project),
-                child: '继续'.asText(),
+                child: S.of(context).continuePracticing.asText(),
               ),
             ]
             .toColumn(crossAxisAlignment: .start, mainAxisSize: .min)
@@ -324,11 +334,11 @@ class _DisplayCard extends ConsumerWidget {
               onTap: ref
                   .read(projectDetailProvider(projectId).notifier)
                   .generateSummary,
-              child: '重新生成副标题'.asText(),
+              child: S.of(context).regenerateSubtitle.asText(),
             ),
             PopupMenuItem(
               onTap: () => onDelete(projectId),
-              child: '删除'.asText(),
+              child: S.of(context).delete.asText(),
             ),
           ]),
       child: themeWrap,

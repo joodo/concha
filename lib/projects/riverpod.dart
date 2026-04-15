@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '/preferences/riverpod.dart';
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -117,7 +118,8 @@ class ProjectDetail extends _$ProjectDetail {
     _isGeneratingSummary = true;
     try {
       final lrc = await file.readAsString();
-      final summary = await createSummary(lrc);
+      final target = ref.read(translateLangProvider);
+      final summary = await createSummary(lrc, target);
 
       await updateAndSave((old) => old.copyWith(summary: summary));
     } finally {

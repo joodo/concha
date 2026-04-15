@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '/generated/l10n.dart';
 import '/lyric_controller/lyric_controller.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
@@ -239,7 +240,9 @@ class ProjectActions extends HookConsumerWidget {
               return null;
             } catch (e) {
               if (context.mounted) {
-                context.showSnackBarText('获取语音失败，请重试');
+                context.showSnackBarText(
+                  S.of(context).failedToReadAloudPleaseRetry,
+                );
               }
               rethrow;
             } finally {

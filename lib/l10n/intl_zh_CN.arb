@@ -1,0 +1,122 @@
+{
+  "@@locale": "zh_CN",
+  "settings": "设置",
+  "interface": "界面",
+  "theme": "主题",
+  "followSystem": "跟随系统",
+  "light": "浅色",
+  "dark": "深色",
+  "language": "语言",
+  "network": "网络",
+  "networkProxy": "网络代理",
+  "functionOfAcoustID": "用于补全音乐信息",
+  "apply": "申请",
+  "functionOfMvsep": "用于生成伴奏",
+  "textProcessing": "文字处理",
+  "selectService": "选择服务",
+  "functionOfLlm": "用于理解和翻译歌词",
+  "targetLanguage": "目标语言",
+  "translateTo": "翻译成：",
+  "optionalServiceUrl": "服务 URL（可选）",
+  "modelName": "模型名称",
+  "llmModelExample": "比如 “gemini-3-flash-preview”",
+  "textProcessingTest": "文字处理测试",
+  "voiceGeneration": "语音生成",
+  "ttsModelExample": "比如 “gemini-2.5-flash-preview-tts”",
+  "voiceTest": "语音测试",
+  "about": "关于",
+  "localStorageDir": "本地存储目录",
+  "test": "测试",
+  "successOfTest": "成功",
+  "failureOfTest": "失败：",
+  "testing": "正在测试",
+  "confirm": "确定",
+  "version": "版本",
+  "copyright2026": "版权所有 © 2026 Joodo。根据 GPLv3 许可证授权。",
+  "wordByWordExplanation": "逐词解释",
+  "currentLyricCopyed": "已复制当前歌词",
+  "wholeLyricCopyed": "已复制全部歌词",
+  "copyCurrentLyric": "复制当前歌词",
+  "copyWholeLyric": "复制全部歌词",
+  "translate": "翻译",
+  "cancel": "取消",
+  "addLanguage": "添加语言",
+  "addLanguageHint": "可以添加辅助内容，比如音标、罗马音或拼音等",
+  "regenerateExplanation": "重新解释",
+  "readAloudLyric": "朗读歌词",
+  "clearLyric": "清除歌词",
+  "readAloudCurrentLyric": "朗读当前歌词",
+  "translateLyric": "翻译歌词",
+  "failed": "失败",
+  "openLocal": "打开本地",
+  "searchOnline": "在线搜索",
+  "lyricFile": "歌词文件",
+  "adjustLyricOffset": "调整歌词延迟",
+  "pause": "暂停",
+  "playFromStartPoint": "从起点播放",
+  "play": "播放",
+  "attachToLyric": "位置吸附到歌词",
+  "stop": "停止",
+  "volume": "音量",
+  "playbackRate": "速度",
+  "pitch": "音调",
+  "vocalIsolation": "人声分离模式",
+  "initiatingService": "正在初始化服务",
+  "startingProgress": "正在执行",
+  "uploading": "正在上传",
+  "queueStatus": "正在排队 (还有 {count} 人)",
+  "@queueStatus": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "compact"
+      }
+    }
+  },
+  "separatingStatus": "正在分离人声和伴奏",
+  "downloadingStatus": "正在下载",
+  "downloadedBytes": "(已下载{bytes})",
+  "@downloadedBytes": {
+    "placeholders": {
+      "bytes": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingAfterSeparatedStatus": "生成成功！正在加载",
+  "phaseFailedStatus": "失败阶段：{phase}\\n原因：{reason}",
+  "@phaseFailedStatus": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "processing": "处理中",
+  "delete": "删除",
+  "failedToReadAloudPleaseRetry": "获取语音失败，请重试",
+  "selectAudioFile": "选择音频文件",
+  "supportAudioInputsHint": "支持 Youtube 链接或本地文件",
+  "autoFillMetadata": "补全音乐信息",
+  "createNewProject": "新建项目",
+  "add": "添加",
+  "audioPathInvalidHint": "请输入本地音频文件路径或有效的 YouTube 链接",
+  "failedToLoad": "加载错误",
+  "noProject": "暂无项目",
+  "projectDeletedHint": "已删除 ${project}",
+  "@projectDeletedHint": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "undo": "撤销",
+  "addAudio": "添加曲目",
+  "myLibrary": "我的曲库",
+  "continuePracticing": "继续",
+  "regenerateSubtitle": "重新生成副标题"
+}

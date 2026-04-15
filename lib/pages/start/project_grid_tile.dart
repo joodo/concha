@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/generated/l10n.dart';
 import '/projects/riverpod.dart';
 import '/utils/utils.dart';
 
@@ -47,10 +48,13 @@ class ProjectGridTile extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: InkWell(
         onTap: onSelect,
-        onSecondaryTapDown: (details) => context.showPopupMenu(
-          details.globalPosition,
-          [PopupMenuItem(onTap: onDelete, child: '删除'.asText())],
-        ),
+        onSecondaryTapDown: (details) =>
+            context.showPopupMenu(details.globalPosition, [
+              PopupMenuItem(
+                onTap: onDelete,
+                child: S.of(context).delete.asText(),
+              ),
+            ]),
         child: tile,
       ),
     );

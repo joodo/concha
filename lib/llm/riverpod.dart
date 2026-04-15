@@ -1,3 +1,4 @@
+import '/preferences/riverpod.dart';
 import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:riverpod_annotation/experimental/json_persist.dart';
@@ -65,7 +66,10 @@ class WordForWord extends _$WordForWord {
     final cached = state.value;
     if (cached != null && !_disableCache) return cached;
 
-    final json = await createSentenceTranslation(sentence);
+    final json = await createSentenceTranslation(
+      sentence,
+      ref.read(translateLangProvider),
+    );
     final result = TranslationResult.fromJson(json);
     return result;
   }

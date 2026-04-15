@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  locale_names: ^1.1.1
+
   audio_metadata_reader: ^1.4.2
   flutter_soloud: ^3.5.0
 
@@ -74,3 +79,6 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: assets/icon.png
+
+flutter_intl:
+  enabled: true

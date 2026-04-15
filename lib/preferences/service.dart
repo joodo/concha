@@ -2,12 +2,13 @@ part of 'riverpod.dart';
 
 enum PrefKey {
   brightness(defaultValue: 'system'),
+  language,
 
   proxy,
 
   acoustKey,
   mvsepKey,
-  autoFillMetadata(defaultValue: true),
+  autoFillMetadata(defaultValue: false),
 
   llmService,
   llmUrl,
@@ -19,7 +20,7 @@ enum PrefKey {
   ttsKey,
   ttsModel,
 
-  translateLang(defaultValue: '中文'),
+  translateLang,
   lyricTranslateLangs,
 
   playLoop(defaultValue: false),
@@ -41,6 +42,29 @@ class Pref {
   }
 
   static T? get<T>(PrefKey key) {
+    switch (key) {
+      case .language:
+        throw ArgumentError.value(
+          key.name,
+          null,
+          'Use "localeProvider" instead',
+        );
+      case .translateLang:
+        throw ArgumentError.value(
+          key.name,
+          null,
+          'Use "translateLangProvider" instead',
+        );
+      case .lyricTranslateLangs:
+        throw ArgumentError.value(
+          key.name,
+          null,
+          'Use "lyricTranslateLangsProvider" instead',
+        );
+
+      default:
+    }
+
     final k = key.toString();
     late final Object? data;
     switch (T) {
@@ -57,7 +81,7 @@ class Pref {
       default:
         data = _i.get(k);
     }
-    return data as T?;
+    return (data ?? key.defaultValue) as T?;
   }
 
   static String? get normalizedProxy {

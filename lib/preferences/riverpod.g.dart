@@ -63,7 +63,7 @@ final class PreferenceProvider<T> extends $NotifierProvider<Preference<T>, T?> {
   }
 }
 
-String _$preferenceHash() => r'cb9c422ffe67124481af389371f338c8fa3abd00';
+String _$preferenceHash() => r'7a9acd10b8c8c4e315a6d8bc514989763985f13a';
 
 final class PreferenceFamily extends $Family {
   PreferenceFamily._()
@@ -157,7 +157,7 @@ final class LocaleProvider extends $NotifierProvider<Locale, dart.Locale> {
   }
 }
 
-String _$localeHash() => r'708111d3344db9c7b89a6d9225964219bdbd496d';
+String _$localeHash() => r'1216b55212bb99a4892ef526b4ac53ae78934109';
 
 abstract class _$Locale extends $Notifier<dart.Locale> {
   dart.Locale build();
@@ -209,7 +209,7 @@ final class TranslateLangProvider
   }
 }
 
-String _$translateLangHash() => r'896647997a196ff4cd70ea62aedf06e8276bda2f';
+String _$translateLangHash() => r'252a61ddc454977e33a6db985935b78ed911c95e';
 
 abstract class _$TranslateLang extends $Notifier<String> {
   String build();
@@ -262,7 +262,7 @@ final class LyricTranslateLangsProvider
 }
 
 String _$lyricTranslateLangsHash() =>
-    r'bc97385de55e1f27bed12da548672884ec2a22c5';
+    r'29d2839df99df5ff9ac40427b2c4116a442af45a';
 
 abstract class _$LyricTranslateLangs extends $Notifier<List<String>> {
   List<String> build();

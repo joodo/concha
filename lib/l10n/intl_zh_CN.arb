@@ -118,5 +118,6 @@
   "addAudio": "添加曲目",
   "myLibrary": "我的曲库",
   "continuePracticing": "继续",
-  "regenerateSubtitle": "重新生成副标题"
+  "regenerateSubtitle": "重新生成副标题",
+  "mixTable": "调音台"
 }

@@ -99,6 +99,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Local Storage Directory",
     ),
     "lyricFile": MessageLookupByLibrary.simpleMessage("Lyric File"),
+    "mixTable": MessageLookupByLibrary.simpleMessage("Mix Table"),
     "modelName": MessageLookupByLibrary.simpleMessage("Model Name"),
     "myLibrary": MessageLookupByLibrary.simpleMessage("My Library"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),

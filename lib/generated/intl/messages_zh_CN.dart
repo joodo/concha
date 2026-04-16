@@ -81,6 +81,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "localStorageDir": MessageLookupByLibrary.simpleMessage("本地存储目录"),
     "lyricFile": MessageLookupByLibrary.simpleMessage("歌词文件"),
+    "mixTable": MessageLookupByLibrary.simpleMessage("调音台"),
     "modelName": MessageLookupByLibrary.simpleMessage("模型名称"),
     "myLibrary": MessageLookupByLibrary.simpleMessage("我的曲库"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),

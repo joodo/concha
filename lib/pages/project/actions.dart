@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -7,6 +6,7 @@ import '/generated/l10n.dart';
 import '/lyric_controller/lyric_controller.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
+import '/shortcuts/shortcuts.dart';
 import '/tts/tts.dart';
 import '/utils/utils.dart';
 
@@ -252,42 +252,7 @@ class ProjectActions extends HookConsumerWidget {
         ),
       },
       child: Shortcuts(
-        shortcuts: {
-          SingleActivator(LogicalKeyboardKey.space): const TogglePlayIntent(),
-          SingleActivator(LogicalKeyboardKey.arrowUp): DeltaVolumeIntent(0.1),
-          SingleActivator(LogicalKeyboardKey.arrowDown): DeltaVolumeIntent(
-            -0.1,
-          ),
-          SingleActivator(LogicalKeyboardKey.arrowLeft): DeltaPositionIntent(
-            -1,
-          ),
-          SingleActivator(LogicalKeyboardKey.arrowRight): DeltaPositionIntent(
-            1,
-          ),
-          SingleActivator(LogicalKeyboardKey.comma): DeltaSpeedIntent(-0.25),
-          SingleActivator(LogicalKeyboardKey.period): DeltaSpeedIntent(0.25),
-          SingleActivator(LogicalKeyboardKey.bracketLeft): DeltaPitchIntent(-1),
-          SingleActivator(LogicalKeyboardKey.bracketRight): DeltaPitchIntent(1),
-          SingleActivator(LogicalKeyboardKey.digit1): SetMixIntent(
-            vocalVolume: 1.0,
-            instruVolume: 1.0,
-          ),
-          SingleActivator(LogicalKeyboardKey.digit2): SetMixIntent(
-            vocalVolume: 0.4,
-            instruVolume: 1.0,
-          ),
-          SingleActivator(LogicalKeyboardKey.digit3): SetMixIntent(
-            vocalVolume: 0,
-            instruVolume: 1.0,
-          ),
-          SingleActivator(LogicalKeyboardKey.digit4): SetMixIntent(
-            vocalVolume: 1.0,
-            instruVolume: 0.1,
-          ),
-          SingleActivator(LogicalKeyboardKey.keyZ): MarkStartPoint(),
-          SingleActivator(LogicalKeyboardKey.keyS):
-              ReadAloudIntent.currentLyric(),
-        },
+        shortcuts: ref.watch(shortcutsIntentMapProvider),
         child: FocusScope(
           node: scopeNode,
           child: Focus(focusNode: rootFocusNode, child: child),

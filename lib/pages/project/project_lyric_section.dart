@@ -14,6 +14,7 @@ import '/lyric_controller/lyric_controller.dart' hide LyricController;
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
+import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
 
@@ -242,7 +243,10 @@ class _LyricToolbar extends ConsumerWidget {
             return _BusyButton(
               icon: Icon(Icons.record_voice_over),
               isBusy: readAloudState.isPending,
-              tooltip: S.of(context).readAloudCurrentLyric,
+              tooltip: ref.tooltipWithShortcuts(
+                S.of(context).readAloudCurrentLyric,
+                [.readLyric],
+              ),
               onPressed: Actions.handler(
                 context,
                 ReadAloudIntent.currentLyric(),

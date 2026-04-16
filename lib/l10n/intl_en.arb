@@ -118,5 +118,6 @@
   "addAudio": "Add Track",
   "myLibrary": "My Library",
   "continuePracticing": "Continue",
-  "regenerateSubtitle": "Regenerate Subtitles"
+  "regenerateSubtitle": "Regenerate Subtitles",
+  "mixTable": "Mix Table"
 }

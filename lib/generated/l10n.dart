@@ -743,6 +743,11 @@ class S {
       args: [],
     );
   }
+
+  /// `Mix Table`
+  String get mixTable {
+    return Intl.message('Mix Table', name: 'mixTable', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

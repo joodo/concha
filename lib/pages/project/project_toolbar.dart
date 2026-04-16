@@ -9,23 +9,31 @@ import '/lyric_controller/lyric_controller.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
+import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 import '/widgets/popup_widget.dart';
 
 import 'actions.dart';
 import 'expansible_button.dart';
 
-class ProjectToolbar extends StatelessWidget {
+class ProjectToolbar extends ConsumerWidget {
   const ProjectToolbar({super.key, required this.playController});
 
   final PlayController playController;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loopProvider = preferenceProvider<bool>(.playLoop);
     final toggleButton = Consumer(
       builder: (context, ref, child) {
         final isLoop = ref.watch(loopProvider)!;
+
+        final tooltipText = playController.isPlayNotifier.value
+            ? S.of(context).pause
+            : isLoop
+            ? S.of(context).playFromStartPoint
+            : S.of(context).play;
+
         return ValueListenableBuilder(
           valueListenable: playController.isPlayNotifier,
           builder: (context, isPlaying, child) => IconButton.filled(
@@ -38,11 +46,7 @@ class ProjectToolbar extends StatelessWidget {
                   : Icons.play_arrow,
               size: 32,
             ),
-            tooltip: playController.isPlayNotifier.value
-                ? S.of(context).pause
-                : isLoop
-                ? S.of(context).playFromStartPoint
-                : S.of(context).play,
+            tooltip: ref.tooltipWithShortcuts(tooltipText, [.togglePlay]),
           ),
         );
       },
@@ -106,7 +110,12 @@ class ProjectToolbar extends StatelessWidget {
               divisions: 100,
               onChanged: playController.setVolume,
             ),
-          ).tooltip(S.of(context).volume),
+          ).tooltip(
+            ref.tooltipWithShortcuts(S.of(context).volume, [
+              .volumeDown,
+              .volumeUp,
+            ]),
+          ),
           ValueListenableBuilder(
             valueListenable: playController.speedNotifier,
             builder: (context, speed, child) => ExpansibleButton(
@@ -123,32 +132,43 @@ class ProjectToolbar extends StatelessWidget {
               divisions: 7,
               onChanged: playController.setSpeed,
             ),
-          ).tooltip(S.of(context).playbackRate),
+          ).tooltip(
+            ref.tooltipWithShortcuts(S.of(context).playbackRate, [
+              .speedDown,
+              .speedUp,
+            ]),
+          ),
           ValueListenableBuilder(
             valueListenable: playController.pitchNotifier,
-            builder: (context, pitch, child) => ExpansibleButton(
-              isExpanded: isExpanded,
-              icon: Image.asset(
-                'assets/icons/diapason.png',
-                width: 24.0,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              value: pitch.toDouble(),
-              min: -7,
-              max: 7,
-              labelStringBuilder: (value) {
-                final pitch = value.round();
-                final mark = switch (pitch) {
-                  0 => '♮',
-                  < 0 => '♭',
-                  > 0 => '♯',
-                  _ => '?',
-                };
-                return '[$pitch] $mark';
-              },
-              divisions: 14,
-              onChanged: (value) => playController.setPitch(value.round()),
-            ).tooltip(S.of(context).pitch),
+            builder: (context, pitch, child) =>
+                ExpansibleButton(
+                  isExpanded: isExpanded,
+                  icon: Image.asset(
+                    'assets/icons/diapason.png',
+                    width: 24.0,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  value: pitch.toDouble(),
+                  min: -7,
+                  max: 7,
+                  labelStringBuilder: (value) {
+                    final pitch = value.round();
+                    final mark = switch (pitch) {
+                      0 => '♮',
+                      < 0 => '♭',
+                      > 0 => '♯',
+                      _ => '?',
+                    };
+                    return '[$pitch] $mark';
+                  },
+                  divisions: 14,
+                  onChanged: (value) => playController.setPitch(value.round()),
+                ).tooltip(
+                  ref.tooltipWithShortcuts(S.of(context).pitch, [
+                    .pitchDown,
+                    .pitchUp,
+                  ]),
+                ),
           ),
           _MixTableButton(playController: playController),
         ].toRow(separator: 12.0.asWidth());
@@ -231,8 +251,18 @@ class _MixTableButton extends HookWidget {
         link: link,
         child: ValueListenableBuilder(
           valueListenable: playController.separateModeNotifier,
-          builder: (context, isSep, child) {
-            return IconButton.outlined(
+          builder: (context, isSep, child) => Consumer(
+            builder: (context, ref, child) {
+              return child!.tooltip(
+                ref.tooltipWithShortcuts(S.of(context).mixTable, [
+                  .mixPreset1,
+                  .mixPreset2,
+                  .mixPreset3,
+                  .mixPreset4,
+                ]),
+              );
+            },
+            child: IconButton.outlined(
               onPressed: () => isShowing.value = true,
               isSelected: isSep,
               icon: Image.asset(
@@ -245,8 +275,8 @@ class _MixTableButton extends HookWidget {
                 width: 20.0,
                 color: context.colors.onInverseSurface,
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

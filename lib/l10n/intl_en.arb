@@ -60,7 +60,7 @@
   "volume": "Volume",
   "playbackRate": "Speed",
   "pitch": "Pitch",
-  "vocalIsolation": "Vocal Isolation Mode",
+  "vocalIsolation": "Vocal Isolation",
   "initiatingService": "Initializing service",
   "startingProgress": "In progress",
   "uploading": "Uploading",
@@ -106,7 +106,7 @@
   "audioPathInvalidHint": "Please enter a local file path or a valid YouTube link",
   "failedToLoad": "Failed to load",
   "noProject": "No projects",
-  "projectDeletedHint": "Deleted ${project}",
+  "projectDeletedHint": "Deleted {project}",
   "@projectDeletedHint": {
     "placeholders": {
       "project": {

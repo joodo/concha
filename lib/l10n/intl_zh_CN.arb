@@ -60,7 +60,7 @@
   "volume": "音量",
   "playbackRate": "速度",
   "pitch": "音调",
-  "vocalIsolation": "人声分离模式",
+  "vocalIsolation": "人声分离",
   "initiatingService": "正在初始化服务",
   "startingProgress": "正在执行",
   "uploading": "正在上传",
@@ -106,7 +106,7 @@
   "audioPathInvalidHint": "请输入本地音频文件路径或有效的 YouTube 链接",
   "failedToLoad": "加载错误",
   "noProject": "暂无项目",
-  "projectDeletedHint": "已删除 ${project}",
+  "projectDeletedHint": "已删除 {project}",
   "@projectDeletedHint": {
     "placeholders": {
       "project": {

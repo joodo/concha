@@ -509,10 +509,10 @@ class S {
     return Intl.message('Pitch', name: 'pitch', desc: '', args: []);
   }
 
-  /// `Vocal Isolation Mode`
+  /// `Vocal Isolation`
   String get vocalIsolation {
     return Intl.message(
-      'Vocal Isolation Mode',
+      'Vocal Isolation',
       name: 'vocalIsolation',
       desc: '',
       args: [],
@@ -699,10 +699,10 @@ class S {
     return Intl.message('No projects', name: 'noProject', desc: '', args: []);
   }
 
-  /// `Deleted ${project}`
+  /// `Deleted {project}`
   String projectDeletedHint(String project) {
     return Intl.message(
-      'Deleted \$$project',
+      'Deleted $project',
       name: 'projectDeletedHint',
       desc: '',
       args: [project],

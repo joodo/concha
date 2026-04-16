@@ -83,14 +83,4 @@ class Pref {
     }
     return (data ?? key.defaultValue) as T?;
   }
-
-  static String? get normalizedProxy {
-    try {
-      final value = get<String>(.proxy)!;
-      final proxy = value.trim();
-      return proxy.isEmpty ? null : proxy;
-    } catch (_) {
-      return null;
-    }
-  }
 }

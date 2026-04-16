@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 
-import '../utils/http.dart';
+import 'network.dart';
 
 typedef MusicBrainzLogHandler = void Function(String line);
 
@@ -35,7 +34,6 @@ class MusicBrainzService {
     String? artist,
     String? album,
     int limit = 5,
-    String? proxy,
     MusicBrainzLogHandler? onLog,
   }) async {
     final query = _buildQuery(title: title, artist: artist, album: album);
@@ -52,26 +50,14 @@ class MusicBrainzService {
     });
 
     onLog?.call('[musicbrainz] GET $uri');
-    final response = await Http.get(
-      uri.toString(),
-      header: const {
-        'Accept': 'application/json',
-        'User-Agent': 'Concha/0.0.1 (music metadata resolver)',
-      },
-      proxy: _normalizeProxy(proxy),
-    );
+    final response = await http()
+        .headers(const {
+          'Accept': 'application/json',
+          'User-Agent': 'Concha/0.0.1 (music metadata resolver)',
+        })
+        .getUri(uri);
 
-    onLog?.call('[musicbrainz] status=${response.statusCode}');
-    if (response.statusCode != 200) {
-      throw Exception('MusicBrainz 请求失败，HTTP ${response.statusCode}');
-    }
-
-    final json = jsonDecode(response.body);
-    if (json is! Map<String, dynamic>) {
-      throw Exception('MusicBrainz 响应格式异常');
-    }
-
-    final recordings = json['recordings'];
+    final recordings = response.data['recordings'];
     if (recordings is! List) {
       return const [];
     }
@@ -200,10 +186,5 @@ class MusicBrainzService {
       releaseId: releaseId,
       releaseGroupId: releaseGroupId,
     );
-  }
-
-  String? _normalizeProxy(String? proxy) {
-    final value = proxy?.trim() ?? '';
-    return value.isEmpty ? null : value;
   }
 }

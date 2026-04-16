@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:llm_dart/llm_dart.dart';
 
 import '/preferences/preferences.dart';
+import '/services/services.dart';
 import '/utils/utils.dart';
 
 import 'service.dart';
@@ -97,35 +98,31 @@ class TtsServiceImpl implements TtsService {
   }
 
   Future<Uint8List> _fetchOpenRouter(String allPrompt, String model) async {
-    final request = http.Request(
-      'POST',
-      Uri.parse('https://openrouter.ai/api/v1/chat/completions'),
-    );
-    request.headers.addAll({
-      'Authorization': 'Bearer $apiKey',
-      'Content-Type': 'application/json',
-    });
-    request.body = jsonEncode({
-      'model': model,
-      'modalities': ['text', 'audio'],
-      'audio': {'voice': 'alloy', 'format': 'pcm16'},
-      'stream': true,
-      'messages': [
-        {'role': 'user', 'content': allPrompt},
-      ],
-    });
-
-    final client = Http.createClient(proxy: proxy);
-    final response = await client.send(request);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = await response.stream.transform(utf8.decoder).join();
-      throw Exception('TTS request failed: ${response.statusCode}\n$message');
-    }
+    final response = await Dio()
+        .proxy(proxy)
+        .headers({
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+        })
+        .responseType(.stream)
+        .post(
+          'https://openrouter.ai/api/v1/chat/completions',
+          data: {
+            'model': model,
+            'modalities': ['text', 'audio'],
+            'audio': {'voice': 'alloy', 'format': 'pcm16'},
+            'stream': true,
+            'messages': [
+              {'role': 'user', 'content': allPrompt},
+            ],
+          },
+        );
 
     final audioBytes = BytesBuilder();
     final buffer = StringBuffer();
-    await for (final chunk in response.stream.transform(utf8.decoder)) {
+    await for (final chunk in response.data.stream.cast<List<int>>().transform(
+      utf8.decoder,
+    )) {
       buffer.write(chunk);
 
       final lines = buffer.toString().split('\n');

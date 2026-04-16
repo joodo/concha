@@ -24,7 +24,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m1(phase, reason) => "失败阶段：${phase}\\n原因：${reason}";
 
-  static String m2(project) => "已删除 \$${project}";
+  static String m2(project) => "已删除 ${project}";
 
   static String m3(count) => "正在排队 (还有 ${count} 人)";
 
@@ -127,7 +127,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("撤销"),
     "uploading": MessageLookupByLibrary.simpleMessage("正在上传"),
     "version": MessageLookupByLibrary.simpleMessage("版本"),
-    "vocalIsolation": MessageLookupByLibrary.simpleMessage("人声分离模式"),
+    "vocalIsolation": MessageLookupByLibrary.simpleMessage("人声分离"),
     "voiceGeneration": MessageLookupByLibrary.simpleMessage("语音生成"),
     "voiceTest": MessageLookupByLibrary.simpleMessage("语音测试"),
     "volume": MessageLookupByLibrary.simpleMessage("音量"),

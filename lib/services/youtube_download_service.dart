@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import '/preferences/preferences.dart';
+import '/utils/utils.dart';
 
-import '../utils/utils.dart';
+import 'network.dart';
 
 typedef YoutubeDownloadLogHandler = void Function(String line);
 
@@ -20,20 +21,20 @@ class YoutubeDownloadService {
   }) async {
     final trimmedUrl = url.trim();
     if (trimmedUrl.isEmpty) {
-      throw Exception('YouTube 链接不能为空');
+      throw Exception('YouTube URL cannot be empty');
     }
 
     final uri = Uri.tryParse(trimmedUrl);
     if (uri == null || !uri.hasScheme) {
-      throw Exception('无效的 YouTube 链接: $trimmedUrl');
+      throw Exception('Invalid YouTube URL: $trimmedUrl');
     }
 
     final scheme = uri.scheme.toLowerCase();
     if (scheme != 'http' && scheme != 'https') {
-      throw Exception('YouTube 链接必须是 http 或 https');
+      throw Exception('YouTube URL must use http or https');
     }
 
-    final proxy = Pref.normalizedProxy;
+    final proxy = Pref.get<String>(.proxy);
     final ytDlpExecutable = await _ensureYtDlp(proxy: proxy, onLog: onLog);
 
     final baseTempDir = await getTemporaryDirectory();
@@ -66,12 +67,16 @@ class YoutubeDownloadService {
     );
 
     if (result.exitCode != 0) {
-      throw Exception('YouTube 下载失败，退出码 ${result.exitCode}');
+      throw Exception(
+        'YouTube download failed with exit code ${result.exitCode}',
+      );
     }
 
     final audioFile = await _findDownloadedAudioFile(tempDir);
     if (audioFile == null) {
-      throw Exception('YouTube 下载完成，但未在临时目录找到音频文件');
+      throw Exception(
+        'YouTube download completed, but no audio file was found in the temporary directory',
+      );
     }
 
     onLog?.call('[youtube] downloaded: ${audioFile.path}');
@@ -85,16 +90,18 @@ class YoutubeDownloadService {
     final localYtDlpPath = await _appBinYtDlpPath();
     if (await File(localYtDlpPath).exists()) {
       await _ensureExecutablePermission(localYtDlpPath, onLog: onLog);
-      onLog?.call('[tool] 使用本地 yt-dlp: $localYtDlpPath');
+      onLog?.call('[tool] Using local yt-dlp: $localYtDlpPath');
       return localYtDlpPath;
     }
 
     if (await _shellRunner.existsInPath('yt-dlp')) {
-      onLog?.call('[tool] 使用系统 yt-dlp');
+      onLog?.call('[tool] Using system yt-dlp');
       return 'yt-dlp';
     }
 
-    onLog?.call('[tool] 未在 PATH 中找到 yt-dlp，尝试自动下载');
+    onLog?.call(
+      '[tool] yt-dlp not found in PATH, attempting automatic download',
+    );
     return _downloadPrebuiltYtDlp(proxy: proxy, onLog: onLog);
   }
 
@@ -111,30 +118,29 @@ class YoutubeDownloadService {
     final targetFile = File(targetPath);
     if (await targetFile.exists()) {
       await _ensureExecutablePermission(targetPath, onLog: onLog);
-      onLog?.call('[tool] 使用 appSupportDir/bin 中已下载的 yt-dlp: $targetPath');
+      onLog?.call(
+        '[tool] Using downloaded yt-dlp in appSupportDir/bin: $targetPath',
+      );
       return targetPath;
     }
 
     for (final url in _candidateYtDlpUrls()) {
       onLog?.call('[download] $url');
-      final response = await Http.get(url, proxy: proxy);
-      if (response.statusCode != 200) {
-        onLog?.call('[download] HTTP ${response.statusCode}, skip');
+      try {
+        await http().download(url, targetPath);
+      } catch (e) {
+        onLog?.call('[download] $e, skip');
         continue;
       }
 
-      if (response.bodyBytes.isEmpty) {
-        onLog?.call('[download] 文件为空, skip');
-        continue;
-      }
-
-      await targetFile.writeAsBytes(response.bodyBytes, flush: true);
       await _ensureExecutablePermission(targetPath, onLog: onLog);
-      onLog?.call('[tool] 已下载 yt-dlp 到 appSupportDir/bin: $targetPath');
+      onLog?.call('[tool] Downloaded yt-dlp to appSupportDir/bin: $targetPath');
       return targetPath;
     }
 
-    throw Exception('自动下载 yt-dlp 失败，请检查网络/代理，或手动安装 yt-dlp');
+    throw Exception(
+      'Failed to automatically download yt-dlp. Please check your network/proxy or install yt-dlp manually',
+    );
   }
 
   List<String> _candidateYtDlpUrls() {
@@ -196,7 +202,7 @@ class YoutubeDownloadService {
       'chmod +x ${ShellRunner.quote(path)}',
     );
     if (chmodResult.exitCode != 0) {
-      throw Exception('设置 yt-dlp 可执行权限失败');
+      throw Exception('Failed to set executable permissions for yt-dlp');
     }
     onLog?.call('[tool] chmod +x $path');
   }

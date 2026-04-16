@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../utils/http.dart';
-import '../utils/shell.dart';
+import '/utils/utils.dart';
+
+import 'network.dart';
 
 typedef AcoustProgressHandler = void Function(String message);
 typedef AcoustLogHandler = void Function(String line);
@@ -30,7 +32,6 @@ class AcoustIdService {
   Future<AcoustIdResult> recognizeLocalFile({
     required String audioFilePath,
     required String apiKey,
-    String? proxy,
     AcoustProgressHandler? onProgress,
     AcoustLogHandler? onLog,
   }) async {
@@ -46,7 +47,6 @@ class AcoustIdService {
 
     onProgress?.call('检查 fpcalc');
     final fpcalcPath = await _ensureFpcalc(
-      proxy: proxy,
       onProgress: onProgress,
       onLog: onLog,
     );
@@ -90,29 +90,16 @@ class AcoustIdService {
     onLog?.call(
       '[http] form duration=$duration fingerprint_len=${fingerprint.length}',
     );
-    final response = await Http.postForm(
-      requestUrl,
-      form: form,
-      header: const {
-        'Accept': 'application/json',
-        'User-Agent':
-            'MusicBrainz-Picard/2.13.3.final0 (macOS; Concha compatibility mode)',
-      },
-      proxy: proxy,
-    );
 
-    onLog?.call('[http] status=${response.statusCode}');
-    if (response.statusCode != 200) {
-      onLog?.call('[http] response\n${response.body}');
-      throw Exception('AcoustID 请求失败，HTTP ${response.statusCode}');
-    }
-    onLog?.call('[http] response\n${response.body}');
+    final response = await http()
+        .headers(const {
+          'Accept': 'application/json',
+          'User-Agent':
+              'MusicBrainz-Picard/2.13.3.final0 (macOS; Concha compatibility mode)',
+        })
+        .post(requestUrl, data: FormData.fromMap(form));
 
-    final body = jsonDecode(response.body);
-    if (body is! Map<String, dynamic>) {
-      throw Exception('AcoustID 响应格式异常');
-    }
-
+    final body = response.data;
     if (body['status']?.toString() != 'ok') {
       final error = body['error']?.toString() ?? '未知错误';
       throw Exception('AcoustID 返回失败: $error');
@@ -168,7 +155,6 @@ class AcoustIdService {
   }
 
   Future<String> _ensureFpcalc({
-    String? proxy,
     AcoustProgressHandler? onProgress,
     AcoustLogHandler? onLog,
   }) async {
@@ -185,13 +171,10 @@ class AcoustIdService {
 
     onLog?.call('[tool] 未在 PATH 中找到 fpcalc');
     onProgress?.call('未找到 fpcalc，开始从官网下载安装包');
-    return _downloadPrebuiltFpcalc(proxy: proxy, onLog: onLog);
+    return _downloadPrebuiltFpcalc(onLog: onLog);
   }
 
-  Future<String> _downloadPrebuiltFpcalc({
-    String? proxy,
-    AcoustLogHandler? onLog,
-  }) async {
+  Future<String> _downloadPrebuiltFpcalc({AcoustLogHandler? onLog}) async {
     final targetPath = await _appBinFpcalcPath();
     final binDir = Directory(await _appBinDirPath());
     if (!await binDir.exists()) {
@@ -210,13 +193,13 @@ class AcoustIdService {
 
       for (final url in _candidateFpcalcUrls()) {
         onLog?.call('[download] $url');
-        final download = await Http.get(url, proxy: proxy);
-        if (download.statusCode != 200) {
-          onLog?.call('[download] HTTP ${download.statusCode}, skip');
+
+        try {
+          await http().download(url, archivePath);
+        } catch (e) {
+          onLog?.call('[download] $e, skip');
           continue;
         }
-
-        await File(archivePath).writeAsBytes(download.bodyBytes, flush: true);
 
         final extractCommand =
             'tar -xzf ${ShellRunner.quote(archivePath)} -C ${ShellRunner.quote(tempDir.path)}';

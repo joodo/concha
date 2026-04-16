@@ -24,7 +24,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m1(phase, reason) => "Failed at: ${phase}\\nReason: ${reason}";
 
-  static String m2(project) => "Deleted \$${project}";
+  static String m2(project) => "Deleted ${project}";
 
   static String m3(count) => "In queue (${count} remaining)";
 
@@ -161,9 +161,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
     "uploading": MessageLookupByLibrary.simpleMessage("Uploading"),
     "version": MessageLookupByLibrary.simpleMessage("version"),
-    "vocalIsolation": MessageLookupByLibrary.simpleMessage(
-      "Vocal Isolation Mode",
-    ),
+    "vocalIsolation": MessageLookupByLibrary.simpleMessage("Vocal Isolation"),
     "voiceGeneration": MessageLookupByLibrary.simpleMessage("Voice Generation"),
     "voiceTest": MessageLookupByLibrary.simpleMessage("Voice Test"),
     "volume": MessageLookupByLibrary.simpleMessage("Volume"),

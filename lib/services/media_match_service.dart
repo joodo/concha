@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 
 import '/preferences/preferences.dart';
-import '/utils/utils.dart';
 
 import 'acoustid_service.dart';
 import 'musicbrainz_service.dart';
+import 'network.dart';
 
 typedef MediaMatchLogHandler = void Function(String line);
 
@@ -101,9 +101,8 @@ class MediaMatchService {
         ),
       );
     }
-
     AcoustIdResult? acoustResult;
-    final proxy = Pref.normalizedProxy;
+
     try {
       onLog?.call('[pipeline] channel=acoustid start');
 
@@ -111,7 +110,6 @@ class MediaMatchService {
       acoustResult = await _acoustIdService.recognizeLocalFile(
         audioFilePath: audioPath,
         apiKey: acoustIdApiKey,
-        proxy: proxy,
         onLog: onLog,
       );
       onLog?.call(
@@ -146,7 +144,6 @@ class MediaMatchService {
           artist: seed.artist,
           album: seed.album,
           limit: 6,
-          proxy: proxy,
           onLog: onLog,
         );
 
@@ -181,7 +178,6 @@ class MediaMatchService {
     final best = ranked.first;
     final downloadedCoverBytes = await _downloadCoverFromCaa(
       candidates: ranked,
-      proxy: proxy,
       onLog: onLog,
     );
     final coverBytes = downloadedCoverBytes ?? localHint.coverBytes;
@@ -328,7 +324,6 @@ class MediaMatchService {
 
   Future<Uint8List?> _downloadCoverFromCaa({
     required List<MediaMatchCandidate> candidates,
-    String? proxy,
     MediaMatchLogHandler? onLog,
   }) async {
     for (final candidate in candidates) {
@@ -349,20 +344,15 @@ class MediaMatchService {
       for (final url in urls) {
         try {
           onLog?.call('[caa] GET $url');
-          final response = await Http.get(
-            url,
-            header: const {
-              'Accept': 'image/*',
-              'User-Agent': 'Concha/0.0.1 (cover fetcher)',
-            },
-            proxy: _normalizeProxy(proxy),
-          );
+          final response = await http()
+              .headers(const {
+                'Accept': 'image/*',
+                'User-Agent': 'Concha/0.0.1 (cover fetcher)',
+              })
+              .responseType(.bytes)
+              .get(url);
           onLog?.call('[caa] status=${response.statusCode}');
-
-          if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-            onLog?.call('[caa] downloaded ${response.bodyBytes.length} bytes');
-            return response.bodyBytes;
-          }
+          return response.data;
         } catch (e) {
           onLog?.call('[caa] request failed: $e');
         }
@@ -484,11 +474,6 @@ class MediaMatchService {
     }
 
     return null;
-  }
-
-  String? _normalizeProxy(String? proxy) {
-    final value = proxy?.trim() ?? '';
-    return value.isEmpty ? null : value;
   }
 
   String? _extractArtist(Map<String, dynamic> recording) {

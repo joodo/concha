@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '/preferences/preferences.dart';
-import '/utils/utils.dart';
+
+import '../services/services.dart';
 
 sealed class MvsepTaskEvent {
   const MvsepTaskEvent();
@@ -133,15 +134,13 @@ class MvsepSeparationService {
   static MvsepSeparationService get i => _instance;
 
   static const String _apiBase = 'https://mvsep.com/api';
-  static const Duration _pollInterval = Duration(seconds: 3);
+  static const Duration _pollInterval = Duration(seconds: 1);
   static const String _statusWaiting = 'waiting';
   static const int _maxErrorPreviewChars = 800;
   static const int _fixedSepType = 40;
   static const String _fixedAlgorithmName =
       'BS Roformer (vocals, instrumental)';
   static const String _fixedAddOpt1 = '81';
-
-  String? get _proxy => Pref.normalizedProxy;
 
   String get _mvsepToken {
     final raw = Pref.get<String>(PrefKey.mvsepKey);
@@ -492,15 +491,7 @@ class MvsepSeparationService {
             },
           );
 
-          final downloadResults = await Future.wait<int>(<Future<int>>[
-            vocalFuture,
-            instruFuture,
-          ]);
-          final vocalBytes = downloadResults[0];
-          final instruBytes = downloadResults[1];
-          vocalDownloadedBytes = vocalBytes;
-          instruDownloadedBytes = instruBytes;
-          emitDownloadProgress(force: true);
+          await Future.wait([vocalFuture, instruFuture]);
 
           record
             ..vocalCachePath = cachePaths.vocalPath
@@ -620,16 +611,20 @@ class MvsepSeparationService {
     };
     final uploadFilename = await _buildUploadFilename(audioPath);
 
-    final responseBody = await _postMultipart(
-      uri: uri,
-      fields: fields,
-      fileFieldCandidates: const <String>['audiofile'],
-      filePath: audioPath,
-      uploadFilename: uploadFilename,
-      onUploadProgress: onUploadProgress,
+    final formData = FormData.fromMap({
+      ...fields,
+      'audiofile': await MultipartFile.fromFile(
+        audioPath,
+        filename: uploadFilename,
+      ),
+    });
+    final response = await http().postUri(
+      uri,
+      data: formData,
+      onSendProgress: onUploadProgress,
     );
 
-    final hash = _extractHashFromAny(responseBody);
+    final hash = _extractHashFromAny(response.data);
     if (hash != null && hash.isNotEmpty) {
       return hash;
     }
@@ -647,20 +642,10 @@ class MvsepSeparationService {
     Object? lastError;
     for (final uri in attempts) {
       try {
-        final response = await Http.get(uri.toString(), proxy: _proxy);
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          lastError = StateError('HTTP ${response.statusCode} at ${uri.path}');
-          continue;
-        }
+        //        final response = await Http.get(uri.toString(), proxy: _proxy);
+        final response = await http().getUri(uri);
 
-        final decoded = jsonDecode(response.body);
-        if (decoded is! Map<String, dynamic>) {
-          lastError = StateError(
-            'Unexpected status response shape at ${uri.path}',
-          );
-          continue;
-        }
-
+        final decoded = response.data;
         final status = _extractRemoteStatus(decoded);
         final data = _asMap(decoded['data']) ?? <String, dynamic>{};
         return _PollResult(status: status, data: data, raw: decoded);
@@ -867,120 +852,17 @@ class MvsepSeparationService {
     return value.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
   }
 
-  Future<int> _downloadToPath({
+  Future<void> _downloadToPath({
     required String url,
     required String savePath,
     void Function(int downloadedBytes, int? totalBytes)? onProgress,
   }) async {
-    final client = Http.createClient(proxy: _proxy);
-    IOSink? sink;
-    try {
-      final request = http.Request('GET', Uri.parse(url));
-      final response = await client.send(request);
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw StateError(
-          'Download failed: HTTP ${response.statusCode} for $url',
-        );
-      }
-      final contentLength = response.contentLength;
-      final totalBytes = (contentLength != null && contentLength > 0)
-          ? contentLength
-          : null;
+    final file = File(savePath);
+    await file.parent.create(recursive: true);
 
-      final file = File(savePath);
-      await file.parent.create(recursive: true);
-      sink = file.openWrite();
-
-      var downloadedBytes = 0;
-      await for (final chunk in response.stream) {
-        sink.add(chunk);
-        downloadedBytes += chunk.length;
-        onProgress?.call(downloadedBytes, totalBytes);
-      }
-      await sink.flush();
-      await sink.close();
-      sink = null;
-      return downloadedBytes;
-    } catch (_) {
-      try {
-        await sink?.close();
-      } catch (_) {
-        // Ignore close failure in error path.
-      }
-      rethrow;
-    } finally {
-      client.close();
-    }
-  }
-
-  Future<dynamic> _postMultipart({
-    required Uri uri,
-    required Map<String, String> fields,
-    required List<String> fileFieldCandidates,
-    required String filePath,
-    required String uploadFilename,
-    void Function(int uploadedBytes, int totalBytes)? onUploadProgress,
-  }) async {
-    final client = Http.createClient(proxy: _proxy);
-    try {
-      Object? lastError;
-      for (final fieldName in fileFieldCandidates) {
-        try {
-          final file = File(filePath);
-          final totalBytes = await file.length();
-          var uploadedBytes = 0;
-
-          final uploadStream = file.openRead().transform(
-            StreamTransformer<List<int>, List<int>>.fromHandlers(
-              handleData: (chunk, sink) {
-                uploadedBytes += chunk.length;
-                onUploadProgress?.call(uploadedBytes, totalBytes);
-                sink.add(chunk);
-              },
-            ),
-          );
-
-          onUploadProgress?.call(0, totalBytes);
-
-          final request = http.MultipartRequest('POST', uri)
-            ..fields.addAll(fields)
-            ..files.add(
-              http.MultipartFile(
-                fieldName,
-                uploadStream,
-                totalBytes,
-                // MVSEP expects uploaded filename to include an audio extension.
-                filename: uploadFilename,
-              ),
-            );
-
-          final streamedResponse = await client.send(request);
-          onUploadProgress?.call(totalBytes, totalBytes);
-          final body = await streamedResponse.stream.bytesToString();
-          if (streamedResponse.statusCode < 200 ||
-              streamedResponse.statusCode >= 300) {
-            final bodyPreview = _previewText(body);
-            lastError = StateError(
-              'HTTP ${streamedResponse.statusCode} for ${uri.path} '
-              'with field "$fieldName": body_preview=$bodyPreview',
-            );
-            continue;
-          }
-
-          try {
-            return jsonDecode(body);
-          } catch (_) {
-            return body;
-          }
-        } catch (e) {
-          lastError = e;
-        }
-      }
-
-      throw StateError('Failed multipart upload for ${uri.path}: $lastError');
-    } finally {
-      client.close();
-    }
+    await http()
+        .responseType(.stream)
+        .download(url, savePath, onReceiveProgress: onProgress);
   }
 
   Future<String> _buildUploadFilename(String filePath) async {

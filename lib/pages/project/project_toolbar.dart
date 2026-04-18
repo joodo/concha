@@ -66,23 +66,22 @@ class ProjectToolbar extends ConsumerWidget {
     final attachButton = Consumer(
       builder: (context, ref, child) {
         final attachToLyricProvider = preferenceProvider<bool>(.attachToLyric);
-
-        final lyricController = ref
-            .watch(lyricControllerProvider(ref.projectId!))
-            .value;
-        if (lyricController == null) return const SizedBox.shrink();
-
         final attachNotifier = ref.watch(attachToLyricProvider);
-        return ValueListenableBuilder(
-          valueListenable: lyricController.lyricNotifier,
-          builder: (context, lyrics, child) => IconButton.outlined(
-            onPressed: lyrics == null
-                ? null
-                : ref.read(attachToLyricProvider.notifier).toggle,
-            tooltip: S.of(context).attachToLyric,
-            isSelected: attachNotifier,
-            icon: const Icon(Icons.my_location),
-          ),
+
+        final hasLyric = ref.watch(
+          lyricProvider(
+            ref.projectId!,
+            isTranslate: false,
+          ).select((asyncValue) => asyncValue.value != null),
+        );
+
+        return IconButton.outlined(
+          onPressed: hasLyric
+              ? ref.read(attachToLyricProvider.notifier).toggle
+              : null,
+          tooltip: S.of(context).attachToLyric,
+          isSelected: attachNotifier,
+          icon: const Icon(Icons.my_location),
         );
       },
     );

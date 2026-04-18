@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/play_controller/play_controller.dart';
 import '/projects/projects.dart';
+import '/utils/utils.dart';
 
 import 'translate_lyric.dart';
 
@@ -40,16 +41,13 @@ class LyricController extends _$LyricController {
 
     ref.listen(lyricProvider(id, isTranslate: false), (previous, next) {
       _lrc = next.value;
-      controller.loadMultiLineLyric(_lrc ?? '', translationLyric: _tlrc);
-      _updatePosition();
+      controller.loadMultiLineLyric(_lrc, translationLyric: _tlrc);
     });
     ref.listen(lyricProvider(id, isTranslate: true), (previous, next) {
       _tlrc = next.value;
-      if (_lrc != null) {
-        controller.loadMultiLineLyric(_lrc ?? '', translationLyric: _tlrc);
-        _updatePosition();
-      }
+      controller.loadMultiLineLyric(_lrc, translationLyric: _tlrc);
     });
+    _updatePosition();
 
     return controller;
   }
@@ -85,12 +83,21 @@ class Lyric extends _$Lyric {
     await future;
   }
 
+  void clearTemporarily() async {
+    state = AsyncData(null);
+  }
+
   String get _filePath =>
       isTranslate ? ProjectPath(id).lyricT : ProjectPath(id).lyric;
 }
 
 extension on fl.LyricController {
-  void loadMultiLineLyric(String lyric, {String? translationLyric}) {
+  void loadMultiLineLyric(String? lyric, {String? translationLyric}) {
+    if (lyric == null) {
+      lyricNotifier.clear();
+      return;
+    }
+
     final lyricModel = LyricParse.parse(
       lyric,
       translationLyric: translationLyric,

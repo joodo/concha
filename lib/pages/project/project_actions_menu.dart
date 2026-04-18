@@ -10,25 +10,25 @@ import '/lyric/lyric.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 
-enum _ProjectAction { editLyric, editLyricT }
-
 class ProjectActionsMenu extends ConsumerWidget {
   const ProjectActionsMenu({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<_ProjectAction>(
+    return PopupMenuButton(
       icon: const Icon(Icons.more_vert),
       itemBuilder: (BuildContext context) => [
         PopupMenuItem(
-          value: .editLyric,
           onTap: () => _editLyric(ref, isTranslate: false),
           child: S.of(context).editLyric.asText(),
         ),
         PopupMenuItem(
-          value: .editLyricT,
           onTap: () => _editLyric(ref, isTranslate: true),
           child: S.of(context).editTranslateLyric.asText(),
+        ),
+        PopupMenuItem(
+          onTap: ref.lyricNotifier(isTranslate: false)!.clearTemporarily,
+          child: S.of(context).clearLyric.asText(),
         ),
       ],
     );

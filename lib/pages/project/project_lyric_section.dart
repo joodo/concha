@@ -31,14 +31,15 @@ class ProjectLyricSection extends HookConsumerWidget {
     final controller = ref.watch(lyricControllerProvider(ref.projectId!)).value;
     if (controller == null) return const SizedBox.shrink();
 
-    return ListenableBuilder(
-      listenable: Listenable.merge([
-        controller.lyricNotifier,
-        isSearchingNotifier,
-      ]),
-      builder: (context, child) {
-        final hasLyric = controller.lyricNotifier.value != null;
-        final isSearching = isSearchingNotifier.value;
+    final hasLyric = ref.watch(
+      lyricProvider(
+        ref.projectId!,
+        isTranslate: false,
+      ).select((asyncValue) => asyncValue.value != null),
+    );
+    return ValueListenableBuilder(
+      valueListenable: isSearchingNotifier,
+      builder: (context, isSearching, child) {
         return hasLyric || isSearching
             ? _Content(isSearchingNotifier: isSearchingNotifier)
             : _EmptyContent(
@@ -62,12 +63,10 @@ class _Content extends HookConsumerWidget {
     final lyricController = ref.lyricController!;
 
     final wordByWordNotifier = useValueNotifier<String?>(null);
-    useEffect(() {
-      lyricController.lyricNotifier.addListener(wordByWordNotifier.clear);
-      return () => lyricController.lyricNotifier.removeListener(
-        wordByWordNotifier.clear,
-      );
-    }, []);
+    ref.listen(
+      lyricProvider(ref.projectId!, isTranslate: false),
+      (previous, next) => wordByWordNotifier.clear(),
+    );
 
     return [
       ValueListenableBuilder(
@@ -250,12 +249,6 @@ class _LyricToolbar extends ConsumerWidget {
               ),
             );
           },
-        ),
-      if (!isPreview)
-        IconButton.filledTonal(
-          onPressed: lyricController.lyricNotifier.clear,
-          tooltip: S.of(context).clearLyric,
-          icon: Icon(Icons.subtitles_off),
         ),
     ].toColumn(mainAxisSize: .min, separator: const SizedBox(height: 16.0));
   }

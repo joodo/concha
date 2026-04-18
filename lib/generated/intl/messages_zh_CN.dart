@@ -59,6 +59,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("删除"),
     "downloadedBytes": m0,
     "downloadingStatus": MessageLookupByLibrary.simpleMessage("正在下载"),
+    "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
+    "editTranslateLyric": MessageLookupByLibrary.simpleMessage("编辑歌词翻译"),
     "failed": MessageLookupByLibrary.simpleMessage("失败"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("加载错误"),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(

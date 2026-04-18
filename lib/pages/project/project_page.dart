@@ -14,6 +14,7 @@ import '/widgets/settings.dart';
 import '/widgets/theme_from_image.dart';
 
 import 'actions.dart';
+import 'project_actions_menu.dart';
 import 'project_lyric_section.dart';
 import 'project_toolbar.dart';
 import 'riverpod.dart';
@@ -110,7 +111,11 @@ class ProjectPage extends HookConsumerWidget {
         },
       ),
       centerTitle: false,
-      actions: [const SettingButton(), 8.0.asWidth()],
+      actions: [
+        const ProjectActionsMenu(),
+        const SettingButton(),
+        8.0.asWidth(),
+      ],
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,

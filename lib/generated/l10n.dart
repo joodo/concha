@@ -748,6 +748,21 @@ class S {
   String get mixTable {
     return Intl.message('Mix Table', name: 'mixTable', desc: '', args: []);
   }
+
+  /// `Edit lyric`
+  String get editLyric {
+    return Intl.message('Edit lyric', name: 'editLyric', desc: '', args: []);
+  }
+
+  /// `Edit translate lyric`
+  String get editTranslateLyric {
+    return Intl.message(
+      'Edit translate lyric',
+      name: 'editTranslateLyric',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

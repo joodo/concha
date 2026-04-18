@@ -39,7 +39,7 @@ abstract class Project with _$Project {
     savedDir = projectsDir.path;
   }
 
-  ProjectPath get path => ProjectPath('$savedDir/$id');
+  ProjectPath get path => ProjectPath(id);
 
   Future<void> save() async {
     final dir = Directory(path.dir);
@@ -71,9 +71,11 @@ class Metadata {
 }
 
 class ProjectPath {
-  const ProjectPath(this.dir);
+  const ProjectPath(this.id);
 
-  final String dir;
+  final String id;
+
+  String get dir => '${Project.savedDir}/$id';
 
   String get audio => '$dir/audio';
   String get audioVocals => '$dir/audio.vocals';

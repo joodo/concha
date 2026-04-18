@@ -50,7 +50,7 @@ final class LyricControllerProvider
   }
 }
 
-String _$lyricControllerHash() => r'e1d32fd7090083b8b7a0d1d149d279c2a5d3a0d3';
+String _$lyricControllerHash() => r'd6821f251c9828ae76af9d956799bc2a2c526107';
 
 final class LyricControllerFamily extends $Family
     with
@@ -96,5 +96,97 @@ abstract class _$LyricController extends $AsyncNotifier<fl.LyricController> {
               Object?
             >;
     element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+@ProviderFor(Lyric)
+final lyricProvider = LyricFamily._();
+
+final class LyricProvider extends $AsyncNotifierProvider<Lyric, String?> {
+  LyricProvider._({
+    required LyricFamily super.from,
+    required (String, {bool isTranslate}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'lyricProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$lyricHash();
+
+  @override
+  String toString() {
+    return r'lyricProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  Lyric create() => Lyric();
+
+  @override
+  bool operator ==(Object other) {
+    return other is LyricProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$lyricHash() => r'6d47e175d1814275a1e86ef6734b9b2efe0a99a6';
+
+final class LyricFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          Lyric,
+          AsyncValue<String?>,
+          String?,
+          FutureOr<String?>,
+          (String, {bool isTranslate})
+        > {
+  LyricFamily._()
+    : super(
+        retry: null,
+        name: r'lyricProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  LyricProvider call(String id, {required bool isTranslate}) =>
+      LyricProvider._(argument: (id, isTranslate: isTranslate), from: this);
+
+  @override
+  String toString() => r'lyricProvider';
+}
+
+abstract class _$Lyric extends $AsyncNotifier<String?> {
+  late final _$args = ref.$arg as (String, {bool isTranslate});
+  String get id => _$args.$1;
+  bool get isTranslate => _$args.isTranslate;
+
+  FutureOr<String?> build(String id, {required bool isTranslate});
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<String?>, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<String?>, String?>,
+              AsyncValue<String?>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(
+      ref,
+      () => build(_$args.$1, isTranslate: _$args.isTranslate),
+    );
   }
 }

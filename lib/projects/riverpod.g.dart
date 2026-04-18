@@ -94,7 +94,7 @@ final class ProjectDetailProvider
   }
 }
 
-String _$projectDetailHash() => r'25e4c4a0c436f85b8722a7f2ab67468a9ce40d29';
+String _$projectDetailHash() => r'cd37a747cc7ad2d66b8e2db5d867b16104103ca2';
 
 final class ProjectDetailFamily extends $Family
     with

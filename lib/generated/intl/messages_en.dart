@@ -67,6 +67,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
     "downloadedBytes": m0,
     "downloadingStatus": MessageLookupByLibrary.simpleMessage("Downloading"),
+    "editLyric": MessageLookupByLibrary.simpleMessage("Edit lyric"),
+    "editTranslateLyric": MessageLookupByLibrary.simpleMessage(
+      "Edit translate lyric",
+    ),
     "failed": MessageLookupByLibrary.simpleMessage("Failed"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("Failed to load"),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(

@@ -119,5 +119,7 @@
   "myLibrary": "我的曲库",
   "continuePracticing": "继续",
   "regenerateSubtitle": "重新生成副标题",
-  "mixTable": "调音台"
+  "mixTable": "调音台",
+  "editLyric": "编辑歌词",
+  "editTranslateLyric": "编辑歌词翻译"
 }

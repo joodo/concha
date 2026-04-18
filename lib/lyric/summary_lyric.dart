@@ -1,4 +1,4 @@
-import 'service.dart';
+import '/llm/service.dart';
 
 String _systemPrompt(String targetLang) =>
     '''

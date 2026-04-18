@@ -5,7 +5,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
 import '/generated/l10n.dart';
-import '/lyric_controller/lyric_controller.dart';
+import '/lyric/lyric.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';

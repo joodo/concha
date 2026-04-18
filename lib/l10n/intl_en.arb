@@ -119,5 +119,7 @@
   "myLibrary": "My Library",
   "continuePracticing": "Continue",
   "regenerateSubtitle": "Regenerate Subtitles",
-  "mixTable": "Mix Table"
+  "mixTable": "Mix Table",
+  "editLyric": "Edit lyric",
+  "editTranslateLyric": "Edit translate lyric"
 }

@@ -3,7 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '/generated/l10n.dart';
-import '/lyric_controller/lyric_controller.dart';
+import '/lyric/lyric.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/shortcuts/shortcuts.dart';

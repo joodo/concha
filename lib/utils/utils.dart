@@ -5,7 +5,7 @@ export 'run_after_build.dart';
 export 'format.dart';
 export 'lyric_controller.dart';
 export 'popup_menu.dart';
-export 'copy_to_clipboard.dart';
+export 'clipboard.dart';
 export 'build_context.dart';
 export 'pending_delete_action.dart';
 export 'riverpod.dart';

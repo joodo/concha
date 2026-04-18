@@ -10,7 +10,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '/generated/l10n.dart';
 import '/llm/llm.dart';
-import '/lyric_controller/lyric_controller.dart' hide LyricController;
+import '/lyric/lyric.dart' hide LyricController;
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
@@ -44,10 +44,7 @@ class ProjectLyricSection extends HookConsumerWidget {
             : _EmptyContent(
                 onLocalPathSelected: (lyricPath) async {
                   final lrc = await File(lyricPath).readAsString();
-
-                  controller.loadMultiLineLyric(lrc);
-
-                  _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
+                  _setProjectLyricAndGenerateSummary(ref, lrc);
                 },
                 onSearch: () => isSearchingNotifier.value = true,
               );
@@ -75,10 +72,12 @@ class _Content extends HookConsumerWidget {
     return [
       ValueListenableBuilder(
         valueListenable: isSearchingNotifier,
-        builder: (context, isSearching, child) => _LyricView(
-          controller: lyricController,
-          onWordForWord: wordByWordNotifier.set,
-          isPreview: isSearching,
+        builder: (context, isSearching, child) => Consumer(
+          builder: (context, ref, child) => _LyricView(
+            controller: lyricController,
+            onWordForWord: wordByWordNotifier.set,
+            isPreview: isSearching,
+          ),
         ),
       ),
       ValueListenableBuilder(
@@ -101,10 +100,10 @@ class _Content extends HookConsumerWidget {
         builder: (context, isSearching, child) {
           if (!isSearching) return const SizedBox.shrink();
           return _SearchPanel(
-            onLyricSelected: lyricController.loadMultiLineLyric,
+            onLyricSelected: ref.lyricNotifier(isTranslate: false)!.preview,
             onConfirm: (lrc) async {
               if (lrc != null) {
-                _setProjectLyricAndGenerateSummary(ref.projectNotifier!, lrc);
+                _setProjectLyricAndGenerateSummary(ref, lrc);
               }
               isSearchingNotifier.value = false;
             },
@@ -230,9 +229,7 @@ class _LyricToolbar extends ConsumerWidget {
               ref.read(lyricTranslateLangsProvider),
             );
 
-            lyricController.loadMultiLineLyric(lrc, translationLyric: tlrc);
-
-            await ref.projectNotifier!.updateLyric(tlrc, isTranslate: true);
+            await ref.lyricNotifier(isTranslate: true)!.save(tlrc);
           },
         ),
       _OffsetButton(onChanged: (value) => lyricController.lyricOffset = value),
@@ -766,9 +763,10 @@ class _OffsetButton extends HookConsumerWidget {
 }
 
 Future<void> _setProjectLyricAndGenerateSummary(
-  ProjectDetail notifier,
-  String lrc,
-) async {
-  await notifier.updateLyric(lrc);
-  await notifier.generateSummary();
+  WidgetRef ref,
+  String lrc, {
+  bool isTranslate = false,
+}) async {
+  await ref.lyricNotifier(isTranslate: isTranslate)!.save(lrc);
+  await ref.projectNotifier!.generateSummary();
 }

@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '/preferences/riverpod.dart';
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/audio_sep/audio_sep.dart';
-import '/llm/llm.dart';
+import '/lyric/lyric.dart';
+import '/preferences/riverpod.dart';
 import '/utils/utils.dart';
 
 import 'models.dart';
@@ -125,12 +125,6 @@ class ProjectDetail extends _$ProjectDetail {
     } finally {
       _isGeneratingSummary = false;
     }
-  }
-
-  Future<void> updateLyric(String lrc, {bool isTranslate = false}) async {
-    final projectPath = state.value!.path;
-    final filePath = isTranslate ? projectPath.lyricT : projectPath.lyric;
-    await File(filePath).writeAsString(lrc);
   }
 
   Future<void> updateAndSave(Project Function(Project old) updateFn) async {

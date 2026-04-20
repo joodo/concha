@@ -121,5 +121,16 @@
   "regenerateSubtitle": "重新生成副标题",
   "mixTable": "调音台",
   "editLyric": "编辑歌词",
-  "editTranslateLyric": "编辑歌词翻译"
+  "editTranslateLyric": "编辑歌词翻译",
+  "editMetadata": "编辑媒体信息",
+  "title": "标题",
+  "album": "专辑",
+  "artist": "艺术家",
+  "save": "保存",
+  "searchTitleArtistOrAlbum": "搜索标题、艺术家或专辑……",
+  "discardChanges": "放弃更改？",
+  "metadataWillBeRestoredToTheStateBeforeModification": "媒体信息将恢复到修改前的状态。",
+  "discard": "放弃",
+  "imageFile": "图片文件",
+  "noMediaInformationFound": "未搜索到媒体信息"
 }

@@ -4,24 +4,18 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '/network/network.dart';
 import '/utils/utils.dart';
-
-import 'network.dart';
 
 typedef AcoustProgressHandler = void Function(String message);
 typedef AcoustLogHandler = void Function(String line);
 
-class AcoustIdResult {
-  const AcoustIdResult({
-    required this.raw,
-    required this.title,
-    required this.artist,
-  });
-
-  final Map<String, dynamic> raw;
-  final String title;
-  final String artist;
-}
+typedef SearchResult = ({
+  String title,
+  String? artist,
+  String? album,
+  Uri coverUrl,
+});
 
 class AcoustIdService {
   AcoustIdService({ShellRunner? shellRunner})
@@ -29,7 +23,7 @@ class AcoustIdService {
 
   final ShellRunner _shellRunner;
 
-  Future<AcoustIdResult> recognizeLocalFile({
+  Future<List<SearchResult>> recognizeLocalFile({
     required String audioFilePath,
     required String apiKey,
     AcoustProgressHandler? onProgress,
@@ -100,58 +94,24 @@ class AcoustIdService {
         .post(requestUrl, data: FormData.fromMap(form));
 
     final body = response.data;
-    if (body['status']?.toString() != 'ok') {
-      final error = body['error']?.toString() ?? '未知错误';
-      throw Exception('AcoustID 返回失败: $error');
-    }
-
     final results = body['results'];
-    if (results is! List || results.isEmpty) {
-      throw Exception('AcoustID 未返回匹配结果');
-    }
-
-    final resultMaps = results.whereType<Map<String, dynamic>>().toList()
-      ..sort((a, b) {
-        final aScore = (a['score'] is num)
-            ? (a['score'] as num).toDouble()
-            : 0.0;
-        final bScore = (b['score'] is num)
-            ? (b['score'] as num).toDouble()
-            : 0.0;
-        return bScore.compareTo(aScore);
-      });
-
-    Map<String, dynamic>? bestRecording;
-    double bestScore = 0.0;
-    for (final item in resultMaps) {
-      final itemScore = (item['score'] is num)
-          ? (item['score'] as num).toDouble()
-          : 0.0;
-      final recordings = item['recordings'];
-      if (recordings is! List || recordings.isEmpty) {
-        continue;
-      }
-
-      for (final recording in recordings.whereType<Map<String, dynamic>>()) {
-        final title = recording['title']?.toString().trim() ?? '';
-        if (title.isEmpty) continue;
-        bestRecording = recording;
-        bestScore = itemScore;
-        break;
-      }
-
-      if (bestRecording != null) break;
-    }
-
-    if (bestRecording == null) {
-      throw Exception('AcoustID 返回结果中没有可用 recording');
-    }
-
-    onLog?.call('[acoustid] best_score=$bestScore');
-    final title = bestRecording['title']?.toString() ?? '未知标题';
-    final artist = _extractArtist(bestRecording);
-
-    return AcoustIdResult(raw: body, title: title, artist: artist);
+    if (results is! List) return [];
+    return results.expand((e) => e['recordings'] ?? []).expand((recording) {
+      final releases = recording['releases'] as List? ?? [];
+      final artists = recording['artists'] as List? ?? [];
+      return releases.map<SearchResult>(
+        (release) => (
+          title: recording['title'],
+          artist: artists.map((e) => e['name']).join(' / '),
+          album: release['title'],
+          coverUrl: Uri(
+            scheme: 'https',
+            host: 'coverartarchive.org',
+            pathSegments: ['release', release['id'], 'front'],
+          ),
+        ),
+      );
+    }).toList();
   }
 
   Future<String> _ensureFpcalc({
@@ -316,19 +276,5 @@ class AcoustIdService {
       return doubleValue?.round();
     }
     return null;
-  }
-
-  String _extractArtist(Map<String, dynamic> recording) {
-    final artists = recording['artists'];
-    if (artists is! List || artists.isEmpty) {
-      return '未知艺术家';
-    }
-
-    final firstArtist = artists.first;
-    if (firstArtist is! Map<String, dynamic>) {
-      return '未知艺术家';
-    }
-
-    return firstArtist['name']?.toString() ?? '未知艺术家';
   }
 }

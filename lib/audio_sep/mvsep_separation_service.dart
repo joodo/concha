@@ -7,9 +7,8 @@ import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '/network/network.dart';
 import '/preferences/preferences.dart';
-
-import '../services/services.dart';
 
 sealed class MvsepTaskEvent {
   const MvsepTaskEvent();

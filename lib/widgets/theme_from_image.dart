@@ -1,19 +1,19 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import '/utils/utils.dart';
 
 class ThemeFromImage extends StatelessWidget {
-  const ThemeFromImage({super.key, required this.path, required this.child});
+  const ThemeFromImage({super.key, required this.data, required this.child});
   final Widget child;
-  final String path;
+  final Uint8List? data;
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
       future: ColorScheme.fromImageProvider(
-        provider: FileImage(File(path)),
+        provider: MemoryImage(data ?? Uint8List(0)),
         brightness: context.theme.brightness,
       ),
       initialData: context.colors,

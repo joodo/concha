@@ -6,18 +6,6 @@ part of 'models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Metadata _$MetadataFromJson(Map<String, dynamic> json) => Metadata(
-  title: json['title'] as String,
-  artist: json['artist'] as String?,
-  album: json['album'] as String?,
-);
-
-Map<String, dynamic> _$MetadataToJson(Metadata instance) => <String, dynamic>{
-  'title': instance.title,
-  'artist': instance.artist,
-  'album': instance.album,
-};
-
 _Project _$ProjectFromJson(Map<String, dynamic> json) => _Project(
   id: json['id'] as String?,
   position: json['position'] == null
@@ -36,4 +24,16 @@ Map<String, dynamic> _$ProjectToJson(_Project instance) => <String, dynamic>{
   'lyricOffset': instance.lyricOffset.inMicroseconds,
   'summary': instance.summary,
   'metadata': instance.metadata,
+};
+
+_Metadata _$MetadataFromJson(Map<String, dynamic> json) => _Metadata(
+  title: json['title'] as String,
+  artist: json['artist'] as String?,
+  album: json['album'] as String?,
+);
+
+Map<String, dynamic> _$MetadataToJson(_Metadata instance) => <String, dynamic>{
+  'title': instance.title,
+  'artist': instance.artist,
+  'album': instance.album,
 };

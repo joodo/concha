@@ -121,5 +121,16 @@
   "regenerateSubtitle": "Regenerate Subtitles",
   "mixTable": "Mix Table",
   "editLyric": "Edit lyric",
-  "editTranslateLyric": "Edit translate lyric"
+  "editTranslateLyric": "Edit translate lyric",
+  "editMetadata": "Edit metadata",
+  "title": "Title",
+  "album": "Album",
+  "artist": "Artist",
+  "save": "Save",
+  "searchTitleArtistOrAlbum": "Search Title, Artist or Album...",
+  "discardChanges": "Discard changes?",
+  "metadataWillBeRestoredToTheStateBeforeModification": "Metadata will be restored to the state before modification.",
+  "discard": "Discard",
+  "imageFile": "Image file",
+  "noMediaInformationFound": "No media information found"
 }

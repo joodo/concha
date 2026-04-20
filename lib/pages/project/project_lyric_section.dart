@@ -128,7 +128,7 @@ class _LyricView extends StatelessWidget {
   Widget build(BuildContext context) {
     final lyricView = LyricView(
       // Avoid text layout not available on textStyle with shadow when brightness changed
-      key: ValueKey(context.theme.brightness),
+      key: ValueKey((context.theme.brightness, context.colors)),
       controller: controller,
       style: LyricStyles.default1.copyWith(
         textStyle: context.textStyles.displaySmall?.copyWith(

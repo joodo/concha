@@ -141,3 +141,92 @@ abstract class _$ProjectDetail extends $AsyncNotifier<Project> {
     element.handleCreate(ref, () => build(_$args));
   }
 }
+
+@ProviderFor(ProjectCoverBytes)
+final projectCoverBytesProvider = ProjectCoverBytesFamily._();
+
+final class ProjectCoverBytesProvider
+    extends $AsyncNotifierProvider<ProjectCoverBytes, Uint8List?> {
+  ProjectCoverBytesProvider._({
+    required ProjectCoverBytesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'projectCoverBytesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$projectCoverBytesHash();
+
+  @override
+  String toString() {
+    return r'projectCoverBytesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ProjectCoverBytes create() => ProjectCoverBytes();
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProjectCoverBytesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$projectCoverBytesHash() => r'c413fc4cfbb9e7b2cbd61908c9b2bbe00174424f';
+
+final class ProjectCoverBytesFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ProjectCoverBytes,
+          AsyncValue<Uint8List?>,
+          Uint8List?,
+          FutureOr<Uint8List?>,
+          String
+        > {
+  ProjectCoverBytesFamily._()
+    : super(
+        retry: null,
+        name: r'projectCoverBytesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProjectCoverBytesProvider call(String id) =>
+      ProjectCoverBytesProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'projectCoverBytesProvider';
+}
+
+abstract class _$ProjectCoverBytes extends $AsyncNotifier<Uint8List?> {
+  late final _$args = ref.$arg as String;
+  String get id => _$args;
+
+  FutureOr<Uint8List?> build(String id);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<Uint8List?>, Uint8List?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<Uint8List?>, Uint8List?>,
+              AsyncValue<Uint8List?>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}

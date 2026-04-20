@@ -8,7 +8,6 @@ enum PrefKey {
 
   acoustKey,
   mvsepKey,
-  autoFillMetadata(defaultValue: false),
 
   llmService,
   llmUrl,

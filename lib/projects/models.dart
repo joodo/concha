@@ -51,18 +51,18 @@ abstract class Project with _$Project {
   }
 }
 
-@JsonSerializable()
-class Metadata {
-  Metadata({required this.title, this.artist, this.album});
-
-  final String title;
-  final String? artist;
-  final String? album;
+@freezed
+abstract class Metadata with _$Metadata {
+  const factory Metadata({
+    required String title,
+    String? artist,
+    String? album,
+  }) = _Metadata;
 
   factory Metadata.fromJson(Map<String, dynamic> json) =>
       _$MetadataFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MetadataToJson(this);
+  const Metadata._();
 
   String get displayTitle {
     final suffix = artist == null ? '' : ' - $artist';

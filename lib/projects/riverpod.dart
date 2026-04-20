@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -146,4 +147,22 @@ class ProjectDetail extends _$ProjectDetail {
       rethrow;
     }
   }
+}
+
+@riverpod
+class ProjectCoverBytes extends _$ProjectCoverBytes {
+  @override
+  Future<Uint8List?> build(String id) async {
+    final file = _file;
+    if (!await file.exists()) return null;
+
+    return await file.readAsBytes();
+  }
+
+  Future<void> set(Uint8List data) async {
+    await _file.writeAsBytes(data);
+    state = AsyncValue.data(data);
+  }
+
+  File get _file => File(ProjectPath(id).cover);
 }

@@ -1,16 +1,13 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:styled_widget/styled_widget.dart';
 
 import '/generated/l10n.dart';
-import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
@@ -65,18 +62,6 @@ class NewDialog extends HookWidget {
       onSubmitted: (_) => submit(),
     );
 
-    final fillDataTile = Consumer(
-      builder: (context, ref, child) {
-        final provider = preferenceProvider<bool>(.autoFillMetadata);
-        return CheckboxListTile(
-          title: S.of(context).autoFillMetadata.asText(),
-          controlAffinity: .leading,
-          value: ref.watch(provider)!,
-          onChanged: (value) => ref.read(provider.notifier).set(value!),
-        );
-      },
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: S.of(context).createNewProject.asText(),
@@ -86,7 +71,6 @@ class NewDialog extends HookWidget {
       body:
           [
                 audioField,
-                fillDataTile,
                 FilledButton(
                   onPressed: isSubmitting.value ? null : submit,
                   child: Text(
@@ -138,50 +122,24 @@ class NewDialog extends HookWidget {
       );
     }
 
-    MediaMatchResult? mediaData;
-    if (Pref.get<bool>(.autoFillMetadata)!) {
-      appendLog('[progress] Start matching metadata...');
-      mediaData = await MediaMatchService().identifyByAudioPath(
-        audioPath: audioPath,
-        onLog: appendLog,
-      );
-    }
-
     if (!context.mounted) return;
     appendLog('[progress] Start creating project...');
-    final project = await _createProject(
-      audioPath: audioPath,
-      matchedMediaInfo: mediaData,
-    );
+    final project = await _createProject(audioPath: audioPath);
 
     appendLog('[progress] All finished! Ready to leave.');
     if (context.mounted) Navigator.of(context).pop(project);
   }
 
-  Future<Project> _createProject({
-    required String audioPath,
-    MediaMatchResult? matchedMediaInfo,
-  }) async {
+  Future<Project> _createProject({required String audioPath}) async {
     // Create Metadata
-    late final Uint8List? coverBytes;
-    late final Metadata metadata;
-    if (matchedMediaInfo != null) {
-      metadata = Metadata(
-        title: matchedMediaInfo.title,
-        artist: matchedMediaInfo.artist,
-        album: matchedMediaInfo.album,
-      );
-      coverBytes = matchedMediaInfo.coverBytes;
-    } else {
-      final m = readMetadata(File(audioPath), getImage: true);
-      final filename = p.basenameWithoutExtension(audioPath);
-      metadata = Metadata(
-        title: m.title ?? filename,
-        artist: m.artist,
-        album: m.album,
-      );
-      coverBytes = m.pictures.firstOrNull?.bytes;
-    }
+    final m = readMetadata(File(audioPath), getImage: true);
+    final filename = p.basenameWithoutExtension(audioPath);
+    final metadata = Metadata(
+      title: m.title ?? filename,
+      artist: m.artist,
+      album: m.album,
+    );
+    final coverBytes = m.pictures.firstOrNull?.bytes;
 
     // Create project
     final project = Project(metadata: metadata);

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -65,18 +63,10 @@ class ProjectPage extends HookConsumerWidget {
 
     final bgSection = Consumer(
       builder: (context, ref, child) {
-        final coverPath =
-            ref.watch(
-              ref.projectProvider!.select((p) => p.value?.path.cover),
-            ) ??
-            '';
-        final coverFile = File(coverPath);
-        return FutureBuilder(
-          future: coverFile.exists(),
-          builder: (context, snapshot) => snapshot.data == true
-              ? Image.file(coverFile, fit: .cover)
-              : const SizedBox.shrink(),
-        );
+        final data = ref.watch(projectCoverBytesProvider(ref.projectId!)).value;
+        return data == null
+            ? const SizedBox.shrink()
+            : Image.memory(data, fit: .cover);
       },
     );
     final lyricSection = [
@@ -117,8 +107,7 @@ class ProjectPage extends HookConsumerWidget {
         8.0.asWidth(),
       ],
       backgroundColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
+      notificationPredicate: (notification) => false,
     );
 
     final scaffoldWrap = Scaffold(
@@ -133,12 +122,8 @@ class ProjectPage extends HookConsumerWidget {
 
     final themeBuilder = Consumer(
       builder: (context, ref, child) {
-        final coverPath =
-            ref.watch(
-              ref.projectProvider!.select((p) => p.value?.path.cover),
-            ) ??
-            '';
-        return ThemeFromImage(path: coverPath, child: child!);
+        final data = ref.watch(projectCoverBytesProvider(ref.projectId!)).value;
+        return ThemeFromImage(data: data, child: child!);
       },
       child: scaffoldWrap,
     );

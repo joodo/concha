@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:llm_dart/llm_dart.dart';
 
+import '/network/network.dart';
 import '/preferences/preferences.dart';
-import '/services/services.dart';
 import '/utils/utils.dart';
 
 import 'service.dart';

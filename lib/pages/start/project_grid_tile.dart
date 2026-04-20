@@ -1,12 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:styled_widget/styled_widget.dart';
 
 import '/generated/l10n.dart';
 import '/projects/riverpod.dart';
 import '/utils/utils.dart';
+import '/widgets/album_cover_placeholder.dart';
 
 class ProjectGridTile extends ConsumerWidget {
   const ProjectGridTile({
@@ -25,7 +23,7 @@ class ProjectGridTile extends ConsumerWidget {
     if (project == null) return const SizedBox.shrink();
 
     final data = project.metadata;
-    final coverFile = File(project.path.cover);
+    final coverBytes = ref.watch(projectCoverBytesProvider(projectId)).value;
 
     final tile = GridTile(
       footer: GridTileBar(
@@ -33,13 +31,9 @@ class ProjectGridTile extends ConsumerWidget {
         title: Text(data.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: data.artist?.asText(),
       ),
-      child: FutureBuilder(
-        future: coverFile.exists(),
-        initialData: false,
-        builder: (context, snapshot) => snapshot.data == true
-            ? Ink.image(image: FileImage(coverFile), fit: .cover)
-            : Icon(Icons.music_note_rounded, size: 56.0).center(),
-      ),
+      child: coverBytes != null
+          ? Ink.image(image: MemoryImage(coverBytes), fit: .cover)
+          : const AlbumCoverPlaceholder(),
     );
 
     return Material(

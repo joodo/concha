@@ -12,5 +12,5 @@ extension MapOrNullExtension<T> on T? {
 }
 
 extension NullIfEmpty on String {
-  String? get nullIfEmpty => isEmpty ? null : this;
+  String? get nullIfEmpty => trim().isEmpty ? null : this;
 }

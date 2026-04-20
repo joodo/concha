@@ -763,6 +763,86 @@ class S {
       args: [],
     );
   }
+
+  /// `Edit metadata`
+  String get editMetadata {
+    return Intl.message(
+      'Edit metadata',
+      name: 'editMetadata',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Title`
+  String get title {
+    return Intl.message('Title', name: 'title', desc: '', args: []);
+  }
+
+  /// `Album`
+  String get album {
+    return Intl.message('Album', name: 'album', desc: '', args: []);
+  }
+
+  /// `Artist`
+  String get artist {
+    return Intl.message('Artist', name: 'artist', desc: '', args: []);
+  }
+
+  /// `Save`
+  String get save {
+    return Intl.message('Save', name: 'save', desc: '', args: []);
+  }
+
+  /// `Search Title, Artist or Album...`
+  String get searchTitleArtistOrAlbum {
+    return Intl.message(
+      'Search Title, Artist or Album...',
+      name: 'searchTitleArtistOrAlbum',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discard changes?`
+  String get discardChanges {
+    return Intl.message(
+      'Discard changes?',
+      name: 'discardChanges',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Metadata will be restored to the state before modification.`
+  String get metadataWillBeRestoredToTheStateBeforeModification {
+    return Intl.message(
+      'Metadata will be restored to the state before modification.',
+      name: 'metadataWillBeRestoredToTheStateBeforeModification',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discard`
+  String get discard {
+    return Intl.message('Discard', name: 'discard', desc: '', args: []);
+  }
+
+  /// `Image file`
+  String get imageFile {
+    return Intl.message('Image file', name: 'imageFile', desc: '', args: []);
+  }
+
+  /// `No media information found`
+  String get noMediaInformationFound {
+    return Intl.message(
+      'No media information found',
+      name: 'noMediaInformationFound',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

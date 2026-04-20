@@ -1,4 +1,4 @@
-import '/services/services.dart';
+import '/network/network.dart';
 
 class LrcLibLyric {
   const LrcLibLyric({

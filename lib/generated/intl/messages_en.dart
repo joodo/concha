@@ -40,7 +40,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "adjustLyricOffset": MessageLookupByLibrary.simpleMessage(
       "Adjust Lyric Offset",
     ),
+    "album": MessageLookupByLibrary.simpleMessage("Album"),
     "apply": MessageLookupByLibrary.simpleMessage("Apply"),
+    "artist": MessageLookupByLibrary.simpleMessage("Artist"),
     "attachToLyric": MessageLookupByLibrary.simpleMessage("Snap to Lyrics"),
     "audioPathInvalidHint": MessageLookupByLibrary.simpleMessage(
       "Please enter a local file path or a valid YouTube link",
@@ -65,9 +67,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dark": MessageLookupByLibrary.simpleMessage("Dark"),
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
+    "discard": MessageLookupByLibrary.simpleMessage("Discard"),
+    "discardChanges": MessageLookupByLibrary.simpleMessage("Discard changes?"),
     "downloadedBytes": m0,
     "downloadingStatus": MessageLookupByLibrary.simpleMessage("Downloading"),
     "editLyric": MessageLookupByLibrary.simpleMessage("Edit lyric"),
+    "editMetadata": MessageLookupByLibrary.simpleMessage("Edit metadata"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage(
       "Edit translate lyric",
     ),
@@ -87,6 +92,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "functionOfMvsep": MessageLookupByLibrary.simpleMessage(
       "Used for generating accompaniments",
     ),
+    "imageFile": MessageLookupByLibrary.simpleMessage("Image file"),
     "initiatingService": MessageLookupByLibrary.simpleMessage(
       "Initializing service",
     ),
@@ -103,11 +109,18 @@ class MessageLookup extends MessageLookupByLibrary {
       "Local Storage Directory",
     ),
     "lyricFile": MessageLookupByLibrary.simpleMessage("Lyric File"),
+    "metadataWillBeRestoredToTheStateBeforeModification":
+        MessageLookupByLibrary.simpleMessage(
+          "Metadata will be restored to the state before modification.",
+        ),
     "mixTable": MessageLookupByLibrary.simpleMessage("Mix Table"),
     "modelName": MessageLookupByLibrary.simpleMessage("Model Name"),
     "myLibrary": MessageLookupByLibrary.simpleMessage("My Library"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("Network Proxy"),
+    "noMediaInformationFound": MessageLookupByLibrary.simpleMessage(
+      "No media information found",
+    ),
     "noProject": MessageLookupByLibrary.simpleMessage("No projects"),
     "openLocal": MessageLookupByLibrary.simpleMessage("Open Local"),
     "optionalServiceUrl": MessageLookupByLibrary.simpleMessage(
@@ -134,7 +147,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "regenerateSubtitle": MessageLookupByLibrary.simpleMessage(
       "Regenerate Subtitles",
     ),
+    "save": MessageLookupByLibrary.simpleMessage("Save"),
     "searchOnline": MessageLookupByLibrary.simpleMessage("Search Online"),
+    "searchTitleArtistOrAlbum": MessageLookupByLibrary.simpleMessage(
+      "Search Title, Artist or Album...",
+    ),
     "selectAudioFile": MessageLookupByLibrary.simpleMessage(
       "Select Audio File",
     ),
@@ -157,6 +174,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Text Processing Test",
     ),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
+    "title": MessageLookupByLibrary.simpleMessage("Title"),
     "translate": MessageLookupByLibrary.simpleMessage("Translate"),
     "translateLyric": MessageLookupByLibrary.simpleMessage("Translate Lyrics"),
     "translateTo": MessageLookupByLibrary.simpleMessage("Translate to: "),

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +10,7 @@ import 'package:styled_widget/styled_widget.dart';
 import '/generated/l10n.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
+import '/widgets/album_cover_placeholder.dart';
 import '/widgets/settings.dart';
 import '/widgets/theme_from_image.dart';
 
@@ -282,23 +283,24 @@ class _DisplayCard extends ConsumerWidget {
     final project = ref.watch(projectDetailProvider(projectId)).value;
     if (project == null) return const SizedBox.shrink();
 
-    final coverPath = project.path.cover;
     final metadata = project.metadata;
     final subtitle = [
       metadata.artist,
       metadata.album,
     ].whereType<String>().join(' - ');
 
+    final coverBytes = ref.watch(projectCoverBytesProvider(projectId)).value;
+
     final content = Card(
       margin: EdgeInsets.all(16.0),
       clipBehavior: .hardEdge,
       elevation: 0,
       child: [
-        Image.file(
-          File(coverPath),
+        Image.memory(
+          coverBytes ?? Uint8List(0),
           fit: .cover,
           errorBuilder: (context, error, stackTrace) =>
-              Icon(Icons.music_note_rounded, size: 56.0).center(),
+              const AlbumCoverPlaceholder(),
         ).constrained(width: 240.0),
         [
               Text(
@@ -325,7 +327,7 @@ class _DisplayCard extends ConsumerWidget {
       ].toRow(),
     ).constrained(maxWidth: 600.0, height: 260.0);
 
-    final themeWrap = ThemeFromImage(path: coverPath, child: content);
+    final themeWrap = ThemeFromImage(data: coverBytes, child: content);
 
     return GestureDetector(
       onSecondaryTapDown: (details) =>

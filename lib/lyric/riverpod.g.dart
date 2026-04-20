@@ -50,7 +50,7 @@ final class LyricControllerProvider
   }
 }
 
-String _$lyricControllerHash() => r'd6821f251c9828ae76af9d956799bc2a2c526107';
+String _$lyricControllerHash() => r'8690d34bcdea0af102fc0fb53569e6bcee1c8d30';
 
 final class LyricControllerFamily extends $Family
     with
@@ -139,7 +139,7 @@ final class LyricProvider extends $AsyncNotifierProvider<Lyric, String?> {
   }
 }
 
-String _$lyricHash() => r'6d47e175d1814275a1e86ef6734b9b2efe0a99a6';
+String _$lyricHash() => r'e36c49cd0a604f52eb9dc62e04548f8eed5a36bd';
 
 final class LyricFamily extends $Family
     with

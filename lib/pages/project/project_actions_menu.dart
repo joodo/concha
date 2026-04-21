@@ -71,9 +71,14 @@ class ProjectActionsMenu extends ConsumerWidget {
     final lrc = ref
         .read(lyricProvider(ref.projectId!, isTranslate: isTranslate))
         .value;
+
+    final s = S.of(ref.context);
+    final title =
+        '${isTranslate ? s.editTranslateLyric : s.editLyric}: ${ref.project?.metadata.title}';
     final result = await showModal<String>(
       context: ref.context,
-      builder: (context) => _LyricEditDialog(initValue: lrc ?? ''),
+      builder: (context) =>
+          _LyricEditDialog(initValue: lrc ?? '', title: title),
     );
     if (result == lrc) return;
 
@@ -463,8 +468,9 @@ class _MetadataDialog extends HookWidget {
 }
 
 class _LyricEditDialog extends HookWidget {
-  const _LyricEditDialog({required this.initValue});
+  const _LyricEditDialog({required this.initValue, this.title});
   final String initValue;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -489,8 +495,9 @@ class _LyricEditDialog extends HookWidget {
     final historyValue = useValueListenable(undoController);
 
     final appBar = AppBar(
-      automaticallyImplyLeading: false,
-      title: [
+      leading: const CloseButton(),
+      title: (title ?? '').asText(),
+      actions: [
         IconButton(
           onPressed: historyValue.canUndo ? undoController.undo : null,
           icon: Icon(Icons.undo),
@@ -499,7 +506,7 @@ class _LyricEditDialog extends HookWidget {
           onPressed: historyValue.canRedo ? undoController.redo : null,
           icon: Icon(Icons.redo),
         ),
-        const VerticalDivider(),
+        8.0.asWidth(),
         IconButton(
           onPressed: canCopy ? textController.copySelectionToClipboard : null,
           icon: Icon(Icons.copy),
@@ -508,8 +515,8 @@ class _LyricEditDialog extends HookWidget {
           onPressed: canPaste.value ? textController.pasteFromClipboard : null,
           icon: Icon(Icons.paste),
         ),
-      ].toRow(),
-      actions: [const CloseButton(), 8.0.asWidth()],
+        8.0.asWidth(),
+      ],
     );
 
     final content = Scaffold(

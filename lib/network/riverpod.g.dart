@@ -18,7 +18,7 @@ final class HttpBlobProvider
     required HttpBlobFamily super.from,
     required Uri super.argument,
   }) : super(
-         retry: disableRetry,
+         retry: null,
          name: r'httpBlobProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -50,7 +50,7 @@ final class HttpBlobProvider
   }
 }
 
-String _$httpBlobHash() => r'726f12a26d752e8ef41f708b38694ffcb76edc03';
+String _$httpBlobHash() => r'd074e4da1806e46ab68a1c2b26d6b9cdef9f84e2';
 
 final class HttpBlobFamily extends $Family
     with
@@ -63,7 +63,7 @@ final class HttpBlobFamily extends $Family
         > {
   HttpBlobFamily._()
     : super(
-        retry: disableRetry,
+        retry: null,
         name: r'httpBlobProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

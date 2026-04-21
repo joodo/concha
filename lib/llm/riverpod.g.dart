@@ -56,7 +56,7 @@ final class WordForWordProvider
     required WordForWordFamily super.from,
     required String super.argument,
   }) : super(
-         retry: disableRetry,
+         retry: null,
          name: r'wordForWordProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -88,7 +88,7 @@ final class WordForWordProvider
   }
 }
 
-String _$wordForWordHash() => r'c72d1c53b1eeacfe003a1b3bee628e1fe109871e';
+String _$wordForWordHash() => r'3442843b3bf2e68607c7ece03d6d28cbf2016d1b';
 
 @JsonPersist()
 final class WordForWordFamily extends $Family
@@ -102,7 +102,7 @@ final class WordForWordFamily extends $Family
         > {
   WordForWordFamily._()
     : super(
-        retry: disableRetry,
+        retry: null,
         name: r'wordForWordProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

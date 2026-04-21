@@ -11,30 +11,23 @@ import 'service.impl.dart';
 
 part 'riverpod.g.dart';
 
-@Riverpod(retry: disableRetry)
-class TextVoice extends _$TextVoice {
+@riverpod
+class TextVoice extends _$TextVoice with LoadPersistOrFetch {
   static const _prompt = 'Read aloud slowly and clearly';
   @override
   Future<Uint8List> build(String text) async {
-    final link = ref.keepAlive();
-    await persist(
-      ref.watch(persistStorageProvider.future),
-      key: 'TextVoice($text)',
-      encode: (state) => base64Encode(state),
-      decode: (encoded) => base64Decode(encoded),
-      options: const StorageOptions(cacheTime: StorageCacheTime.unsafe_forever),
-    ).future;
-
-    if (state.hasValue) {
-      link.close();
-      return state.requireValue;
-    }
-
-    try {
-      return await _fetch();
-    } finally {
-      link.close();
-    }
+    return loadPersistOrFetch(
+      persist: persist(
+        ref.watch(persistStorageProvider.future),
+        key: 'TextVoice($text)',
+        encode: (state) => base64Encode(state),
+        decode: (encoded) => base64Decode(encoded),
+        options: const StorageOptions(
+          cacheTime: StorageCacheTime.unsafe_forever,
+        ),
+      ),
+      fetch: _fetch,
+    );
   }
 
   Future<Uint8List> _fetch() async {

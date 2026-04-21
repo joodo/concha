@@ -45,7 +45,7 @@ abstract class Project with _$Project {
     final dir = Directory(path.dir);
     if (!await dir.exists()) await dir.create(recursive: true);
 
-    final file = File('${path.dir}/info.json');
+    final file = File(path.info);
     final data = jsonEncode(toJson());
     await file.writeAsString(data);
   }
@@ -77,6 +77,7 @@ class ProjectPath {
 
   String get dir => '${Project.savedDir}/$id';
 
+  String get info => '$dir/info.json';
   String get audio => '$dir/audio';
   String get audioVocals => '$dir/audio.vocals';
   String get audioInstru => '$dir/audio.inst';

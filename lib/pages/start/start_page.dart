@@ -43,7 +43,7 @@ class StartPage extends HookConsumerWidget {
     final displayCard = hasDisplayTile
         ? _DisplayCard(
             projectId: firstId!,
-            onSelected: (project) => _pushRoute(context: context, id: firstId),
+            onSelected: (project) => _projectSelected(ref, firstId),
             onDelete: (projectId) =>
                 _deleteProject(ref: ref, context: context, id: projectId),
           )
@@ -66,8 +66,7 @@ class StartPage extends HookConsumerWidget {
                     .map(
                       (projectId) => ProjectGridTile(
                         projectId: projectId,
-                        onSelect: () =>
-                            _pushRoute(context: context, id: projectId),
+                        onSelect: () => _projectSelected(ref, projectId),
                         onDelete: () => _deleteProject(
                           ref: ref,
                           context: context,
@@ -106,7 +105,7 @@ class StartPage extends HookConsumerWidget {
             isExpanded: isExpanded,
             onProjectCreated: (value) {
               ref.invalidate(projectListProvider);
-              _pushRoute(context: context, id: value);
+              _projectSelected(ref, value);
             },
           );
         },
@@ -124,8 +123,9 @@ class StartPage extends HookConsumerWidget {
     return project.summary != null;
   }
 
-  void _pushRoute({required BuildContext context, required String id}) {
-    Navigator.of(context).pushNamed('/project', arguments: {'id': id});
+  void _projectSelected(WidgetRef ref, String id) {
+    Navigator.of(ref.context).pushNamed('/project', arguments: {'id': id});
+    ref.read(projectListProvider.notifier).visit(id);
   }
 
   Future<void> _deleteProject({
@@ -133,9 +133,10 @@ class StartPage extends HookConsumerWidget {
     required BuildContext context,
     required String id,
   }) async {
-    final action = ref.read(projectListProvider.notifier).dismiss(id);
+    final action = await ref.read(projectListProvider.notifier).dismiss(id);
     if (action == null) return;
 
+    if (!context.mounted) return;
     final controller = context.showSnackBar(
       SnackBar(
         content: S

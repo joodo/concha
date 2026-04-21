@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/audio_sep/audio_sep.dart';
 import '/lyric/lyric.dart';
+import '/persistence/persistence.dart';
 import '/preferences/riverpod.dart';
 import '/utils/utils.dart';
 
@@ -19,35 +21,48 @@ class ProjectList extends _$ProjectList {
   @override
   FutureOr<List<String>> build() async {
     final directory = Directory(Project.savedDir);
-    final entries = await directory
+
+    final ids = await directory
         .list()
-        .map((entity) {
-          final infoPath = '${entity.path}${Platform.pathSeparator}info.json';
-          return File(infoPath);
-        })
-        .where((entity) => entity.existsSync())
-        .cast<File>()
-        .asyncMap(
-          (file) async => (
-            projectId: path_tool.basename(path_tool.dirname(file.path)),
-            modifiedAt: await file.lastModified(),
-          ),
+        .map((entity) => path_tool.basename(entity.path))
+        .asyncWhere(
+          (e) => ref.read(projectDetailProvider(e).notifier)._isValid(),
         )
         .toList();
-    entries.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
 
-    return entries.map((entry) => entry.projectId).toList();
+    final lastVisited = {
+      for (final id in ids)
+        id: await ref.read(projectLastVisitedProvider(id).future),
+    };
+    ids.sort((a, b) => lastVisited[b]!.compareTo(lastVisited[a]!));
+
+    return ids;
   }
 
-  PendingDeleteAction<Project>? dismiss(String id) {
-    final list = state.value ?? [];
-    final index = list.indexOf(id);
+  Future<void> visit(String id) async {
+    final previousState = await future;
+    final index = previousState.indexOf(id);
+    if (index == -1) return;
+
+    state = AsyncData([
+      previousState[index],
+      ...previousState.take(index),
+      ...previousState.skip(index + 1),
+    ]);
+
+    await ref.read(projectLastVisitedProvider(id).notifier)._updateNow();
+  }
+
+  Future<PendingDeleteAction<Project>?> dismiss(String id) async {
+    final target = await ref.read(projectDetailProvider(id).future);
+
+    final previousState = await future;
+    final index = previousState.indexOf(id);
     if (index == -1) return null;
-
-    final target = ref.read(projectDetailProvider(id)).value;
-    if (target == null) return null;
-
-    _removeId(id);
+    state = AsyncData([
+      ...previousState.take(index),
+      ...previousState.skip(index + 1),
+    ]);
 
     return PendingDeleteAction(
       value: target,
@@ -62,20 +77,11 @@ class ProjectList extends _$ProjectList {
           target.path.audio,
         );
 
-        // Delete project files
-        final projectDir = Directory(target.path.dir);
-        if (await projectDir.exists()) {
-          await projectDir.delete(recursive: true);
-        }
+        // Delete providers
+        await ref.read(projectDetailProvider(id).notifier)._delete();
+        await ref.read(projectLastVisitedProvider(id).notifier)._delete();
       },
     );
-  }
-
-  void _removeId(String id) {
-    final previousState = state.value;
-    if (previousState == null) return;
-
-    state = AsyncData(previousState.where((e) => e != id).toList());
   }
 }
 
@@ -83,44 +89,45 @@ class ProjectList extends _$ProjectList {
 class ProjectDetail extends _$ProjectDetail {
   @override
   Future<Project> build(String id) async {
+    final file = File(ProjectPath(id).info);
+    final content = await file.readAsString();
+    final json = jsonDecode(content) as JsonMap;
+    return Project.fromJson(json);
+  }
+
+  Future<bool> _isValid() async {
+    // During initialization, ProjectList will first "touch" all available ProjectDetail instances to filter for valid ones.
+    // Subsequently, the UI layer will watch the ProjectDetailProvider to keep it alive.
+    // A 3-second cache is implemented for ProjectDetailProvider to ensure the UI can re-attach without re-parsing the JSON file
+    ref.cacheFor(3.seconds);
     try {
-      final file = File('${Project.savedDir}/$id/info.json');
-      final content = await file.readAsString();
-      final json = jsonDecode(content) as Map<String, dynamic>;
-      return Project.fromJson(json);
-    } catch (e) {
-      Future.microtask(() {
-        if (!ref.mounted) return;
-        ref.read(projectListProvider.notifier)._removeId(id);
-      });
-      rethrow;
+      await future;
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
   bool _isGeneratingSummary = false;
 
   Future<void> generateSummaryIfAbsent() async {
-    final project = state.value;
-    if (project == null) return;
-
+    final project = await future;
     if (project.summary?.isNotEmpty == true) return;
     await generateSummary();
   }
 
   Future<void> generateSummary() async {
     if (_isGeneratingSummary) return;
+    _isGeneratingSummary = true;
 
-    final project = state.value;
-    if (project == null) return;
-
+    final project = await future;
     final file = File(project.path.lyric);
     if (!await file.exists()) return;
 
-    _isGeneratingSummary = true;
     try {
       final lrc = await file.readAsString();
-      final target = ref.read(translateLangProvider);
-      final summary = await createSummary(lrc, target);
+      final targetLang = ref.read(translateLangProvider);
+      final summary = await createSummary(lrc, targetLang);
 
       await updateAndSave((old) => old.copyWith(summary: summary));
     } finally {
@@ -147,6 +154,48 @@ class ProjectDetail extends _$ProjectDetail {
       rethrow;
     }
   }
+
+  Future<void> _delete() async {
+    final path = ProjectPath(id).dir;
+    final dir = Directory(path);
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+
+    ref.invalidateSelf();
+  }
+}
+
+@riverpod
+class ProjectLastVisited extends _$ProjectLastVisited with LoadPersistOrFetch {
+  @override
+  FutureOr<DateTime> build(String id) {
+    return loadPersistOrFetch(
+      persist: persist(
+        ref.watch(persistStorageProvider.future),
+        key: _persistKey,
+        encode: (state) => state.toString(),
+        decode: (encoded) => DateTime.parse(encoded),
+        options: const StorageOptions(
+          cacheTime: StorageCacheTime.unsafe_forever,
+        ),
+      ),
+      fetch: () => File(ProjectPath(id).info).lastModified(),
+    );
+  }
+
+  Future<void> _updateNow() async {
+    await future;
+    state = AsyncData(DateTime.now());
+  }
+
+  Future<void> _delete() async {
+    final storage = await ref.read(persistStorageProvider.future);
+    await storage.delete(_persistKey);
+    ref.invalidateSelf();
+  }
+
+  String get _persistKey => 'ProjectLastVisit($id)';
 }
 
 @riverpod

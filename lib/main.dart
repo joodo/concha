@@ -15,5 +15,5 @@ Future<void> main() async {
 
   await Project.initSavedDir();
 
-  runApp(const ProviderScope(child: ConchaApp()));
+  runApp(ProviderScope(retry: (_, _) => null, child: ConchaApp()));
 }

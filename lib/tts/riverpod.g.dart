@@ -18,7 +18,7 @@ final class TextVoiceProvider
     required TextVoiceFamily super.from,
     required String super.argument,
   }) : super(
-         retry: disableRetry,
+         retry: null,
          name: r'textVoiceProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -50,7 +50,7 @@ final class TextVoiceProvider
   }
 }
 
-String _$textVoiceHash() => r'75b237e8c0e191afbe809d77e0e5ee33369a4aec';
+String _$textVoiceHash() => r'a5e7d1fd9a7da1740423af9291c82d645e4c3d0e';
 
 final class TextVoiceFamily extends $Family
     with
@@ -63,7 +63,7 @@ final class TextVoiceFamily extends $Family
         > {
   TextVoiceFamily._()
     : super(
-        retry: disableRetry,
+        retry: null,
         name: r'textVoiceProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

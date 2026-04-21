@@ -33,7 +33,7 @@ final class ProjectListProvider
   ProjectList create() => ProjectList();
 }
 
-String _$projectListHash() => r'72e4bf5212c9ead9e26a54b98a2a47460aa7370a';
+String _$projectListHash() => r'b395935696b346dbb63f72aa21ca901945a43604';
 
 abstract class _$ProjectList extends $AsyncNotifier<List<String>> {
   FutureOr<List<String>> build();
@@ -94,7 +94,7 @@ final class ProjectDetailProvider
   }
 }
 
-String _$projectDetailHash() => r'cd37a747cc7ad2d66b8e2db5d867b16104103ca2';
+String _$projectDetailHash() => r'e90e014fc547ab99baff74ce3e243ecebf65aece';
 
 final class ProjectDetailFamily extends $Family
     with
@@ -135,6 +135,96 @@ abstract class _$ProjectDetail extends $AsyncNotifier<Project> {
             as $ClassProviderElement<
               AnyNotifier<AsyncValue<Project>, Project>,
               AsyncValue<Project>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+@ProviderFor(ProjectLastVisited)
+final projectLastVisitedProvider = ProjectLastVisitedFamily._();
+
+final class ProjectLastVisitedProvider
+    extends $AsyncNotifierProvider<ProjectLastVisited, DateTime> {
+  ProjectLastVisitedProvider._({
+    required ProjectLastVisitedFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'projectLastVisitedProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$projectLastVisitedHash();
+
+  @override
+  String toString() {
+    return r'projectLastVisitedProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  ProjectLastVisited create() => ProjectLastVisited();
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProjectLastVisitedProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$projectLastVisitedHash() =>
+    r'cbe095732070cf902cfec0e85d46c02d88359719';
+
+final class ProjectLastVisitedFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          ProjectLastVisited,
+          AsyncValue<DateTime>,
+          DateTime,
+          FutureOr<DateTime>,
+          String
+        > {
+  ProjectLastVisitedFamily._()
+    : super(
+        retry: null,
+        name: r'projectLastVisitedProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProjectLastVisitedProvider call(String id) =>
+      ProjectLastVisitedProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'projectLastVisitedProvider';
+}
+
+abstract class _$ProjectLastVisited extends $AsyncNotifier<DateTime> {
+  late final _$args = ref.$arg as String;
+  String get id => _$args;
+
+  FutureOr<DateTime> build(String id);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<DateTime>, DateTime>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<DateTime>, DateTime>,
+              AsyncValue<DateTime>,
               Object?,
               Object?
             >;

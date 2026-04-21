@@ -1,10 +1,10 @@
-import '/preferences/riverpod.dart';
 import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:riverpod_annotation/experimental/json_persist.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/persistence/persistence.dart';
+import '/preferences/preferences.dart';
 import '/utils/utils.dart';
 
 import 'word_for_word.dart';
@@ -51,21 +51,23 @@ class TranslationDetail {
   Map<String, dynamic> toJson() => _$TranslationDetailToJson(this);
 }
 
-@Riverpod(retry: disableRetry)
+@riverpod
 @JsonPersist()
-class WordForWord extends _$WordForWord {
-  bool _disableCache = false;
-
+class WordForWord extends _$WordForWord with LoadPersistOrFetch {
   @override
   Future<TranslationResult> build(String sentence) async {
-    await persist(
-      ref.watch(persistStorageProvider.future),
-      options: const StorageOptions(cacheTime: StorageCacheTime.unsafe_forever),
-    ).future;
+    return loadPersistOrFetch(
+      persist: persist(
+        ref.watch(persistStorageProvider.future),
+        options: const StorageOptions(
+          cacheTime: StorageCacheTime.unsafe_forever,
+        ),
+      ),
+      fetch: _fetch,
+    );
+  }
 
-    final cached = state.value;
-    if (cached != null && !_disableCache) return cached;
-
+  Future<TranslationResult> _fetch() async {
     final json = await createSentenceTranslation(
       sentence,
       ref.read(translateLangProvider),
@@ -75,9 +77,8 @@ class WordForWord extends _$WordForWord {
   }
 
   Future<void> refresh() async {
-    _disableCache = true;
-    ref.invalidateSelf();
     await future;
-    _disableCache = false;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_fetch);
   }
 }

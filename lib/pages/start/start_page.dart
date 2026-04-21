@@ -125,7 +125,10 @@ class StartPage extends HookConsumerWidget {
 
   void _projectSelected(WidgetRef ref, String id) {
     Navigator.of(ref.context).pushNamed('/project', arguments: {'id': id});
-    ref.read(projectListProvider.notifier).visit(id);
+    Future.delayed(1.seconds, () {
+      // Resort silently after a 1s delay
+      ref.read(projectListProvider.notifier).visit(id);
+    });
   }
 
   Future<void> _deleteProject({

@@ -19,9 +19,14 @@ class PersistStorage extends _$PersistStorage {
     dbPath = join(supportDir.path, 'riverpod.db');
 
     final db = await openDatabase(dbPath);
-    await _makeSureIncrementalColumn(db);
-    await _trimCacheToLimit(db);
-    await db.close();
+    try {
+      await _makeSureIncrementalColumn(db);
+      await _trimCacheToLimit(db);
+    } catch (_) {
+      // Ignore trim errors.
+    } finally {
+      await db.close();
+    }
 
     return JsonSqFliteStorage.open(dbPath);
   }
@@ -39,10 +44,11 @@ class PersistStorage extends _$PersistStorage {
 
     final columnDefinitions = tableInfo
         .map((column) {
-          String name = column['name'] as String;
-          String type = column['type'] as String;
-          String notNull = column['notnull'] == 1 ? "NOT NULL" : "";
-          return '"$name" $type $notNull';
+          final name = column['name'] as String;
+          final type = column['type'] as String;
+          final notNull = column['notnull'] == 1 ? "NOT NULL" : "";
+          final unique = name == 'key' ? 'UNIQUE' : '';
+          return '"$name" $type $notNull $unique';
         })
         .join(', ');
 

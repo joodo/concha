@@ -33,7 +33,7 @@ final class PersistStorageProvider
   PersistStorage create() => PersistStorage();
 }
 
-String _$persistStorageHash() => r'881e17da084836c16ee1594fe664e9d9a05707e1';
+String _$persistStorageHash() => r'387de3ab4d5f17742251a5bfef4e876cd15f08ea';
 
 abstract class _$PersistStorage
     extends $AsyncNotifier<Storage<String, String>> {

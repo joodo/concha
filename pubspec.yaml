@@ -2,7 +2,7 @@ name: concha
 description: "Concha — hear it again. sing it better."
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 0.0.16
+version: 0.0.17
 
 environment:
   sdk: ^3.10.8

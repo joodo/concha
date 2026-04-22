@@ -29,8 +29,8 @@ class LayoutSize implements Comparable<LayoutSize> {
   SizeBreakPoint get breakPoint => SizeBreakPoint.fromWidth(width);
 }
 
-class AdaptiveLayout extends StatelessWidget {
-  const AdaptiveLayout({super.key, required this.builder});
+class AdaptiveLayoutBuilder extends StatelessWidget {
+  const AdaptiveLayoutBuilder({super.key, required this.builder});
   final Widget Function(BuildContext context, LayoutSize layoutSize) builder;
 
   @override

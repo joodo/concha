@@ -118,6 +118,8 @@ class _MetadataDialog extends HookWidget {
 
     final acoustProgress = useValueNotifier<String?>(null);
 
+    final searchSectionKey = useGlobalKey();
+
     final albumCover = [
       Consumer(
             builder: (context, ref, child) {
@@ -174,71 +176,79 @@ class _MetadataDialog extends HookWidget {
       ),
     ].toColumn(crossAxisAlignment: .stretch, separator: 16.0.asHeight());
 
-    final searchActions = [
-      FilledButton.tonalIcon(
-        onPressed: searchResult.connectionState == .waiting
-            ? null
-            : () {
-                searchFuture.value = _searchMetadata(
-                  title: textControllers.title.text,
-                  artist: textControllers.artist.text,
-                  album: textControllers.album.text,
-                );
-              },
-        label: S.of(context).searchOnline.asText(),
-        icon: Icon(Icons.search),
-      ),
-      FilledButton.tonalIcon(
-        onPressed: searchResult.connectionState == .waiting
-            ? null
-            : () {
-                searchFuture.value = AcoustIdService()
-                    .recognizeLocalFile(
-                      audioFilePath: project.path.audio,
-                      apiKey: Pref.get(.acoustKey),
-                      onProgress: acoustProgress.set,
-                    )
-                    .then((result) {
-                      acoustProgress.clear();
-                      return result;
-                    });
-              },
-        label: 'Voice ID'.asText(),
-        icon: Icon(Icons.fingerprint),
-      ),
-      ValueListenableBuilder(
-        valueListenable: acoustProgress,
-        builder: (context, value, child) => (value ?? '').asText(),
-      ),
-    ].toRow(separator: 12.0.asWidth()).padding(horizontal: 16.0);
-    final searchResultView = Builder(
-      builder: (context) {
-        if (searchResult.data?.isEmpty == true) {
-          return S
-              .of(context)
-              .noMediaInformationFound
-              .asText()
-              .textColor(context.colors.onSurfaceVariant)
-              .center();
-        }
+    return AdaptiveLayoutBuilder(
+      builder: (context, layoutSize) {
+        final searchActions = [
+          FilledButton.icon(
+            onPressed: searchResult.connectionState == .waiting
+                ? null
+                : () {
+                    searchFuture.value = _searchMetadata(
+                      title: textControllers.title.text,
+                      artist: textControllers.artist.text,
+                      album: textControllers.album.text,
+                    );
+                  },
+            label: S.of(context).searchOnline.asText(),
+            icon: Icon(Icons.search),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.tertiaryContainer,
+              foregroundColor: context.colors.onTertiaryContainer,
+            ),
+          ),
+          FilledButton.icon(
+            onPressed: searchResult.connectionState == .waiting
+                ? null
+                : () {
+                    searchFuture.value = AcoustIdService()
+                        .recognizeLocalFile(
+                          audioFilePath: project.path.audio,
+                          apiKey: Pref.get(.acoustKey),
+                          onProgress: acoustProgress.set,
+                        )
+                        .then((result) {
+                          acoustProgress.clear();
+                          return result;
+                        });
+                  },
+            label: 'Voice ID'.asText(),
+            icon: Icon(Icons.fingerprint),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.tertiaryContainer,
+              foregroundColor: context.colors.onTertiaryContainer,
+            ),
+          ),
+          ValueListenableBuilder(
+            valueListenable: acoustProgress,
+            builder: (context, value, child) => (value ?? '').asText(),
+          ),
+        ].toRow(separator: 12.0.asWidth()).padding(horizontal: 16.0);
+        final searchResultView = Builder(
+          builder: (context) {
+            if (searchResult.data?.isEmpty == true) {
+              return S
+                  .of(context)
+                  .noMediaInformationFound
+                  .asText()
+                  .textColor(context.colors.onSurfaceVariant)
+                  .center();
+            }
 
-        if (searchResult.hasError) {
-          return searchResult.error.toString().asText().center();
-        }
+            if (searchResult.hasError) {
+              return searchResult.error.toString().asText().center();
+            }
 
-        final data =
-            searchResult.data ??
-            List.filled(6, (
-              title: 'Mock Title',
-              artist: 'Mock Artist',
-              album: 'Mock Album',
-              coverUrl: Uri.parse('http://www.example.com'),
-            ));
+            final data =
+                searchResult.data ??
+                List.filled(6, (
+                  title: 'Mock Title',
+                  artist: 'Mock Artist',
+                  album: 'Mock Album',
+                  coverUrl: Uri.parse('http://www.example.com'),
+                ));
 
-        final list = AdaptiveLayout(
-          builder: (context, layoutSize) {
-            return AdaptiveListView(
-              isList: layoutSize.breakPoint <= .compact,
+            final listView = AdaptiveListView(
+              isList: layoutSize.breakPoint <= .medium,
               onTap: (value) {
                 textControllers.title.text = value.title;
                 textControllers.album.text = value.album ?? '';
@@ -282,61 +292,25 @@ class _MetadataDialog extends HookWidget {
               },
               data: data,
             );
+            return Skeletonizer(
+              enabled: !searchResult.hasData,
+              enableSwitchAnimation: true,
+              child: listView,
+            );
           },
         );
-        return Skeletonizer(
-          enabled: !searchResult.hasData,
-          enableSwitchAnimation: true,
-          child: list,
-        );
-      },
-    );
-    final searchSection = [
-      searchActions,
-      searchResultView.expanded(),
-    ].toColumn(crossAxisAlignment: .stretch, separator: 8.0.asHeight());
+        final searchSection = [searchActions, searchResultView.expanded()]
+            .toColumn(
+              key: searchSectionKey,
+              crossAxisAlignment: .stretch,
+              separator: 8.0.asHeight(),
+            );
 
-    final body = LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final layoutIndex = width < 600.0
-            ? 0
-            : width < 900.0
-            ? 1
-            : 2;
+        final Axis bodyDirection = layoutSize.breakPoint >= .expanded
+            ? .horizontal
+            : .vertical;
 
-        final Axis metaDirection = layoutIndex == 1 ? .horizontal : .vertical;
-        final metadataSection = Flex(
-          direction: metaDirection,
-          spacing: 8.0,
-          mainAxisSize: .min,
-          children: [
-            albumCover.constrained(width: layoutIndex == 2 ? 350.0 : 200.0),
-            metadataForm.flexible(),
-          ],
-        );
-
-        final Axis bodyDirection = width > 900.0 ? .horizontal : .vertical;
-        return Flex(
-          direction: bodyDirection,
-          spacing: 16.0,
-          children: [
-            metadataSection
-                .constrained(
-                  maxWidth: layoutIndex == 2 ? 500.0 : double.infinity,
-                )
-                .padding(horizontal: 12.0),
-            searchSection.expanded(),
-          ],
-        );
-      },
-    );
-
-    final appBar = AppBar(
-      leading: const CloseButton(),
-      title: S.of(context).editMetadata.asText(),
-      actions: [
-        Consumer(
+        final saveButton = Consumer(
           builder: (context, ref, child) => FilledButton(
             onPressed: () async {
               final metadata = Metadata(
@@ -360,53 +334,91 @@ class _MetadataDialog extends HookWidget {
             },
             child: S.of(context).save.asText(),
           ),
-        ),
-        16.0.asWidth(),
-      ],
-      notificationPredicate: (notification) => false,
-    );
-
-    final scaffold = Scaffold(appBar: appBar, body: body);
-
-    final content = PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-
-        if (result != null) return Navigator.of(context).pop(result);
-
-        final discard = await showModal<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: S.of(context).discardChanges.asText(),
-            content: S
-                .of(context)
-                .metadataWillBeRestoredToTheStateBeforeModification
-                .asText()
-                .constrained(maxWidth: 400.0),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: S.of(context).cancel.asText(),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: S.of(context).discard.asText(),
-              ),
-            ],
-          ),
         );
 
-        if (context.mounted && discard == true) Navigator.of(context).pop();
-      },
-      child: scaffold,
-    );
+        final metadataSection = switch (layoutSize.breakPoint) {
+          SizeBreakPoint.compact => [
+            albumCover.constrained(width: 200.0),
+            metadataForm,
+          ].toColumn(separator: 8.0.asHeight()),
+          SizeBreakPoint.medium => [
+            albumCover.constrained(width: 200.0),
+            metadataForm.expanded(),
+          ].toRow(separator: 8.0.asWidth()),
+          >= SizeBreakPoint.expanded => [
+            albumCover.padding(horizontal: 56.0, bottom: 12.0),
+            metadataForm,
+            saveButton.padding(top: 12.0),
+          ].toColumn(crossAxisAlignment: .stretch, separator: 8.0.asHeight()),
+          _ => throw UnimplementedError(),
+        };
 
-    return AdaptiveLayout(
-      builder: (context, layoutSize) => AdaptiveDialog(
-        isFullscreen: layoutSize.breakPoint <= .medium,
-        child: content,
-      ),
+        final appBar = AppBar(
+          leading: const CloseButton(),
+          title: S.of(context).editMetadata.asText(),
+          centerTitle: false,
+          actions: bodyDirection == .vertical
+              ? [saveButton, 16.0.asWidth()]
+              : null,
+          notificationPredicate: (notification) => false,
+        );
+
+        final content = layoutSize.breakPoint <= .medium
+            ? Scaffold(
+                appBar: appBar,
+                body: [
+                  metadataSection.padding(horizontal: 12.0),
+                  searchSection.expanded(),
+                ].toColumn(separator: 16.0.asHeight()),
+              )
+            : [
+                Scaffold(
+                  appBar: appBar,
+                  body: metadataSection.padding(horizontal: 12.0),
+                ).constrained(maxWidth: 500.0).flexible(flex: 3),
+                searchSection.padding(top: 16.0).expanded(flex: 5),
+              ].toRow(separator: 16.0.asWidth());
+
+        final popScope = PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+
+            if (result != null) return Navigator.of(context).pop(result);
+
+            final discard = await showModal<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: S.of(context).discardChanges.asText(),
+                content: S
+                    .of(context)
+                    .metadataWillBeRestoredToTheStateBeforeModification
+                    .asText()
+                    .constrained(maxWidth: 400.0),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: S.of(context).cancel.asText(),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: S.of(context).discard.asText(),
+                  ),
+                ],
+              ),
+            );
+
+            if (context.mounted && discard == true) Navigator.of(context).pop();
+          },
+          child: content,
+        );
+
+        return AdaptiveDialog(
+          isFullscreen: layoutSize.breakPoint <= .medium,
+          backgroundColor: context.colors.surfaceContainerLow,
+          child: popScope,
+        );
+      },
     );
   }
 

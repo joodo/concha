@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 class AdaptiveDialog extends StatelessWidget {
-  const AdaptiveDialog({super.key, required this.isFullscreen, this.child});
+  const AdaptiveDialog({
+    super.key,
+    required this.isFullscreen,
+    this.child,
+    this.backgroundColor,
+  });
 
   final bool isFullscreen;
+  final Color? backgroundColor;
   final Widget? child;
 
   @override
@@ -14,6 +20,7 @@ class AdaptiveDialog extends StatelessWidget {
       shape: isFullscreen
           ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero)
           : null,
+      backgroundColor: backgroundColor,
       child: child,
     );
   }

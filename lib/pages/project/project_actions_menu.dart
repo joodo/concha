@@ -9,6 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
 import '/lyric/lyric.dart';
 import '/network/network.dart';
@@ -17,8 +18,6 @@ import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
 import '/widgets/album_cover_placeholder.dart';
-import '/widgets/responsive_dialog.dart';
-import '/widgets/responsive_list.dart';
 
 class ProjectActionsMenu extends ConsumerWidget {
   const ProjectActionsMenu({super.key});
@@ -236,47 +235,54 @@ class _MetadataDialog extends HookWidget {
               coverUrl: Uri.parse('http://www.example.com'),
             ));
 
-        final list = ResponsiveList(
-          onTap: (value) {
-            textControllers.title.text = value.title;
-            textControllers.album.text = value.album ?? '';
-            textControllers.artist.text = value.artist ?? '';
-            coverUri.value = value.coverUrl;
-          },
-          imageBuilder: (context, data, useList) => Consumer(
-            builder: (context, ref, child) {
-              final placeholder = Ink(
-                color: context.colors.surfaceContainerHigh,
-                child: Icon(
-                  Icons.music_note_rounded,
-                  size: useList ? 32.0 : 56.0,
-                ).center(),
-              );
+        final list = AdaptiveLayout(
+          builder: (context, layoutSize) {
+            return AdaptiveListView(
+              isList: layoutSize.breakPoint <= .compact,
+              onTap: (value) {
+                textControllers.title.text = value.title;
+                textControllers.album.text = value.album ?? '';
+                textControllers.artist.text = value.artist ?? '';
+                coverUri.value = value.coverUrl;
+              },
+              imageBuilder: (context, data, useList) => Consumer(
+                builder: (context, ref, child) {
+                  final placeholder = Ink(
+                    color: context.colors.surfaceContainerHigh,
+                    child: Icon(
+                      Icons.music_note_rounded,
+                      size: useList ? 32.0 : 56.0,
+                    ).center(),
+                  );
 
-              if (data.coverUrl.host == 'www.example.com') {
-                return placeholder;
-              }
+                  if (data.coverUrl.host == 'www.example.com') {
+                    return placeholder;
+                  }
 
-              final blob = ref.watch(httpBlobProvider(data.coverUrl));
-              return switch (blob) {
-                AsyncLoading() => Skeletonizer.zone(
-                  child: Bone.square(size: 48.0),
-                ),
-                AsyncData(:final value) => Ink.image(image: MemoryImage(value)),
-                AsyncError() => placeholder,
-              };
-            },
-          ).aspectRatio(aspectRatio: 1.0),
-          titleBuilder: (context, data, useList) => data.title.asText(),
-          subtitleBuilder: (context, data, useList) {
-            final (:title, :artist, :album, :coverUrl) = data;
-            return [
-              ?artist,
-              if (artist != null && album != null) ' - ',
-              ?album,
-            ].map((e) => e.asText()).toList().toWrap();
+                  final blob = ref.watch(httpBlobProvider(data.coverUrl));
+                  return switch (blob) {
+                    AsyncLoading() => Skeletonizer.zone(
+                      child: Bone.square(size: 48.0),
+                    ),
+                    AsyncData(:final value) => Ink.image(
+                      image: MemoryImage(value),
+                    ),
+                    AsyncError() => placeholder,
+                  };
+                },
+              ).aspectRatio(aspectRatio: 1.0),
+              titleBuilder: (context, data, useList) => data.title.asText(),
+              subtitleBuilder: (context, data, useList) {
+                final (:title, :artist, :album, :coverUrl) = data;
+                return [
+                  ?artist,
+                  if (artist != null && album != null) ' - ',
+                  ?album,
+                ].map((e) => e.asText()).toList().toWrap();
+              },
+              data: data,
+            );
           },
-          data: data,
         );
         return Skeletonizer(
           enabled: !searchResult.hasData,
@@ -396,7 +402,12 @@ class _MetadataDialog extends HookWidget {
       child: scaffold,
     );
 
-    return ResponsiveDialog(widthThreshold: 840.0, child: content);
+    return AdaptiveLayout(
+      builder: (context, layoutSize) => AdaptiveDialog(
+        isFullscreen: layoutSize.breakPoint <= .medium,
+        child: content,
+      ),
+    );
   }
 
   Future<List<_SearchResult>> _searchMetadata({

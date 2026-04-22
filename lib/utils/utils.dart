@@ -14,3 +14,4 @@ export 'json.dart';
 export 'camel_to_snake.dart';
 export 'functional.dart';
 export 'list.dart';
+export 'comparable.dart';

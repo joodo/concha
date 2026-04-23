@@ -149,7 +149,11 @@
   },
   "upgrading": "Upgrading...",
   "upgrade": "Upgrade",
-  "ytDlpUpgradingHint": "Try updating your version if YouTube video downloads fail.",
+  "ytDlpUpgradingHint": "Try updating your version if YouTube audio downloads fail.",
   "extraArgs": "Extra args",
-  "separateWithSpace": "Separate with space"
+  "separateWithSpace": "Separate with space",
+  "ytDlpUseHint": "Used to download audio from YouTube",
+  "downloading": "Downloading...",
+  "download": "Download",
+  "noExecutableFound": "No executable found."
 }

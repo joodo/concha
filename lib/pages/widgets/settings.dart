@@ -167,79 +167,7 @@ class SettingDialog extends HookWidget {
                   ),
                 ],
                 children: [
-                  HookBuilder(
-                    builder: (context) {
-                      final service = useValue(YoutubeDownloadService());
-
-                      final infoFuture = useState(service.executableInfo());
-                      final info = useFuture(
-                        infoFuture.value,
-                        preserveState: false,
-                      ).data;
-
-                      final upgrading = useState(false);
-                      final upgradeError = useState<String?>(null);
-
-                      if (info == null) return '...'.asText();
-
-                      final infoText = S
-                          .of(context)
-                          .ytDlpInfo(info.usingLocal.toString(), info.version)
-                          .asText();
-
-                      final upgradeButton = TextButton(
-                        onPressed: upgrading.value
-                            ? null
-                            : () async {
-                                upgradeError.clear();
-
-                                try {
-                                  upgrading.value = true;
-                                  await service.upgrade();
-                                  infoFuture.value = service.executableInfo();
-                                } catch (e) {
-                                  upgradeError.value = e.toString();
-                                } finally {
-                                  upgrading.value = false;
-                                }
-                              },
-                        child: Text(
-                          upgrading.value
-                              ? S.of(context).upgrading
-                              : S.of(context).upgrade,
-                        ),
-                      );
-
-                      final hint = upgradeError.value == null
-                          ? S
-                                .of(context)
-                                .ytDlpUpgradingHint
-                                .asText()
-                                .textStyle(
-                                  context.textStyles.labelMedium!.copyWith(
-                                    color: context.colors.onSurfaceVariant,
-                                  ),
-                                )
-                          : upgradeError.value!.asText().textStyle(
-                              context.textStyles.bodyMedium!.copyWith(
-                                color: context.colors.error,
-                              ),
-                            );
-
-                      return [
-                            [
-                              infoText,
-                              upgradeButton,
-                            ].toRow(separator: 12.0.asWidth()),
-                            hint,
-                          ]
-                          .toColumn(
-                            crossAxisAlignment: .start,
-                            separator: 4.0.asHeight(),
-                          )
-                          .padding(bottom: 12.0);
-                    },
-                  ).padding(bottom: 12.0),
+                  _YtDlpSection().padding(bottom: 24.0),
                   _PrefTextField(
                     .ytDlpExtraArgs,
                     multiLine: true,
@@ -397,6 +325,91 @@ class SettingDialog extends HookWidget {
         ),
       ),
     );
+  }
+}
+
+class _YtDlpSection extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    final service = useValue(YoutubeDownloadService());
+
+    final infoFuture = useState(service.executableInfo());
+    final infoSnapshot = useFuture(infoFuture.value, preserveState: false);
+
+    final operating = useState(false);
+    final operationError = useState<String?>(null);
+
+    final downloadProgress = useState<double?>(null);
+
+    if (infoSnapshot.connectionState == .waiting) return '...'.asText();
+    final info = infoSnapshot.data;
+
+    final exeFounded = info != null;
+
+    final infoText = exeFounded
+        ? S
+              .of(context)
+              .ytDlpInfo(info.usingLocal.toString(), info.version)
+              .asText()
+        : downloadProgress.value.mapOrNull((v) {
+                final percent = v * 100;
+                final text = percent.toStringAsFixed(1);
+                return '$text %'.asText();
+              }) ??
+              S.of(context).noExecutableFound.asText();
+
+    final button = TextButton(
+      onPressed: operating.value
+          ? null
+          : () async {
+              operationError.clear();
+
+              try {
+                operating.value = true;
+                final operation = exeFounded
+                    ? service.upgrade()
+                    : service.downloadPrebuiltYtDlp(
+                        onProgress: downloadProgress.set,
+                      );
+                await operation;
+                infoFuture.value = service.executableInfo();
+              } catch (e) {
+                operationError.value = e.toString();
+              } finally {
+                operating.value = false;
+                downloadProgress.value = null;
+              }
+            },
+      child: _getButtonText(context, exeFounded, operating.value).asText(),
+    );
+
+    final hint = operationError.value == null
+        ? Text(
+            exeFounded
+                ? S.of(context).ytDlpUpgradingHint
+                : S.of(context).ytDlpUseHint,
+            style: context.textStyles.labelMedium!.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          )
+        : operationError.value!.asText().textStyle(
+            context.textStyles.bodyMedium!.copyWith(
+              color: context.colors.error,
+            ),
+          );
+
+    return [
+      [infoText, button].toRow(separator: 12.0.asWidth()),
+      hint,
+    ].toColumn(crossAxisAlignment: .start, separator: 4.0.asHeight());
+  }
+
+  String _getButtonText(BuildContext context, bool exeFound, bool operating) {
+    if (exeFound) {
+      return operating ? S.of(context).upgrading : S.of(context).upgrade;
+    } else {
+      return operating ? S.of(context).downloading : S.of(context).download;
+    }
   }
 }
 

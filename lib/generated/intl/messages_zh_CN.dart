@@ -64,7 +64,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("删除"),
     "discard": MessageLookupByLibrary.simpleMessage("放弃"),
     "discardChanges": MessageLookupByLibrary.simpleMessage("放弃更改？"),
+    "download": MessageLookupByLibrary.simpleMessage("下载"),
     "downloadedBytes": m0,
+    "downloading": MessageLookupByLibrary.simpleMessage("正在下载"),
     "downloadingStatus": MessageLookupByLibrary.simpleMessage("正在下载"),
     "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("编辑媒体信息"),
@@ -101,6 +103,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "myLibrary": MessageLookupByLibrary.simpleMessage("我的曲库"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("网络代理"),
+    "noExecutableFound": MessageLookupByLibrary.simpleMessage("未找到工具。"),
     "noMediaInformationFound": MessageLookupByLibrary.simpleMessage("未搜索到媒体信息"),
     "noProject": MessageLookupByLibrary.simpleMessage("暂无项目"),
     "openLocal": MessageLookupByLibrary.simpleMessage("打开本地"),
@@ -162,7 +165,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage("逐词解释"),
     "ytDlpInfo": m4,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
-      "如果 YouTube 视频下载失败，尝试更新到最新版本。",
+      "如果 YouTube 音频下载失败，尝试更新到最新版本。",
     ),
+    "ytDlpUseHint": MessageLookupByLibrary.simpleMessage("用以下载 YouTube 音频"),
   };
 }

@@ -884,10 +884,10 @@ class S {
     return Intl.message('Upgrade', name: 'upgrade', desc: '', args: []);
   }
 
-  /// `Try updating your version if YouTube video downloads fail.`
+  /// `Try updating your version if YouTube audio downloads fail.`
   String get ytDlpUpgradingHint {
     return Intl.message(
-      'Try updating your version if YouTube video downloads fail.',
+      'Try updating your version if YouTube audio downloads fail.',
       name: 'ytDlpUpgradingHint',
       desc: '',
       args: [],
@@ -904,6 +904,41 @@ class S {
     return Intl.message(
       'Separate with space',
       name: 'separateWithSpace',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Used to download audio from YouTube`
+  String get ytDlpUseHint {
+    return Intl.message(
+      'Used to download audio from YouTube',
+      name: 'ytDlpUseHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloading...`
+  String get downloading {
+    return Intl.message(
+      'Downloading...',
+      name: 'downloading',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download`
+  String get download {
+    return Intl.message('Download', name: 'download', desc: '', args: []);
+  }
+
+  /// `No executable found.`
+  String get noExecutableFound {
+    return Intl.message(
+      'No executable found.',
+      name: 'noExecutableFound',
       desc: '',
       args: [],
     );

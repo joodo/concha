@@ -123,34 +123,9 @@ class YoutubeDownloadService {
     if (result.exitCode != 0) throw Exception(result.stderr.trim());
   }
 
-  Future<String> _ensureYtDlp({
-    String? proxy,
+  Future<String> downloadPrebuiltYtDlp({
     YoutubeDownloadLogHandler? onLog,
-    bool downloadIfNotExist = true,
-  }) async {
-    final localYtDlpPath = await _appBinYtDlpPath();
-    if (await File(localYtDlpPath).exists()) {
-      await _ensureExecutablePermission(localYtDlpPath, onLog: onLog);
-      onLog?.call('[tool] Using local yt-dlp: $localYtDlpPath');
-      return localYtDlpPath;
-    }
-
-    if (await _shellRunner.existsInPath('yt-dlp')) {
-      onLog?.call('[tool] Using system yt-dlp');
-      return 'yt-dlp';
-    }
-
-    if (!downloadIfNotExist) throw Exception('No YtDlp found');
-
-    onLog?.call(
-      '[tool] yt-dlp not found in PATH, attempting automatic download',
-    );
-    return _downloadPrebuiltYtDlp(proxy: proxy, onLog: onLog);
-  }
-
-  Future<String> _downloadPrebuiltYtDlp({
-    String? proxy,
-    YoutubeDownloadLogHandler? onLog,
+    void Function(double progress)? onProgress,
   }) async {
     final targetPath = await _appBinYtDlpPath();
     final binDir = Directory(await _appBinDirPath());
@@ -170,7 +145,11 @@ class YoutubeDownloadService {
     for (final url in _candidateYtDlpUrls()) {
       onLog?.call('[download] $url');
       try {
-        await http().download(url, targetPath);
+        await http().download(
+          url,
+          targetPath,
+          onReceiveProgress: (count, total) => onProgress?.call(count / total),
+        );
       } catch (e) {
         onLog?.call('[download] $e, skip');
         continue;
@@ -184,6 +163,36 @@ class YoutubeDownloadService {
     throw Exception(
       'Failed to automatically download yt-dlp. Please check your network/proxy or install yt-dlp manually',
     );
+  }
+
+  Future<String> _ensureYtDlp({
+    String? proxy,
+    YoutubeDownloadLogHandler? onLog,
+    bool downloadIfNotExist = true,
+  }) async {
+    final localYtDlpPath = await _appBinYtDlpPath();
+    if (await File(localYtDlpPath).exists()) {
+      await _ensureExecutablePermission(localYtDlpPath, onLog: onLog);
+      final result = await _shellRunner.run(
+        '${ShellRunner.quote(localYtDlpPath)} --version',
+      );
+      if (result.exitCode == 0) {
+        onLog?.call('[tool] Using local yt-dlp: $localYtDlpPath');
+        return localYtDlpPath;
+      }
+    }
+
+    if (await _shellRunner.existsInPath('yt-dlp')) {
+      onLog?.call('[tool] Using system yt-dlp');
+      return 'yt-dlp';
+    }
+
+    if (!downloadIfNotExist) throw Exception('No YtDlp found');
+
+    onLog?.call(
+      '[tool] yt-dlp not found in PATH, attempting automatic download',
+    );
+    return downloadPrebuiltYtDlp(onLog: onLog);
   }
 
   List<String> _candidateYtDlpUrls() {

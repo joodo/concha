@@ -149,7 +149,11 @@
   },
   "upgrading": "正在更新……",
   "upgrade": "更新",
-  "ytDlpUpgradingHint": "如果 YouTube 视频下载失败，尝试更新到最新版本。",
+  "ytDlpUpgradingHint": "如果 YouTube 音频下载失败，尝试更新到最新版本。",
   "extraArgs": "额外参数",
-  "separateWithSpace": "使用空格分隔"
+  "separateWithSpace": "使用空格分隔",
+  "ytDlpUseHint": "用以下载 YouTube 音频",
+  "downloading": "正在下载",
+  "download": "下载",
+  "noExecutableFound": "未找到工具。"
 }

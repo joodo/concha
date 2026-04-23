@@ -72,7 +72,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
     "discard": MessageLookupByLibrary.simpleMessage("Discard"),
     "discardChanges": MessageLookupByLibrary.simpleMessage("Discard changes?"),
+    "download": MessageLookupByLibrary.simpleMessage("Download"),
     "downloadedBytes": m0,
+    "downloading": MessageLookupByLibrary.simpleMessage("Downloading..."),
     "downloadingStatus": MessageLookupByLibrary.simpleMessage("Downloading"),
     "editLyric": MessageLookupByLibrary.simpleMessage("Edit lyric"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("Edit metadata"),
@@ -123,6 +125,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "myLibrary": MessageLookupByLibrary.simpleMessage("My Library"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("Network Proxy"),
+    "noExecutableFound": MessageLookupByLibrary.simpleMessage(
+      "No executable found.",
+    ),
     "noMediaInformationFound": MessageLookupByLibrary.simpleMessage(
       "No media information found",
     ),
@@ -208,7 +213,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ytDlpInfo": m4,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
-      "Try updating your version if YouTube video downloads fail.",
+      "Try updating your version if YouTube audio downloads fail.",
+    ),
+    "ytDlpUseHint": MessageLookupByLibrary.simpleMessage(
+      "Used to download audio from YouTube",
     ),
   };
 }

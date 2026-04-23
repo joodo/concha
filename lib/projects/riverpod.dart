@@ -162,7 +162,7 @@ class ProjectDetail extends _$ProjectDetail {
       await dir.delete(recursive: true);
     }
 
-    ref.invalidateSelf();
+    if (ref.mounted) ref.invalidateSelf();
   }
 }
 
@@ -192,7 +192,7 @@ class ProjectLastVisited extends _$ProjectLastVisited with LoadPersistOrFetch {
   Future<void> _delete() async {
     final storage = await ref.read(persistStorageProvider.future);
     await storage.delete(_persistKey);
-    ref.invalidateSelf();
+    if (ref.mounted) ref.invalidateSelf();
   }
 
   String get _persistKey => 'ProjectLastVisit($id)';

@@ -28,6 +28,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m3(count) => "In queue (${count} remaining)";
 
+  static String m4(usingLocal, version) =>
+      "Using ${Intl.select(usingLocal, {'true': 'local', 'false': 'system', 'other': 'unknown'})} yt-dlp, version ${version}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("About"),
@@ -76,6 +79,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage(
       "Edit translate lyric",
     ),
+    "extraArgs": MessageLookupByLibrary.simpleMessage("Extra args"),
     "failed": MessageLookupByLibrary.simpleMessage("Failed"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("Failed to load"),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(
@@ -157,6 +161,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select Audio File",
     ),
     "selectService": MessageLookupByLibrary.simpleMessage("Select Service"),
+    "separateWithSpace": MessageLookupByLibrary.simpleMessage(
+      "Separate with space",
+    ),
     "separatingStatus": MessageLookupByLibrary.simpleMessage(
       "Separating vocals and accompaniment",
     ),
@@ -185,6 +192,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "e.g., \"gemini-2.5-flash-preview-tts\"",
     ),
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
+    "upgrade": MessageLookupByLibrary.simpleMessage("Upgrade"),
+    "upgrading": MessageLookupByLibrary.simpleMessage("Upgrading..."),
     "uploading": MessageLookupByLibrary.simpleMessage("Uploading"),
     "version": MessageLookupByLibrary.simpleMessage("version"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("Vocal Isolation"),
@@ -196,6 +205,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage(
       "Word-by-word Breakdown",
+    ),
+    "ytDlpInfo": m4,
+    "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
+      "Try updating your version if YouTube video downloads fail.",
     ),
   };
 }

@@ -8,6 +8,8 @@ import '/utils/utils.dart';
 
 typedef YoutubeDownloadLogHandler = void Function(String line);
 
+typedef ExecutableInfo = ({bool usingLocal, String version});
+
 class YoutubeDownloadService {
   YoutubeDownloadService({ShellRunner? shellRunner})
     : _shellRunner = shellRunner ?? const ShellRunner();
@@ -41,6 +43,12 @@ class YoutubeDownloadService {
       baseTempDir.path,
     ).createTemp('concha-youtube-');
 
+    final extraArgs =
+        Pref.get<String>(
+          .ytDlpExtraArgs,
+        )?.split(' ').map((e) => e.trim()).where((e) => e.isNotEmpty) ??
+        [];
+
     final commandParts = <String>[
       ytDlpExecutable,
       '-x',
@@ -53,6 +61,7 @@ class YoutubeDownloadService {
       tempDir.path,
       '--output',
       '%(id)s.%(ext)s',
+      ...extraArgs,
       if (proxy != null) ...['--proxy', proxy],
       trimmedUrl,
     ];
@@ -82,9 +91,42 @@ class YoutubeDownloadService {
     return audioFile.path;
   }
 
+  Future<ExecutableInfo?> executableInfo() async {
+    try {
+      final ytDlpExecutable = await _ensureYtDlp(downloadIfNotExist: false);
+      final usingLocal = ytDlpExecutable != 'yt-dlp';
+
+      final result = await _shellRunner.run(
+        '${ShellRunner.quote(ytDlpExecutable)} --version',
+      );
+      if (result.exitCode != 0) return null;
+
+      final version = result.stdout.trim();
+      return (usingLocal: usingLocal, version: version);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> upgrade() async {
+    final proxy = Pref.get<String>(.proxy);
+    final ytDlpExecutable = await _ensureYtDlp(proxy: proxy);
+
+    final commandParts = <String>[
+      ytDlpExecutable,
+      '-U',
+      if (proxy != null) ...['--proxy', proxy],
+    ];
+    final command = commandParts.map(ShellRunner.quote).join(' ');
+
+    final result = await _shellRunner.run(command);
+    if (result.exitCode != 0) throw Exception(result.stderr.trim());
+  }
+
   Future<String> _ensureYtDlp({
     String? proxy,
     YoutubeDownloadLogHandler? onLog,
+    bool downloadIfNotExist = true,
   }) async {
     final localYtDlpPath = await _appBinYtDlpPath();
     if (await File(localYtDlpPath).exists()) {
@@ -97,6 +139,8 @@ class YoutubeDownloadService {
       onLog?.call('[tool] Using system yt-dlp');
       return 'yt-dlp';
     }
+
+    if (!downloadIfNotExist) throw Exception('No YtDlp found');
 
     onLog?.call(
       '[tool] yt-dlp not found in PATH, attempting automatic download',

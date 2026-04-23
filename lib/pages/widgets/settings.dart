@@ -15,6 +15,7 @@ import '/generated/l10n.dart';
 import '/llm/llm.dart';
 import '/preferences/preferences.dart' hide Locale;
 import '/projects/projects.dart';
+import '/services/services.dart';
 import '/tts/tts.dart';
 import '/utils/utils.dart';
 
@@ -44,9 +45,7 @@ class SettingDialog extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final packageInfo = useFuture(
-      useMemoized(() => PackageInfo.fromPlatform()),
-    ).data;
+    final packageInfo = useFuture(useMemoized(PackageInfo.fromPlatform)).data;
     if (packageInfo == null) return const SizedBox.shrink();
 
     return AdaptiveLayoutBuilder(
@@ -154,6 +153,100 @@ class SettingDialog extends HookWidget {
                             launchUrlString('https://mvsep.com/user-api'),
                         child: S.of(context).apply.asText(),
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              _SettingSection(
+                title: 'YT-DLP',
+                actions: [
+                  IconButton(
+                    onPressed: () =>
+                        launchUrlString('https://github.com/yt-dlp/yt-dlp'),
+                    icon: FaIcon(FontAwesomeIcons.github),
+                  ),
+                ],
+                children: [
+                  HookBuilder(
+                    builder: (context) {
+                      final service = useValue(YoutubeDownloadService());
+
+                      final infoFuture = useState(service.executableInfo());
+                      final info = useFuture(
+                        infoFuture.value,
+                        preserveState: false,
+                      ).data;
+
+                      final upgrading = useState(false);
+                      final upgradeError = useState<String?>(null);
+
+                      if (info == null) return '...'.asText();
+
+                      final infoText = S
+                          .of(context)
+                          .ytDlpInfo(info.usingLocal.toString(), info.version)
+                          .asText();
+
+                      final upgradeButton = TextButton(
+                        onPressed: upgrading.value
+                            ? null
+                            : () async {
+                                upgradeError.clear();
+
+                                try {
+                                  upgrading.value = true;
+                                  await service.upgrade();
+                                  infoFuture.value = service.executableInfo();
+                                } catch (e) {
+                                  upgradeError.value = e.toString();
+                                } finally {
+                                  upgrading.value = false;
+                                }
+                              },
+                        child: Text(
+                          upgrading.value
+                              ? S.of(context).upgrading
+                              : S.of(context).upgrade,
+                        ),
+                      );
+
+                      final hint = upgradeError.value == null
+                          ? S
+                                .of(context)
+                                .ytDlpUpgradingHint
+                                .asText()
+                                .textStyle(
+                                  context.textStyles.labelMedium!.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                  ),
+                                )
+                          : upgradeError.value!.asText().textStyle(
+                              context.textStyles.bodyMedium!.copyWith(
+                                color: context.colors.error,
+                              ),
+                            );
+
+                      return [
+                            [
+                              infoText,
+                              upgradeButton,
+                            ].toRow(separator: 12.0.asWidth()),
+                            hint,
+                          ]
+                          .toColumn(
+                            crossAxisAlignment: .start,
+                            separator: 4.0.asHeight(),
+                          )
+                          .padding(bottom: 12.0);
+                    },
+                  ).padding(bottom: 12.0),
+                  _PrefTextField(
+                    .ytDlpExtraArgs,
+                    multiLine: true,
+                    decoration: InputDecoration(
+                      labelText: S.of(context).extraArgs,
+                      helperText: S.of(context).separateWithSpace,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -323,18 +416,19 @@ class _SettingPage extends StatelessWidget {
 }
 
 class _SettingSection extends StatelessWidget {
-  const _SettingSection({this.title, required this.children});
+  const _SettingSection({this.title, required this.children, this.actions});
   final String? title;
   final List<Widget> children;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
     return [
-      title
-              ?.asText()
-              .textStyle(context.textStyles.titleLarge!)
-              .padding(bottom: 12.0) ??
-          const SizedBox.shrink(),
+      [
+        ?title?.asText().textStyle(context.textStyles.titleLarge!),
+        if (actions?.isNotEmpty == true) 12.0.asWidth(),
+        ...?actions,
+      ].toWrap(crossAxisAlignment: .center).padding(bottom: 12.0),
       children
           .toColumn(crossAxisAlignment: .start)
           .padding(all: 16.0)
@@ -345,10 +439,10 @@ class _SettingSection extends StatelessWidget {
 }
 
 class _PrefTextField extends StatelessWidget {
+  const _PrefTextField(this.prefKey, {this.decoration, this.multiLine});
   final PrefKey prefKey;
   final InputDecoration? decoration;
-
-  const _PrefTextField(this.prefKey, {this.decoration});
+  final bool? multiLine;
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +453,7 @@ class _PrefTextField extends StatelessWidget {
                 initValue: initValue,
                 decoration: decoration,
                 onChanged: onChanged,
+                multiLine: multiLine,
               )
               .constrained(maxWidth: 400.0)
               .alignment(.centerLeft)
@@ -421,10 +516,12 @@ class _InitializableTextField extends HookWidget {
     required this.decoration,
     required this.initValue,
     required this.onChanged,
+    this.multiLine,
   });
   final InputDecoration? decoration;
   final String? initValue;
   final ValueSetter<String> onChanged;
+  final bool? multiLine;
 
   @override
   Widget build(BuildContext context) {
@@ -439,6 +536,7 @@ class _InitializableTextField extends HookWidget {
       controller: controller,
       decoration: decoration,
       onChanged: onChanged,
+      maxLines: multiLine == true ? null : 1,
     );
   }
 }

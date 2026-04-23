@@ -135,5 +135,21 @@
   "noMediaInformationFound": "未搜索到媒体信息",
   "showLicense": "显示许可",
   "tools": "工具",
-  "general": "常用"
+  "general": "常用",
+  "ytDlpInfo": "使用{usingLocal, select, true{本地} false{系统} other{未知}} yt-dlp，版本 {version}",
+  "@ytDlpInfo": {
+    "placeholders": {
+      "usingLocal": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "upgrading": "正在更新……",
+  "upgrade": "更新",
+  "ytDlpUpgradingHint": "如果 YouTube 视频下载失败，尝试更新到最新版本。",
+  "extraArgs": "额外参数",
+  "separateWithSpace": "使用空格分隔"
 }

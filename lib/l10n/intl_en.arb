@@ -135,5 +135,21 @@
   "noMediaInformationFound": "No media information found",
   "showLicense": "Show License",
   "tools": "Tools",
-  "general": "General"
+  "general": "General",
+  "ytDlpInfo": "Using {usingLocal, select, true{local} false{system} other{unknown}} yt-dlp, version {version}",
+  "@ytDlpInfo": {
+    "placeholders": {
+      "usingLocal": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "upgrading": "Upgrading...",
+  "upgrade": "Upgrade",
+  "ytDlpUpgradingHint": "Try updating your version if YouTube video downloads fail.",
+  "extraArgs": "Extra args",
+  "separateWithSpace": "Separate with space"
 }

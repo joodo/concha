@@ -9,6 +9,8 @@ enum PrefKey {
   acoustKey,
   mvsepKey,
 
+  ytDlpExtraArgs,
+
   llmService,
   llmUrl,
   llmKey,

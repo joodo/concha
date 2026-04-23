@@ -863,6 +863,51 @@ class S {
   String get general {
     return Intl.message('General', name: 'general', desc: '', args: []);
   }
+
+  /// `Using {usingLocal, select, true{local} false{system} other{unknown}} yt-dlp, version {version}`
+  String ytDlpInfo(String usingLocal, String version) {
+    return Intl.message(
+      'Using ${Intl.select(usingLocal, {'true': 'local', 'false': 'system', 'other': 'unknown'})} yt-dlp, version $version',
+      name: 'ytDlpInfo',
+      desc: '',
+      args: [usingLocal, version],
+    );
+  }
+
+  /// `Upgrading...`
+  String get upgrading {
+    return Intl.message('Upgrading...', name: 'upgrading', desc: '', args: []);
+  }
+
+  /// `Upgrade`
+  String get upgrade {
+    return Intl.message('Upgrade', name: 'upgrade', desc: '', args: []);
+  }
+
+  /// `Try updating your version if YouTube video downloads fail.`
+  String get ytDlpUpgradingHint {
+    return Intl.message(
+      'Try updating your version if YouTube video downloads fail.',
+      name: 'ytDlpUpgradingHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Extra args`
+  String get extraArgs {
+    return Intl.message('Extra args', name: 'extraArgs', desc: '', args: []);
+  }
+
+  /// `Separate with space`
+  String get separateWithSpace {
+    return Intl.message(
+      'Separate with space',
+      name: 'separateWithSpace',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

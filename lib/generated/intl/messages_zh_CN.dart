@@ -28,6 +28,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m3(count) => "正在排队 (还有 ${count} 人)";
 
+  static String m4(usingLocal, version) =>
+      "使用${Intl.select(usingLocal, {'true': '本地', 'false': '系统', 'other': '未知'})} yt-dlp，版本 ${version}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "about": MessageLookupByLibrary.simpleMessage("关于"),
@@ -66,6 +69,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("编辑媒体信息"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage("编辑歌词翻译"),
+    "extraArgs": MessageLookupByLibrary.simpleMessage("额外参数"),
     "failed": MessageLookupByLibrary.simpleMessage("失败"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("加载错误"),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(
@@ -121,6 +125,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectAudioFile": MessageLookupByLibrary.simpleMessage("选择音频文件"),
     "selectService": MessageLookupByLibrary.simpleMessage("选择服务"),
+    "separateWithSpace": MessageLookupByLibrary.simpleMessage("使用空格分隔"),
     "separatingStatus": MessageLookupByLibrary.simpleMessage("正在分离人声和伴奏"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "showLicense": MessageLookupByLibrary.simpleMessage("显示许可"),
@@ -145,6 +150,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "比如 “gemini-2.5-flash-preview-tts”",
     ),
     "undo": MessageLookupByLibrary.simpleMessage("撤销"),
+    "upgrade": MessageLookupByLibrary.simpleMessage("更新"),
+    "upgrading": MessageLookupByLibrary.simpleMessage("正在更新……"),
     "uploading": MessageLookupByLibrary.simpleMessage("正在上传"),
     "version": MessageLookupByLibrary.simpleMessage("版本"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("人声分离"),
@@ -153,5 +160,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "volume": MessageLookupByLibrary.simpleMessage("音量"),
     "wholeLyricCopyed": MessageLookupByLibrary.simpleMessage("已复制全部歌词"),
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage("逐词解释"),
+    "ytDlpInfo": m4,
+    "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
+      "如果 YouTube 视频下载失败，尝试更新到最新版本。",
+    ),
   };
 }

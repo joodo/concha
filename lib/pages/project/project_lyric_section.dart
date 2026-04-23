@@ -16,7 +16,8 @@ import '/projects/projects.dart';
 import '/services/services.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
-import '/widgets/popup_widget.dart';
+
+import '../widgets/popup_widget.dart';
 
 import 'actions.dart';
 import 'riverpod.dart';

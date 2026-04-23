@@ -132,5 +132,8 @@
   "metadataWillBeRestoredToTheStateBeforeModification": "Metadata will be restored to the state before modification.",
   "discard": "Discard",
   "imageFile": "Image file",
-  "noMediaInformationFound": "No media information found"
+  "noMediaInformationFound": "No media information found",
+  "showLicense": "Show License",
+  "tools": "Tools",
+  "general": "General"
 }

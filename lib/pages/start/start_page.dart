@@ -10,9 +10,10 @@ import 'package:styled_widget/styled_widget.dart';
 import '/generated/l10n.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
-import '/widgets/album_cover_placeholder.dart';
-import '/widgets/settings.dart';
-import '/widgets/theme_from_image.dart';
+
+import '../widgets/album_cover_placeholder.dart';
+import '../widgets/settings.dart';
+import '../widgets/theme_from_image.dart';
 
 import 'new_dialog.dart';
 import 'project_grid_tile.dart';

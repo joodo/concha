@@ -8,8 +8,8 @@ import '/play_controller/play_controller.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
-import '/widgets/settings.dart';
-import '/widgets/theme_from_image.dart';
+
+import '../widgets/theme_from_image.dart';
 
 import 'actions.dart';
 import 'project_actions_menu.dart';
@@ -101,11 +101,7 @@ class ProjectPage extends HookConsumerWidget {
         },
       ),
       centerTitle: false,
-      actions: [
-        const ProjectActionsMenu(),
-        const SettingButton(),
-        8.0.asWidth(),
-      ],
+      actions: [const ProjectActionsMenu(), 8.0.asWidth()],
       backgroundColor: Colors.transparent,
       notificationPredicate: (notification) => false,
     );

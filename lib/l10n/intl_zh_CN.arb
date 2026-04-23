@@ -132,5 +132,8 @@
   "metadataWillBeRestoredToTheStateBeforeModification": "媒体信息将恢复到修改前的状态。",
   "discard": "放弃",
   "imageFile": "图片文件",
-  "noMediaInformationFound": "未搜索到媒体信息"
+  "noMediaInformationFound": "未搜索到媒体信息",
+  "showLicense": "显示许可",
+  "tools": "工具",
+  "general": "常用"
 }

@@ -11,7 +11,8 @@ import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
-import '/widgets/popup_widget.dart';
+
+import '../widgets/popup_widget.dart';
 
 import 'actions.dart';
 import 'expansible_button.dart';

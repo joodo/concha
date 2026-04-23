@@ -11,7 +11,8 @@ import '/generated/l10n.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/widgets/settings.dart';
+
+import '../widgets/settings.dart';
 
 class NewDialog extends HookWidget {
   const NewDialog({super.key});

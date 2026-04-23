@@ -4,7 +4,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '/generated/l10n.dart';
 import '/projects/riverpod.dart';
 import '/utils/utils.dart';
-import '/widgets/album_cover_placeholder.dart';
+
+import '../widgets/album_cover_placeholder.dart';
 
 class ProjectGridTile extends ConsumerWidget {
   const ProjectGridTile({

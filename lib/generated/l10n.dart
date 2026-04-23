@@ -843,6 +843,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Show License`
+  String get showLicense {
+    return Intl.message(
+      'Show License',
+      name: 'showLicense',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tools`
+  String get tools {
+    return Intl.message('Tools', name: 'tools', desc: '', args: []);
+  }
+
+  /// `General`
+  String get general {
+    return Intl.message('General', name: 'general', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

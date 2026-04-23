@@ -92,6 +92,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "functionOfMvsep": MessageLookupByLibrary.simpleMessage(
       "Used for generating accompaniments",
     ),
+    "general": MessageLookupByLibrary.simpleMessage("General"),
     "imageFile": MessageLookupByLibrary.simpleMessage("Image file"),
     "initiatingService": MessageLookupByLibrary.simpleMessage(
       "Initializing service",
@@ -160,6 +161,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Separating vocals and accompaniment",
     ),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
+    "showLicense": MessageLookupByLibrary.simpleMessage("Show License"),
     "startingProgress": MessageLookupByLibrary.simpleMessage("In progress"),
     "stop": MessageLookupByLibrary.simpleMessage("Stop"),
     "successOfTest": MessageLookupByLibrary.simpleMessage(" Success"),
@@ -175,6 +177,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "title": MessageLookupByLibrary.simpleMessage("Title"),
+    "tools": MessageLookupByLibrary.simpleMessage("Tools"),
     "translate": MessageLookupByLibrary.simpleMessage("Translate"),
     "translateLyric": MessageLookupByLibrary.simpleMessage("Translate Lyrics"),
     "translateTo": MessageLookupByLibrary.simpleMessage("Translate to: "),

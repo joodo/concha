@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -17,18 +18,29 @@ import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
 import '/utils/utils.dart';
-import '/widgets/album_cover_placeholder.dart';
+
+import '../widgets/album_cover_placeholder.dart';
+import '../widgets/settings.dart';
 
 class ProjectActionsMenu extends ConsumerWidget {
   const ProjectActionsMenu({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton(
-      icon: const Icon(Icons.more_vert),
-      itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-        PopupMenuItem(
-          onTap: () async {
+    return MenuAnchor(
+      builder: (context, controller, child) => IconButton(
+        onPressed: () {
+          if (controller.isOpen) {
+            controller.close();
+          } else {
+            controller.open();
+          }
+        },
+        icon: const Icon(Icons.more_vert),
+      ),
+      menuChildren: [
+        MenuItemButton(
+          onPressed: () async {
             final result = await showModal<_MetadataEditResult>(
               context: context,
               builder: (context) => _MetadataDialog(project: ref.project!),
@@ -47,20 +59,33 @@ class ProjectActionsMenu extends ConsumerWidget {
                   .set(result.coverBytes!);
             }
           },
+          leadingIcon: const FaIcon(FontAwesomeIcons.compactDisc),
           child: S.of(context).editMetadata.asText(),
         ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          onTap: () => _editLyric(ref, isTranslate: false),
+        const Divider(),
+        MenuItemButton(
+          onPressed: () => _editLyric(ref, isTranslate: false),
+          leadingIcon: const Icon(Icons.edit),
           child: S.of(context).editLyric.asText(),
         ),
-        PopupMenuItem(
-          onTap: () => _editLyric(ref, isTranslate: true),
+        MenuItemButton(
+          onPressed: () => _editLyric(ref, isTranslate: true),
+          leadingIcon: const Icon(Icons.edit),
           child: S.of(context).editTranslateLyric.asText(),
         ),
-        PopupMenuItem(
-          onTap: ref.lyricNotifier(isTranslate: false)!.clearTemporarily,
+        MenuItemButton(
+          onPressed: ref.lyricNotifier(isTranslate: false)!.clearTemporarily,
+          leadingIcon: const Icon(Icons.subtitles_off),
           child: S.of(context).clearLyric.asText(),
+        ),
+        const Divider(),
+        MenuItemButton(
+          onPressed: () => showModal(
+            context: context,
+            builder: (context) => const Material(child: SettingDialog()),
+          ),
+          leadingIcon: const Icon(Icons.settings),
+          child: S.of(context).settings.asText(),
         ),
       ],
     );

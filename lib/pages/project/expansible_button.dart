@@ -3,7 +3,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/utils/utils.dart';
-import '/widgets/popup_widget.dart';
+
+import '../widgets/popup_widget.dart';
 
 class ExpansibleButton extends HookWidget {
   const ExpansibleButton({

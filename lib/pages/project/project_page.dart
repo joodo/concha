@@ -5,6 +5,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
 import '/play_controller/play_controller.dart';
+import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
@@ -61,6 +62,8 @@ class ProjectPage extends HookConsumerWidget {
         playController = value;
     }
 
+    final expertMode = ref.watch(preferenceProvider<bool>(.expertMode))!;
+
     final bgSection = Consumer(
       builder: (context, ref, child) {
         final data = ref.watch(projectCoverBytesProvider(ref.projectId!)).value;
@@ -71,21 +74,20 @@ class ProjectPage extends HookConsumerWidget {
     );
     final lyricSection = [
       bgSection,
-      SafeArea(child: ProjectLyricSection())
+      SafeArea(
+            child: [
+              ProjectLyricSection().expanded(),
+              if (!expertMode) _LinarBar(),
+            ].toColumn(separator: 12.0.asHeight()),
+          )
           .backgroundBlur(10.0)
           .backgroundColor(context.colors.surfaceContainerLow.withAlpha(200)),
     ].toStack(fit: .expand);
 
     final bodyContent = [
       lyricSection.expanded(),
-      Waveform(
-            playController: playController,
-            waveformController: ref.watch(waveformControllerProvider),
-          )
-          .backgroundColor(context.colors.surfaceContainerLow)
-          .padding(top: 12.0)
-          .constrained(height: 200.0),
-    ].toColumn();
+      if (expertMode) _WaveformBar(),
+    ].toColumn(separator: 12.0.asHeight());
 
     final appBar = AppBar(
       title: Consumer(
@@ -125,5 +127,45 @@ class ProjectPage extends HookConsumerWidget {
     );
 
     return ProjectActions(child: themeBuilder);
+  }
+}
+
+class _LinarBar extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playControllerAsync = ref.watch(
+      playControllerProvider(ref.projectId!),
+    );
+    if (!playControllerAsync.hasValue) return const SizedBox.shrink();
+
+    final controller = playControllerAsync.requireValue;
+    return ValueListenableBuilder(
+      valueListenable: controller.positionNotifier,
+      builder: (context, position, child) {
+        return Slider(
+          year2023: false,
+          max: controller.duration.inMilliseconds.toDouble(),
+          value: position.inMilliseconds.toDouble(),
+          onChanged: (value) =>
+              controller.positionNotifier.value = value.round().milliseconds,
+        );
+      },
+    );
+  }
+}
+
+class _WaveformBar extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playController = ref.watch(playControllerProvider(ref.projectId!));
+    if (!playController.hasValue) return const SizedBox.shrink();
+
+    final waveformController = ref.watch(waveformControllerProvider);
+    return Waveform(
+          playController: playController.requireValue,
+          waveformController: waveformController,
+        )
+        .backgroundColor(context.colors.surfaceContainerLow)
+        .constrained(height: 200.0);
   }
 }

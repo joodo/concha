@@ -175,9 +175,10 @@ class ProjectToolbar extends ConsumerWidget {
       },
     );
 
+    final expertMode = ref.watch(preferenceProvider<bool>(.expertMode))!;
     return [
       toggleButton,
-      loopButton,
+      if (expertMode) loopButton,
       attachButton,
       stopButton,
       8.0.asWidth(),

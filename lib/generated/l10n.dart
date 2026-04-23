@@ -953,6 +953,21 @@ class S {
       args: [],
     );
   }
+
+  /// `Expert Mode`
+  String get expertMode {
+    return Intl.message('Expert Mode', name: 'expertMode', desc: '', args: []);
+  }
+
+  /// `Locate songs by waveform and allow playback from a fixed position.`
+  String get expertModeHint {
+    return Intl.message(
+      'Locate songs by waveform and allow playback from a fixed position.',
+      name: 'expertModeHint',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

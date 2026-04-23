@@ -25,7 +25,8 @@ enum PrefKey {
   lyricTranslateLangs,
 
   playLoop(defaultValue: false),
-  attachToLyric(defaultValue: true);
+  attachToLyric(defaultValue: true),
+  expertMode(defaultValue: false);
 
   final Object? defaultValue;
   const PrefKey({this.defaultValue});

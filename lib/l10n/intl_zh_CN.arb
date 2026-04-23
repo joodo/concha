@@ -156,5 +156,7 @@
   "downloading": "正在下载",
   "download": "下载",
   "noExecutableFound": "未找到工具。",
-  "openProjectDirectory": "打开项目目录"
+  "openProjectDirectory": "打开项目目录",
+  "expertMode": "专家模式",
+  "expertModeHint": "按照波形图来定位歌曲，并允许从固定位置开始播放。"
 }

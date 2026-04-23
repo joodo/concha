@@ -71,6 +71,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("编辑媒体信息"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage("编辑歌词翻译"),
+    "expertMode": MessageLookupByLibrary.simpleMessage("专家模式"),
+    "expertModeHint": MessageLookupByLibrary.simpleMessage(
+      "按照波形图来定位歌曲，并允许从固定位置开始播放。",
+    ),
     "extraArgs": MessageLookupByLibrary.simpleMessage("额外参数"),
     "failed": MessageLookupByLibrary.simpleMessage("失败"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("加载错误"),

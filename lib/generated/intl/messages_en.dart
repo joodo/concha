@@ -81,6 +81,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage(
       "Edit translate lyric",
     ),
+    "expertMode": MessageLookupByLibrary.simpleMessage("Expert Mode"),
+    "expertModeHint": MessageLookupByLibrary.simpleMessage(
+      "Locate songs by waveform and allow playback from a fixed position.",
+    ),
     "extraArgs": MessageLookupByLibrary.simpleMessage("Extra args"),
     "failed": MessageLookupByLibrary.simpleMessage("Failed"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("Failed to load"),

@@ -112,6 +112,32 @@ class SettingDialog extends HookWidget {
                       ).alignment(.centerLeft).padding(vertical: 12.0);
                     },
                   ),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final provider = preferenceProvider<bool>(.expertMode);
+                      final tile = SwitchListTile(
+                        title: S.of(context).expertMode.asText(),
+                        subtitle: S.of(context).expertModeHint.asText(),
+                        value: ref.watch(provider)!,
+                        onChanged: (value) {
+                          ref.read(provider.notifier).set(value);
+                          if (!value) {
+                            ref
+                                .read(
+                                  preferenceProvider<bool>(.playLoop).notifier,
+                                )
+                                .set(false);
+                          }
+                        },
+                      );
+                      return Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12.0),
+                        clipBehavior: .hardEdge,
+                        child: tile,
+                      );
+                    },
+                  ),
                 ],
               ),
               _SettingSection(

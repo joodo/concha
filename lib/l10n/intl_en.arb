@@ -156,5 +156,7 @@
   "downloading": "Downloading...",
   "download": "Download",
   "noExecutableFound": "No executable found.",
-  "openProjectDirectory": "Open project directory"
+  "openProjectDirectory": "Open project directory",
+  "expertMode": "Expert Mode",
+  "expertModeHint": "Locate songs by waveform and allow playback from a fixed position."
 }

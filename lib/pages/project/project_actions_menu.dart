@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:styled_widget/styled_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
@@ -79,6 +80,11 @@ class ProjectActionsMenu extends ConsumerWidget {
           child: S.of(context).clearLyric.asText(),
         ),
         const Divider(),
+        MenuItemButton(
+          onPressed: () => launchUrl(Uri.file(ref.project!.path.dir)),
+          leadingIcon: const Icon(Icons.folder_open),
+          child: S.of(context).openProjectDirectory.asText(),
+        ),
         MenuItemButton(
           onPressed: () => showModal(
             context: context,

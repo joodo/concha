@@ -155,5 +155,6 @@
   "ytDlpUseHint": "Used to download audio from YouTube",
   "downloading": "Downloading...",
   "download": "Download",
-  "noExecutableFound": "No executable found."
+  "noExecutableFound": "No executable found.",
+  "openProjectDirectory": "Open project directory"
 }

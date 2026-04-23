@@ -943,6 +943,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Open project directory`
+  String get openProjectDirectory {
+    return Intl.message(
+      'Open project directory',
+      name: 'openProjectDirectory',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

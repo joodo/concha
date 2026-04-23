@@ -133,6 +133,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "noProject": MessageLookupByLibrary.simpleMessage("No projects"),
     "openLocal": MessageLookupByLibrary.simpleMessage("Open Local"),
+    "openProjectDirectory": MessageLookupByLibrary.simpleMessage(
+      "Open project directory",
+    ),
     "optionalServiceUrl": MessageLookupByLibrary.simpleMessage(
       "Service URL (Optional)",
     ),

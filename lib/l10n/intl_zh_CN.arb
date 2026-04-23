@@ -155,5 +155,6 @@
   "ytDlpUseHint": "用以下载 YouTube 音频",
   "downloading": "正在下载",
   "download": "下载",
-  "noExecutableFound": "未找到工具。"
+  "noExecutableFound": "未找到工具。",
+  "openProjectDirectory": "打开项目目录"
 }

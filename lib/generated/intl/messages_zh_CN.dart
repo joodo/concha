@@ -107,6 +107,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noMediaInformationFound": MessageLookupByLibrary.simpleMessage("未搜索到媒体信息"),
     "noProject": MessageLookupByLibrary.simpleMessage("暂无项目"),
     "openLocal": MessageLookupByLibrary.simpleMessage("打开本地"),
+    "openProjectDirectory": MessageLookupByLibrary.simpleMessage("打开项目目录"),
     "optionalServiceUrl": MessageLookupByLibrary.simpleMessage("服务 URL（可选）"),
     "pause": MessageLookupByLibrary.simpleMessage("暂停"),
     "phaseFailedStatus": m1,

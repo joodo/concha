@@ -104,6 +104,7 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage("媒体信息将恢复到修改前的状态。"),
     "mixTable": MessageLookupByLibrary.simpleMessage("调音台"),
     "modelName": MessageLookupByLibrary.simpleMessage("模型名称"),
+    "modified": MessageLookupByLibrary.simpleMessage("(Modified)"),
     "myLibrary": MessageLookupByLibrary.simpleMessage("我的曲库"),
     "network": MessageLookupByLibrary.simpleMessage("网络"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("网络代理"),

@@ -110,9 +110,9 @@ class ProjectActionsMenu extends ConsumerWidget {
       builder: (context) =>
           _LyricEditDialog(initValue: lrc ?? '', title: title),
     );
-    if (result == lrc) return;
+    if (result == null || result == lrc) return;
 
-    ref.lyricNotifier(isTranslate: isTranslate)!.save(result!);
+    ref.lyricNotifier(isTranslate: isTranslate)!.save(result);
   }
 }
 
@@ -410,44 +410,19 @@ class _MetadataDialog extends HookWidget {
                 searchSection.padding(top: 16.0).expanded(flex: 5),
               ].toRow(separator: 16.0.asWidth());
 
-        final popScope = PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) async {
-            if (didPop) return;
-
-            if (result != null) return Navigator.of(context).pop(result);
-
-            final discard = await showModal<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: S.of(context).discardChanges.asText(),
-                content: S
-                    .of(context)
-                    .metadataWillBeRestoredToTheStateBeforeModification
-                    .asText()
-                    .constrained(maxWidth: 400.0),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: S.of(context).cancel.asText(),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: S.of(context).discard.asText(),
-                  ),
-                ],
-              ),
-            );
-
-            if (context.mounted && discard == true) Navigator.of(context).pop();
-          },
+        final popConfirm = _ConfirmPopWithoutResult(
+          when: () =>
+              coverUri.value != Uri.file(project.path.cover) ||
+              textControllers.title.text != project.metadata.title ||
+              textControllers.artist.text != project.metadata.artist ||
+              textControllers.album.text != project.metadata.album,
           child: content,
         );
 
         return AdaptiveDialog(
           isFullscreen: layoutSize.breakPoint <= .medium,
           backgroundColor: context.colors.surfaceContainerLow,
-          child: popScope,
+          child: popConfirm,
         );
       },
     );
@@ -522,9 +497,9 @@ class _MetadataDialog extends HookWidget {
 }
 
 class _LyricEditDialog extends HookWidget {
-  const _LyricEditDialog({required this.initValue, this.title});
+  const _LyricEditDialog({required this.initValue, required this.title});
   final String initValue;
-  final String? title;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -534,23 +509,18 @@ class _LyricEditDialog extends HookWidget {
       return null;
     }, []);
 
-    final textValue = useListenable(textController);
-
-    final canCopy = !textController.selection.isCollapsed;
-    final canPaste = useState(false);
-    final lifecycleState = useAppLifecycleState();
-    useEffect(() {
-      _checkClipboard().then(canPaste.set);
-      return null;
-    }, [textValue.text, lifecycleState]);
-
     final undoController = useMemoized(() => UndoHistoryController());
     useEffect(() => undoController.dispose, [undoController]);
     final historyValue = useValueListenable(undoController);
 
+    final modified = useState(false);
+
     final appBar = AppBar(
       leading: const CloseButton(),
-      title: (title ?? '').asText(),
+      title: [
+        title,
+        if (modified.value) S.of(context).modified,
+      ].join(' ').asText(),
       actions: [
         IconButton(
           onPressed: historyValue.canUndo ? undoController.undo : null,
@@ -561,13 +531,12 @@ class _LyricEditDialog extends HookWidget {
           icon: Icon(Icons.redo),
         ),
         8.0.asWidth(),
-        IconButton(
-          onPressed: canCopy ? textController.copySelectionToClipboard : null,
-          icon: Icon(Icons.copy),
-        ),
-        IconButton(
-          onPressed: canPaste.value ? textController.pasteFromClipboard : null,
-          icon: Icon(Icons.paste),
+        TextButton.icon(
+          onPressed: modified.value
+              ? () => Navigator.of(context).maybePop(textController.text)
+              : null,
+          label: S.of(context).save.asText(),
+          icon: Icon(Icons.check),
         ),
         8.0.asWidth(),
       ],
@@ -580,6 +549,7 @@ class _LyricEditDialog extends HookWidget {
         child: TextField(
           controller: textController,
           undoController: undoController,
+          onChanged: (value) => modified.value = true,
           maxLines: null,
           autofocus: true,
           decoration: const InputDecoration(border: InputBorder.none),
@@ -587,18 +557,54 @@ class _LyricEditDialog extends HookWidget {
       ),
     );
 
+    return _ConfirmPopWithoutResult(when: () => modified.value, child: content);
+  }
+}
+
+class _ConfirmPopWithoutResult extends StatelessWidget {
+  const _ConfirmPopWithoutResult({this.when, required this.child});
+  final ValueGetter<bool>? when;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        Navigator.pop(context, textValue.text);
-      },
-      child: content,
-    );
-  }
 
-  Future<bool> _checkClipboard() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    return data?.text?.isNotEmpty ?? false;
+        final willConfirm = when?.call() ?? true;
+        if (!willConfirm || result != null) {
+          return Navigator.of(context).pop(result);
+        }
+
+        final dialog = AlertDialog(
+          title: S.of(context).discardChanges.asText(),
+          content: S
+              .of(context)
+              .metadataWillBeRestoredToTheStateBeforeModification
+              .asText()
+              .constrained(maxWidth: 400.0),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: S.of(context).cancel.asText(),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: S.of(context).discard.asText(),
+            ),
+          ],
+        );
+
+        final discard = await showModal<bool>(
+          context: context,
+          builder: (context) => dialog,
+        );
+
+        if (context.mounted && discard == true) Navigator.of(context).pop();
+      },
+      child: child,
+    );
   }
 }

@@ -158,5 +158,6 @@
   "noExecutableFound": "未找到工具。",
   "openProjectDirectory": "打开项目目录",
   "expertMode": "专家模式",
-  "expertModeHint": "按照波形图来定位歌曲，并允许从固定位置开始播放。"
+  "expertModeHint": "按照波形图来定位歌曲，并允许从固定位置开始播放。",
+  "modified": "(Modified)"
 }

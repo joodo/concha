@@ -126,6 +126,7 @@ class MessageLookup extends MessageLookupByLibrary {
         ),
     "mixTable": MessageLookupByLibrary.simpleMessage("Mix Table"),
     "modelName": MessageLookupByLibrary.simpleMessage("Model Name"),
+    "modified": MessageLookupByLibrary.simpleMessage("(Modified)"),
     "myLibrary": MessageLookupByLibrary.simpleMessage("My Library"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("Network Proxy"),

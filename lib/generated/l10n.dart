@@ -968,6 +968,11 @@ class S {
       args: [],
     );
   }
+
+  /// `(Modified)`
+  String get modified {
+    return Intl.message('(Modified)', name: 'modified', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

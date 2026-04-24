@@ -1,7 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:llm_dart/llm_dart.dart';
 import 'package:locale_names/locale_names.dart';
@@ -12,6 +11,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
+import '/icon_font/icon_font.dart';
 import '/llm/llm.dart';
 import '/preferences/preferences.dart' hide Locale;
 import '/projects/projects.dart';
@@ -189,7 +189,7 @@ class SettingDialog extends HookWidget {
                   IconButton(
                     onPressed: () =>
                         launchUrlString('https://github.com/yt-dlp/yt-dlp'),
-                    icon: FaIcon(FontAwesomeIcons.github),
+                    icon: Icon(UiIcons.github),
                   ),
                 ],
                 children: [
@@ -326,7 +326,7 @@ class SettingDialog extends HookWidget {
                   onPressed: () =>
                       launchUrlString('https://github.com/joodo/concha'),
                   label: 'Github'.asText(),
-                  icon: FaIcon(FontAwesomeIcons.github),
+                  icon: Icon(UiIcons.github),
                 ),
                 TextButton.icon(
                   onPressed: () => launchUrl(Uri.file(Project.savedDir)),

@@ -5,6 +5,7 @@ import 'package:styled_widget/styled_widget.dart';
 
 import '/audio_sep/audio_sep.dart';
 import '/generated/l10n.dart';
+import '/icon_font/icon_font.dart';
 import '/lyric/lyric.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
@@ -120,11 +121,7 @@ class ProjectToolbar extends ConsumerWidget {
             valueListenable: playController.speedNotifier,
             builder: (context, speed, child) => ExpansibleButton(
               isExpanded: isExpanded,
-              icon: Image.asset(
-                'assets/icons/metronome.png',
-                width: 24.0,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              icon: Icon(UiIcons.metronome),
               value: speed,
               min: 0.25,
               max: 2.0,
@@ -143,11 +140,7 @@ class ProjectToolbar extends ConsumerWidget {
             builder: (context, pitch, child) =>
                 ExpansibleButton(
                   isExpanded: isExpanded,
-                  icon: Image.asset(
-                    'assets/icons/diapason.png',
-                    width: 24.0,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  icon: Icon(UiIcons.diapason),
                   value: pitch.toDouble(),
                   min: -7,
                   max: 7,
@@ -266,16 +259,7 @@ class _MixTableButton extends HookWidget {
             child: IconButton.outlined(
               onPressed: () => isShowing.value = true,
               isSelected: isSep,
-              icon: Image.asset(
-                'assets/icons/mixing-table.png',
-                width: 20.0,
-                color: context.colors.onSurfaceVariant,
-              ),
-              selectedIcon: Image.asset(
-                'assets/icons/mixing-table-fill.png',
-                width: 20.0,
-                color: context.colors.onInverseSurface,
-              ),
+              icon: Icon(UiIcons.mixer),
             ),
           ),
         ),
@@ -315,11 +299,7 @@ class _MixTableButton extends HookWidget {
   Widget _buildContent(BuildContext context, {required bool isSeparated}) {
     return [
       [
-        Image.asset(
-          'assets/icons/singing.png',
-          width: 24.0,
-          color: context.colors.onSurfaceVariant,
-        ).padding(left: 12.0),
+        Icon(UiIcons.microphone).padding(left: 12.0),
         ValueListenableBuilder(
           valueListenable: playController.vocalVolumeNotifier,
           builder: (context, volume, child) => Slider(
@@ -329,11 +309,7 @@ class _MixTableButton extends HookWidget {
         ),
       ].toRow(mainAxisAlignment: .center),
       [
-        Image.asset(
-          'assets/icons/drum.png',
-          width: 24.0,
-          color: context.colors.onSurfaceVariant,
-        ).padding(left: 12.0),
+        Icon(UiIcons.guitar).padding(left: 12.0),
         ValueListenableBuilder(
           valueListenable: playController.instruVolumeNotifier,
           builder: (context, volume, child) => Slider(

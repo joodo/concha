@@ -77,7 +77,7 @@ class ProjectPage extends HookConsumerWidget {
       SafeArea(
             child: [
               ProjectLyricSection().expanded(),
-              if (!expertMode) _LinarBar(),
+              if (!expertMode) _LinarBar().padding(bottom: 8.0),
             ].toColumn(separator: 12.0.asHeight()),
           )
           .backgroundBlur(10.0)

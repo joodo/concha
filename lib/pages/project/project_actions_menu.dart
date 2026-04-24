@@ -5,7 +5,6 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -13,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
+import '/icon_font/icon_font.dart';
 import '/lyric/lyric.dart';
 import '/network/network.dart';
 import '/preferences/preferences.dart';
@@ -60,7 +60,7 @@ class ProjectActionsMenu extends ConsumerWidget {
                   .set(result.coverBytes!);
             }
           },
-          leadingIcon: const FaIcon(FontAwesomeIcons.compactDisc),
+          leadingIcon: const Icon(UiIcons.disc),
           child: S.of(context).editMetadata.asText(),
         ),
         const Divider(),

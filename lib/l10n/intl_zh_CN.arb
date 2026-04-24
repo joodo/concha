@@ -159,5 +159,9 @@
   "openProjectDirectory": "打开项目目录",
   "expertMode": "专家模式",
   "expertModeHint": "按照波形图来定位歌曲，并允许从固定位置开始播放。",
-  "modified": "(Modified)"
+  "modified": "（已修改）",
+  "proofread": "校对",
+  "proofreadHint": "将根据提供的歌词文本来校正和补充 lrc 歌词。",
+  "pasteLyricsHere": "将歌词粘贴至此",
+  "proofreading": "正在校对……"
 }

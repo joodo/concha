@@ -144,6 +144,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "optionalServiceUrl": MessageLookupByLibrary.simpleMessage(
       "Service URL (Optional)",
     ),
+    "pasteLyricsHere": MessageLookupByLibrary.simpleMessage(
+      "Paste lyrics here",
+    ),
     "pause": MessageLookupByLibrary.simpleMessage("Pause"),
     "phaseFailedStatus": m1,
     "pitch": MessageLookupByLibrary.simpleMessage("Pitch"),
@@ -154,6 +157,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "playbackRate": MessageLookupByLibrary.simpleMessage("Speed"),
     "processing": MessageLookupByLibrary.simpleMessage("Processing"),
     "projectDeletedHint": m2,
+    "proofread": MessageLookupByLibrary.simpleMessage("Proofread"),
+    "proofreadHint": MessageLookupByLibrary.simpleMessage(
+      "The LRC lyrics will be calibrated and supplemented according to the provided lyric text.",
+    ),
+    "proofreading": MessageLookupByLibrary.simpleMessage("Proofreading..."),
     "queueStatus": m3,
     "readAloudCurrentLyric": MessageLookupByLibrary.simpleMessage(
       "Read Current Lyric Aloud",

@@ -509,11 +509,14 @@ class _LyricEditDialog extends HookWidget {
       return null;
     }, []);
 
-    final undoController = useMemoized(() => UndoHistoryController());
+    final undoController = useValue(UndoHistoryController());
     useEffect(() => undoController.dispose, [undoController]);
     final historyValue = useValueListenable(undoController);
 
     final modified = useState(false);
+    undoController.addListener(
+      () => modified.value = undoController.value.canUndo,
+    );
 
     final appBar = AppBar(
       leading: const CloseButton(),
@@ -531,12 +534,52 @@ class _LyricEditDialog extends HookWidget {
           icon: Icon(Icons.redo),
         ),
         8.0.asWidth(),
+        HookBuilder(
+          builder: (context) {
+            final isBusy = useState(false);
+            return TextButton.icon(
+              onPressed: isBusy.value
+                  ? null
+                  : () async {
+                      final original = await _getOriginalLyric(context);
+                      if (original == null) return;
+
+                      try {
+                        isBusy.value = true;
+
+                        final proofreaded = await lyricProofread(
+                          textController.text,
+                          original,
+                        );
+
+                        textController.value = TextEditingValue(
+                          text: proofreaded,
+                          selection: const TextSelection.collapsed(offset: 0),
+                        );
+                      } catch (e) {
+                        if (context.mounted) {
+                          context.showSnackBarText(e.toString());
+                        }
+                      } finally {
+                        isBusy.value = false;
+                      }
+                    },
+              label: Text(
+                isBusy.value
+                    ? S.of(context).proofreading
+                    : S.of(context).proofread,
+              ),
+              icon: Icon(Icons.spellcheck),
+            );
+          },
+        ),
+        8.0.asWidth(),
         TextButton.icon(
           onPressed: modified.value
               ? () => Navigator.of(context).maybePop(textController.text)
               : null,
           label: S.of(context).save.asText(),
-          icon: Icon(Icons.check),
+          icon: const Icon(Icons.check),
         ),
         8.0.asWidth(),
       ],
@@ -549,7 +592,6 @@ class _LyricEditDialog extends HookWidget {
         child: TextField(
           controller: textController,
           undoController: undoController,
-          onChanged: (value) => modified.value = true,
           maxLines: null,
           autofocus: true,
           decoration: const InputDecoration(border: InputBorder.none),
@@ -558,6 +600,58 @@ class _LyricEditDialog extends HookWidget {
     );
 
     return _ConfirmPopWithoutResult(when: () => modified.value, child: content);
+  }
+
+  Future<String?> _getOriginalLyric(BuildContext context) async {
+    final dialog = HookBuilder(
+      builder: (context) {
+        final controller = useTextEditingController();
+        void submit() {
+          if (controller.text.isEmpty) return;
+          Navigator.of(context).pop(controller.text);
+        }
+
+        return AlertDialog(
+          icon: const Icon(Icons.spellcheck),
+          content:
+              [
+                    S.of(context).proofreadHint.asText(),
+                    TextField(
+                      controller: controller,
+                      onSubmitted: (_) => submit(),
+                      maxLines: 10,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: S.of(context).pasteLyricsHere,
+                      ),
+                    ),
+                  ]
+                  .toColumn(
+                    crossAxisAlignment: .start,
+                    mainAxisSize: .min,
+                    separator: 16.0.asHeight(),
+                  )
+                  .constrained(width: 400.0),
+          actions: [
+            TextButton(
+              onPressed: Navigator.of(context).pop,
+              child: S.of(context).cancel.asText(),
+            ),
+            ValueListenableBuilder(
+              valueListenable: controller,
+              builder: (context, value, child) {
+                return TextButton(
+                  onPressed: value.text.isNotEmpty ? submit : null,
+                  child: S.of(context).proofread.asText(),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    return showModal<String>(context: context, builder: (context) => dialog);
   }
 }
 

@@ -973,6 +973,41 @@ class S {
   String get modified {
     return Intl.message('(Modified)', name: 'modified', desc: '', args: []);
   }
+
+  /// `Proofread`
+  String get proofread {
+    return Intl.message('Proofread', name: 'proofread', desc: '', args: []);
+  }
+
+  /// `The LRC lyrics will be calibrated and supplemented according to the provided lyric text.`
+  String get proofreadHint {
+    return Intl.message(
+      'The LRC lyrics will be calibrated and supplemented according to the provided lyric text.',
+      name: 'proofreadHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Paste lyrics here`
+  String get pasteLyricsHere {
+    return Intl.message(
+      'Paste lyrics here',
+      name: 'pasteLyricsHere',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Proofreading...`
+  String get proofreading {
+    return Intl.message(
+      'Proofreading...',
+      name: 'proofreading',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

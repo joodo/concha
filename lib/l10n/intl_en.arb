@@ -159,5 +159,9 @@
   "openProjectDirectory": "Open project directory",
   "expertMode": "Expert Mode",
   "expertModeHint": "Locate songs by waveform and allow playback from a fixed position.",
-  "modified": "(Modified)"
+  "modified": "(Modified)",
+  "proofread": "Proofread",
+  "proofreadHint": "The LRC lyrics will be calibrated and supplemented according to the provided lyric text.",
+  "pasteLyricsHere": "Paste lyrics here",
+  "proofreading": "Proofreading..."
 }

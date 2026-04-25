@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/experimental/persist.dart';
 import 'package:path/path.dart' as path_tool;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '/audio_sep/audio_sep.dart';
 import '/lyric/lyric.dart';
 import '/persistence/persistence.dart';
 import '/preferences/riverpod.dart';
@@ -72,11 +71,6 @@ class ProjectList extends _$ProjectList {
         state = AsyncData(current);
       },
       onCommit: () async {
-        // Delete cached separated audio
-        await MvsepSeparationService.i.deleteCacheByAudioPath(
-          target.path.audio,
-        );
-
         // Delete providers
         await ref.read(projectDetailProvider(id).notifier)._delete();
         await ref.read(projectLastVisitedProvider(id).notifier)._delete();

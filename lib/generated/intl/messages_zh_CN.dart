@@ -20,15 +20,9 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_CN';
 
-  static String m0(bytes) => "(已下载${bytes})";
+  static String m0(project) => "已删除 ${project}";
 
-  static String m1(phase, reason) => "失败阶段：${phase}\\n原因：${reason}";
-
-  static String m2(project) => "已删除 ${project}";
-
-  static String m3(count) => "正在排队 (还有 ${count} 人)";
-
-  static String m4(usingLocal, version) =>
+  static String m1(usingLocal, version) =>
       "使用${Intl.select(usingLocal, {'true': '本地', 'false': '系统', 'other': '未知'})} yt-dlp，版本 ${version}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -65,9 +59,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discard": MessageLookupByLibrary.simpleMessage("放弃"),
     "discardChanges": MessageLookupByLibrary.simpleMessage("放弃更改？"),
     "download": MessageLookupByLibrary.simpleMessage("下载"),
-    "downloadedBytes": m0,
     "downloading": MessageLookupByLibrary.simpleMessage("正在下载"),
-    "downloadingStatus": MessageLookupByLibrary.simpleMessage("正在下载"),
     "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("编辑媒体信息"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage("编辑歌词翻译"),
@@ -78,6 +70,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "extraArgs": MessageLookupByLibrary.simpleMessage("额外参数"),
     "failed": MessageLookupByLibrary.simpleMessage("失败"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("加载错误"),
+    "failedToLoadSeparationAudio": MessageLookupByLibrary.simpleMessage(
+      "加载分离音轨失败",
+    ),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(
       "获取语音失败，请重试",
     ),
@@ -88,15 +83,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "functionOfMvsep": MessageLookupByLibrary.simpleMessage("用于生成伴奏"),
     "general": MessageLookupByLibrary.simpleMessage("常用"),
     "imageFile": MessageLookupByLibrary.simpleMessage("图片文件"),
-    "initiatingService": MessageLookupByLibrary.simpleMessage("正在初始化服务"),
     "interface": MessageLookupByLibrary.simpleMessage("界面"),
     "language": MessageLookupByLibrary.simpleMessage("语言"),
     "light": MessageLookupByLibrary.simpleMessage("浅色"),
     "llmModelExample": MessageLookupByLibrary.simpleMessage(
       "比如 “gemini-3-flash-preview”",
-    ),
-    "loadingAfterSeparatedStatus": MessageLookupByLibrary.simpleMessage(
-      "生成成功！正在加载",
     ),
     "localStorageDir": MessageLookupByLibrary.simpleMessage("本地存储目录"),
     "lyricFile": MessageLookupByLibrary.simpleMessage("歌词文件"),
@@ -116,23 +107,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "optionalServiceUrl": MessageLookupByLibrary.simpleMessage("服务 URL（可选）"),
     "pasteLyricsHere": MessageLookupByLibrary.simpleMessage("将歌词粘贴至此"),
     "pause": MessageLookupByLibrary.simpleMessage("暂停"),
-    "phaseFailedStatus": m1,
     "pitch": MessageLookupByLibrary.simpleMessage("音调"),
     "play": MessageLookupByLibrary.simpleMessage("播放"),
     "playFromStartPoint": MessageLookupByLibrary.simpleMessage("从起点播放"),
     "playbackRate": MessageLookupByLibrary.simpleMessage("速度"),
     "processing": MessageLookupByLibrary.simpleMessage("处理中"),
-    "projectDeletedHint": m2,
+    "projectDeletedHint": m0,
     "proofread": MessageLookupByLibrary.simpleMessage("校对"),
     "proofreadHint": MessageLookupByLibrary.simpleMessage(
       "将根据提供的歌词文本来校正和补充 lrc 歌词。",
     ),
     "proofreading": MessageLookupByLibrary.simpleMessage("正在校对……"),
-    "queueStatus": m3,
     "readAloudCurrentLyric": MessageLookupByLibrary.simpleMessage("朗读当前歌词"),
     "readAloudLyric": MessageLookupByLibrary.simpleMessage("朗读歌词"),
     "regenerateExplanation": MessageLookupByLibrary.simpleMessage("重新解释"),
     "regenerateSubtitle": MessageLookupByLibrary.simpleMessage("重新生成副标题"),
+    "retry": MessageLookupByLibrary.simpleMessage("重试"),
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "searchOnline": MessageLookupByLibrary.simpleMessage("在线搜索"),
     "searchTitleArtistOrAlbum": MessageLookupByLibrary.simpleMessage(
@@ -141,10 +131,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectAudioFile": MessageLookupByLibrary.simpleMessage("选择音频文件"),
     "selectService": MessageLookupByLibrary.simpleMessage("选择服务"),
     "separateWithSpace": MessageLookupByLibrary.simpleMessage("使用空格分隔"),
-    "separatingStatus": MessageLookupByLibrary.simpleMessage("正在分离人声和伴奏"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "showLicense": MessageLookupByLibrary.simpleMessage("显示许可"),
-    "startingProgress": MessageLookupByLibrary.simpleMessage("正在执行"),
     "stop": MessageLookupByLibrary.simpleMessage("停止"),
     "successOfTest": MessageLookupByLibrary.simpleMessage("成功"),
     "supportAudioInputsHint": MessageLookupByLibrary.simpleMessage(
@@ -167,7 +155,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("撤销"),
     "upgrade": MessageLookupByLibrary.simpleMessage("更新"),
     "upgrading": MessageLookupByLibrary.simpleMessage("正在更新……"),
-    "uploading": MessageLookupByLibrary.simpleMessage("正在上传"),
     "version": MessageLookupByLibrary.simpleMessage("版本"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("人声分离"),
     "voiceGeneration": MessageLookupByLibrary.simpleMessage("语音生成"),
@@ -175,7 +162,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "volume": MessageLookupByLibrary.simpleMessage("音量"),
     "wholeLyricCopyed": MessageLookupByLibrary.simpleMessage("已复制全部歌词"),
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage("逐词解释"),
-    "ytDlpInfo": m4,
+    "ytDlpInfo": m1,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
       "如果 YouTube 音频下载失败，尝试更新到最新版本。",
     ),

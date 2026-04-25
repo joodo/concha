@@ -8,6 +8,8 @@ mixin LoadPersistOrFetch<T> on AnyNotifier<AsyncValue<T>, T> {
     required PersistResult persist,
     required Future<T> Function() fetch,
   }) async {
+    if (!ref.isFirstBuild) return await fetch();
+
     final link = ref.keepAlive();
     await persist.future;
     if (state.hasValue) {

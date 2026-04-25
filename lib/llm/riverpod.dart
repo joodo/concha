@@ -75,10 +75,4 @@ class WordForWord extends _$WordForWord with LoadPersistOrFetch {
     final result = TranslationResult.fromJson(json);
     return result;
   }
-
-  Future<void> refresh() async {
-    await future;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetch);
-  }
 }

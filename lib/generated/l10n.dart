@@ -519,96 +519,6 @@ class S {
     );
   }
 
-  /// `Initializing service`
-  String get initiatingService {
-    return Intl.message(
-      'Initializing service',
-      name: 'initiatingService',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `In progress`
-  String get startingProgress {
-    return Intl.message(
-      'In progress',
-      name: 'startingProgress',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Uploading`
-  String get uploading {
-    return Intl.message('Uploading', name: 'uploading', desc: '', args: []);
-  }
-
-  /// `In queue ({count} remaining)`
-  String queueStatus(num count) {
-    final NumberFormat countNumberFormat = NumberFormat.compact(
-      locale: Intl.getCurrentLocale(),
-    );
-    final String countString = countNumberFormat.format(count);
-
-    return Intl.message(
-      'In queue ($countString remaining)',
-      name: 'queueStatus',
-      desc: '',
-      args: [countString],
-    );
-  }
-
-  /// `Separating vocals and accompaniment`
-  String get separatingStatus {
-    return Intl.message(
-      'Separating vocals and accompaniment',
-      name: 'separatingStatus',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Downloading`
-  String get downloadingStatus {
-    return Intl.message(
-      'Downloading',
-      name: 'downloadingStatus',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `({bytes} downloaded)`
-  String downloadedBytes(String bytes) {
-    return Intl.message(
-      '($bytes downloaded)',
-      name: 'downloadedBytes',
-      desc: '',
-      args: [bytes],
-    );
-  }
-
-  /// `Generated successfully! Loading`
-  String get loadingAfterSeparatedStatus {
-    return Intl.message(
-      'Generated successfully! Loading',
-      name: 'loadingAfterSeparatedStatus',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Failed at: {phase}\nReason: {reason}`
-  String phaseFailedStatus(String phase, String reason) {
-    return Intl.message(
-      'Failed at: $phase\\nReason: $reason',
-      name: 'phaseFailedStatus',
-      desc: '',
-      args: [phase, reason],
-    );
-  }
-
   /// `Processing`
   String get processing {
     return Intl.message('Processing', name: 'processing', desc: '', args: []);
@@ -1007,6 +917,21 @@ class S {
       desc: '',
       args: [],
     );
+  }
+
+  /// `Failed to load separation audio`
+  String get failedToLoadSeparationAudio {
+    return Intl.message(
+      'Failed to load separation audio',
+      name: 'failedToLoadSeparationAudio',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retry`
+  String get retry {
+    return Intl.message('Retry', name: 'retry', desc: '', args: []);
   }
 }
 

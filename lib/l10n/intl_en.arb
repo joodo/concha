@@ -61,40 +61,6 @@
   "playbackRate": "Speed",
   "pitch": "Pitch",
   "vocalIsolation": "Vocal Isolation",
-  "initiatingService": "Initializing service",
-  "startingProgress": "In progress",
-  "uploading": "Uploading",
-  "queueStatus": "In queue ({count} remaining)",
-  "@queueStatus": {
-    "placeholders": {
-      "count": {
-        "type": "num",
-        "format": "compact"
-      }
-    }
-  },
-  "separatingStatus": "Separating vocals and accompaniment",
-  "downloadingStatus": "Downloading",
-  "downloadedBytes": "({bytes} downloaded)",
-  "@downloadedBytes": {
-    "placeholders": {
-      "bytes": {
-        "type": "String"
-      }
-    }
-  },
-  "loadingAfterSeparatedStatus": "Generated successfully! Loading",
-  "phaseFailedStatus": "Failed at: {phase}\\nReason: {reason}",
-  "@phaseFailedStatus": {
-    "placeholders": {
-      "phase": {
-        "type": "String"
-      },
-      "reason": {
-        "type": "String"
-      }
-    }
-  },
   "processing": "Processing",
   "delete": "Delete",
   "failedToReadAloudPleaseRetry": "Failed to get audio, please retry",
@@ -163,5 +129,7 @@
   "proofread": "Proofread",
   "proofreadHint": "The LRC lyrics will be calibrated and supplemented according to the provided lyric text.",
   "pasteLyricsHere": "Paste lyrics here",
-  "proofreading": "Proofreading..."
+  "proofreading": "Proofreading...",
+  "failedToLoadSeparationAudio": "Failed to load separation audio",
+  "retry": "Retry"
 }

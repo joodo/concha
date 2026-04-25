@@ -51,6 +51,8 @@ extension DioFunctionalExtension on Dio {
   Dio headers(Map<String, String> headers) => this..options.headers = headers;
   Dio responseType(ResponseType type) => this..options.responseType = type;
 
+  Dio acceptAllStatus() => this..options.validateStatus = (_) => true;
+
   Dio transform<T>(T Function(dynamic json) transformer) =>
       this..transformer = _Transformer(transformer);
 }

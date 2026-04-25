@@ -33,7 +33,7 @@ final class ProjectListProvider
   ProjectList create() => ProjectList();
 }
 
-String _$projectListHash() => r'b395935696b346dbb63f72aa21ca901945a43604';
+String _$projectListHash() => r'2146adc2ed7e7522cd7bc8a831bcc6aa4370cef9';
 
 abstract class _$ProjectList extends $AsyncNotifier<List<String>> {
   FutureOr<List<String>> build();
@@ -94,7 +94,7 @@ final class ProjectDetailProvider
   }
 }
 
-String _$projectDetailHash() => r'e90e014fc547ab99baff74ce3e243ecebf65aece';
+String _$projectDetailHash() => r'139d5880dfa42a2ce8bab22ee226bd370bba2d74';
 
 final class ProjectDetailFamily extends $Family
     with
@@ -184,7 +184,7 @@ final class ProjectLastVisitedProvider
 }
 
 String _$projectLastVisitedHash() =>
-    r'cbe095732070cf902cfec0e85d46c02d88359719';
+    r'17ef20643157db5a01908ab4e91e834df6715e07';
 
 final class ProjectLastVisitedFamily extends $Family
     with

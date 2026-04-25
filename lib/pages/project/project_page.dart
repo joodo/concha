@@ -3,7 +3,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '/audio_sep/audio_sep.dart';
+import '/generated/l10n.dart';
+import '/mvsep/mvsep.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
@@ -30,23 +31,23 @@ class ProjectPage extends HookConsumerWidget {
     }, []);
 
     // Seprate audio
-    ref.listen(sepAudioEventProvider(ref.projectId!), (previous, next) async {
-      if (next.hasError) {
-        debugPrint('Failed to load sep audio: ${next.error}');
+    ref.listen(separationPathProvider(ref.projectId!), (previous, next) async {
+      if (next is AsyncError) {
+        if (context.mounted) {
+          context.showSnackBarText(
+            '${S.of(context).failedToLoadSeparationAudio}: ${next.error}',
+          );
+        }
+        Error.throwWithStackTrace(next.error!, next.stackTrace!);
       }
       if (!next.hasValue) return;
 
-      final event = next.value!;
-      if (event is MvsepCompletedEvent) {
-        final playController = await ref.read(
-          playControllerProvider(ref.projectId!).future,
-        );
-        await playController.setSeparatedAudio(
-          event.vocalPath,
-          event.instruPath,
-        );
-        await playController.setSeparateMode(true);
-      }
+      final paths = next.requireValue;
+      final playController = await ref.read(
+        playControllerProvider(ref.projectId!).future,
+      );
+      await playController.setSeparatedAudio(paths.vocal, paths.instrument);
+      await playController.setSeparateMode(true);
     });
 
     late final PlayController playController;

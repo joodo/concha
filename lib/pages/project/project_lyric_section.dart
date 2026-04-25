@@ -374,7 +374,7 @@ class _WordForWordPanel extends ConsumerWidget {
         icon: Icon(Icons.refresh),
         tooltip: S.of(context).regenerateExplanation,
         onPressed: !dataAsync.isRefreshing && !dataAsync.isLoading
-            ? ref.read(wordForWordProvider(sentense).notifier).refresh
+            ? () => ref.invalidate(wordForWordProvider(sentense))
             : null,
       ),
       const Spacer(),

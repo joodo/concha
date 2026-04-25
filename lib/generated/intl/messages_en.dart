@@ -20,15 +20,9 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(bytes) => "(${bytes} downloaded)";
+  static String m0(project) => "Deleted ${project}";
 
-  static String m1(phase, reason) => "Failed at: ${phase}\\nReason: ${reason}";
-
-  static String m2(project) => "Deleted ${project}";
-
-  static String m3(count) => "In queue (${count} remaining)";
-
-  static String m4(usingLocal, version) =>
+  static String m1(usingLocal, version) =>
       "Using ${Intl.select(usingLocal, {'true': 'local', 'false': 'system', 'other': 'unknown'})} yt-dlp, version ${version}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -73,9 +67,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discard": MessageLookupByLibrary.simpleMessage("Discard"),
     "discardChanges": MessageLookupByLibrary.simpleMessage("Discard changes?"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
-    "downloadedBytes": m0,
     "downloading": MessageLookupByLibrary.simpleMessage("Downloading..."),
-    "downloadingStatus": MessageLookupByLibrary.simpleMessage("Downloading"),
     "editLyric": MessageLookupByLibrary.simpleMessage("Edit lyric"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("Edit metadata"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage(
@@ -88,6 +80,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "extraArgs": MessageLookupByLibrary.simpleMessage("Extra args"),
     "failed": MessageLookupByLibrary.simpleMessage("Failed"),
     "failedToLoad": MessageLookupByLibrary.simpleMessage("Failed to load"),
+    "failedToLoadSeparationAudio": MessageLookupByLibrary.simpleMessage(
+      "Failed to load separation audio",
+    ),
     "failedToReadAloudPleaseRetry": MessageLookupByLibrary.simpleMessage(
       "Failed to get audio, please retry",
     ),
@@ -104,17 +99,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "general": MessageLookupByLibrary.simpleMessage("General"),
     "imageFile": MessageLookupByLibrary.simpleMessage("Image file"),
-    "initiatingService": MessageLookupByLibrary.simpleMessage(
-      "Initializing service",
-    ),
     "interface": MessageLookupByLibrary.simpleMessage("Interface"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "llmModelExample": MessageLookupByLibrary.simpleMessage(
       "e.g., \"gemini-3-flash-preview\"",
-    ),
-    "loadingAfterSeparatedStatus": MessageLookupByLibrary.simpleMessage(
-      "Generated successfully! Loading",
     ),
     "localStorageDir": MessageLookupByLibrary.simpleMessage(
       "Local Storage Directory",
@@ -148,7 +137,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Paste lyrics here",
     ),
     "pause": MessageLookupByLibrary.simpleMessage("Pause"),
-    "phaseFailedStatus": m1,
     "pitch": MessageLookupByLibrary.simpleMessage("Pitch"),
     "play": MessageLookupByLibrary.simpleMessage("Play"),
     "playFromStartPoint": MessageLookupByLibrary.simpleMessage(
@@ -156,13 +144,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "playbackRate": MessageLookupByLibrary.simpleMessage("Speed"),
     "processing": MessageLookupByLibrary.simpleMessage("Processing"),
-    "projectDeletedHint": m2,
+    "projectDeletedHint": m0,
     "proofread": MessageLookupByLibrary.simpleMessage("Proofread"),
     "proofreadHint": MessageLookupByLibrary.simpleMessage(
       "The LRC lyrics will be calibrated and supplemented according to the provided lyric text.",
     ),
     "proofreading": MessageLookupByLibrary.simpleMessage("Proofreading..."),
-    "queueStatus": m3,
     "readAloudCurrentLyric": MessageLookupByLibrary.simpleMessage(
       "Read Current Lyric Aloud",
     ),
@@ -173,6 +160,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "regenerateSubtitle": MessageLookupByLibrary.simpleMessage(
       "Regenerate Subtitles",
     ),
+    "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "searchOnline": MessageLookupByLibrary.simpleMessage("Search Online"),
     "searchTitleArtistOrAlbum": MessageLookupByLibrary.simpleMessage(
@@ -185,12 +173,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "separateWithSpace": MessageLookupByLibrary.simpleMessage(
       "Separate with space",
     ),
-    "separatingStatus": MessageLookupByLibrary.simpleMessage(
-      "Separating vocals and accompaniment",
-    ),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "showLicense": MessageLookupByLibrary.simpleMessage("Show License"),
-    "startingProgress": MessageLookupByLibrary.simpleMessage("In progress"),
     "stop": MessageLookupByLibrary.simpleMessage("Stop"),
     "successOfTest": MessageLookupByLibrary.simpleMessage(" Success"),
     "supportAudioInputsHint": MessageLookupByLibrary.simpleMessage(
@@ -215,7 +199,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
     "upgrade": MessageLookupByLibrary.simpleMessage("Upgrade"),
     "upgrading": MessageLookupByLibrary.simpleMessage("Upgrading..."),
-    "uploading": MessageLookupByLibrary.simpleMessage("Uploading"),
     "version": MessageLookupByLibrary.simpleMessage("version"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("Vocal Isolation"),
     "voiceGeneration": MessageLookupByLibrary.simpleMessage("Voice Generation"),
@@ -227,7 +210,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage(
       "Word-by-word Breakdown",
     ),
-    "ytDlpInfo": m4,
+    "ytDlpInfo": m1,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
       "Try updating your version if YouTube audio downloads fail.",
     ),

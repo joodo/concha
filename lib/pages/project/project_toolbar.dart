@@ -3,10 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '/audio_sep/audio_sep.dart';
 import '/generated/l10n.dart';
 import '/icon_font/icon_font.dart';
 import '/lyric/lyric.dart';
+import '/mvsep/riverpod.dart';
 import '/play_controller/play_controller.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
@@ -272,11 +272,11 @@ class _MixTableButton extends HookWidget {
     WidgetRef ref,
     Widget? child,
   ) {
-    final event = ref.watch(sepAudioEventProvider(ref.projectId!)).value;
+    final sepPathProvider = separationPathProvider(ref.projectId!);
+    final sepPathAsync = ref.watch(sepPathProvider);
 
     final separateModeNotifier = playController.separateModeNotifier;
 
-    final isSepFileReady = event is MvsepCompletedEvent;
     return ValueListenableBuilder(
       valueListenable: separateModeNotifier,
       builder: (context, isSeparated, child) {
@@ -284,13 +284,23 @@ class _MixTableButton extends HookWidget {
           SwitchListTile(
             value: isSeparated,
             title: S.of(context).vocalIsolation.asText(),
-            onChanged: isSepFileReady
+            onChanged: sepPathAsync.hasValue
                 ? (value) => separateModeNotifier.value = value
                 : null,
           ),
-          isSepFileReady
-              ? _buildContent(context, isSeparated: isSeparated)
-              : _buildProgressingContent(context, _getMessage(context, event)),
+          switch (sepPathAsync) {
+            AsyncLoading(:final progress) => _buildProgressingContent(
+              context,
+              progress: progress as double?,
+            ),
+            AsyncData() => _buildContent(context, isSeparated: isSeparated),
+            AsyncError() => _buildErrorContent(
+              context,
+              retry: () {
+                ref.invalidate(sepPathProvider, asReload: true);
+              },
+            ),
+          },
         ].toColumn(separator: const SizedBox(height: 16.0));
       },
     );
@@ -321,8 +331,11 @@ class _MixTableButton extends HookWidget {
     ].toColumn();
   }
 
-  Widget _buildProgressingContent(BuildContext context, String message) {
-    return [S.of(context).processing.asText(), message.asText()]
+  Widget _buildProgressingContent(BuildContext context, {double? progress}) {
+    return [
+          S.of(context).processing.asText(),
+          CircularProgressIndicator(value: progress),
+        ]
         .toColumn(
           mainAxisAlignment: .center,
           separator: const SizedBox(height: 8.0),
@@ -330,47 +343,15 @@ class _MixTableButton extends HookWidget {
         .expanded();
   }
 
-  String _getMessage(BuildContext context, MvsepTaskEvent? event) {
-    switch (event) {
-      case null:
-      case MvsepInitEvent():
-        return S.of(context).initiatingService;
-
-      case MvsepLocalRunningEvent():
-        return S.of(context).startingProgress;
-
-      case MvsepUploadingEvent(:final uploadedBytes, :final totalBytes):
-        final percent = (uploadedBytes / totalBytes).asPercent;
-        return '${S.of(context).uploading} ($percent%)\n'
-            '${uploadedBytes.asByteSize} / ${totalBytes.asByteSize}';
-
-      case MvsepRemoteQueuedEvent(:final remoteCurrentOrder):
-        return S.of(context).queueStatus(remoteCurrentOrder ?? 0);
-
-      case MvsepRemoteProcessingEvent():
-        return S.of(context).separatingStatus;
-
-      case MvsepDownloadingEvent(
-        :final vocalDownloadedBytes,
-        :final vocalFileBytes,
-        :final instruDownloadedBytes,
-        :final instruFileBytes,
-      ):
-        final downloaded = instruDownloadedBytes + vocalDownloadedBytes;
-        if (instruFileBytes == null || vocalFileBytes == null) {
-          return '${S.of(context).downloadingStatus} ${S.of(context).downloadedBytes(downloaded.asByteSize)}';
-        }
-
-        final total = instruFileBytes + vocalFileBytes;
-        final percent = (downloaded / total).asPercent;
-        return '${S.of(context).downloadingStatus} ($percent%)\n'
-            '${vocalDownloadedBytes.asByteSize} / ${vocalFileBytes.asByteSize}\n'
-            '${instruDownloadedBytes.asByteSize} / ${instruFileBytes.asByteSize}';
-
-      case MvsepCompletedEvent():
-        return S.of(context).loadingAfterSeparatedStatus;
-      case MvsepFailedEvent(:final phase, :final error):
-        return S.of(context).phaseFailedStatus(phase, error);
-    }
+  Widget _buildErrorContent(BuildContext context, {VoidCallback? retry}) {
+    return [
+          S.of(context).failedToLoadSeparationAudio.asText(),
+          TextButton(onPressed: retry, child: S.of(context).retry.asText()),
+        ]
+        .toColumn(
+          mainAxisAlignment: .center,
+          separator: const SizedBox(height: 8.0),
+        )
+        .expanded();
   }
 }

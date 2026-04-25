@@ -61,40 +61,6 @@
   "playbackRate": "速度",
   "pitch": "音调",
   "vocalIsolation": "人声分离",
-  "initiatingService": "正在初始化服务",
-  "startingProgress": "正在执行",
-  "uploading": "正在上传",
-  "queueStatus": "正在排队 (还有 {count} 人)",
-  "@queueStatus": {
-    "placeholders": {
-      "count": {
-        "type": "num",
-        "format": "compact"
-      }
-    }
-  },
-  "separatingStatus": "正在分离人声和伴奏",
-  "downloadingStatus": "正在下载",
-  "downloadedBytes": "(已下载{bytes})",
-  "@downloadedBytes": {
-    "placeholders": {
-      "bytes": {
-        "type": "String"
-      }
-    }
-  },
-  "loadingAfterSeparatedStatus": "生成成功！正在加载",
-  "phaseFailedStatus": "失败阶段：{phase}\\n原因：{reason}",
-  "@phaseFailedStatus": {
-    "placeholders": {
-      "phase": {
-        "type": "String"
-      },
-      "reason": {
-        "type": "String"
-      }
-    }
-  },
   "processing": "处理中",
   "delete": "删除",
   "failedToReadAloudPleaseRetry": "获取语音失败，请重试",
@@ -163,5 +129,7 @@
   "proofread": "校对",
   "proofreadHint": "将根据提供的歌词文本来校正和补充 lrc 歌词。",
   "pasteLyricsHere": "将歌词粘贴至此",
-  "proofreading": "正在校对……"
+  "proofreading": "正在校对……",
+  "failedToLoadSeparationAudio": "加载分离音轨失败",
+  "retry": "重试"
 }

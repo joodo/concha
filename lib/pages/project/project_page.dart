@@ -147,8 +147,7 @@ class _LinarBar extends ConsumerWidget {
           year2023: false,
           max: controller.duration.inMilliseconds.toDouble(),
           value: position.inMilliseconds.toDouble(),
-          onChanged: (value) =>
-              controller.positionNotifier.value = value.round().milliseconds,
+          onChanged: (value) => controller.seekTo(value.round().milliseconds),
         );
       },
     );

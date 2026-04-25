@@ -131,5 +131,8 @@
   "pasteLyricsHere": "Paste lyrics here",
   "proofreading": "Proofreading...",
   "failedToLoadSeparationAudio": "Failed to load separation audio",
-  "retry": "Retry"
+  "retry": "Retry",
+  "aiTranscribe": "AI Transcribe",
+  "vocalIsolationIsRequired": "Vocal isolation is required",
+  "transcribing": "Transcribing"
 }

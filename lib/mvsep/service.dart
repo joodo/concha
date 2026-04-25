@@ -47,6 +47,48 @@ class MvsepUnknownJobResult extends MvsepException {
   String toString() => algorithm;
 }
 
+sealed class MvsepResult {
+  const MvsepResult({required this.data});
+  final JsonMap data;
+}
+
+class MvsepSeparationResult extends MvsepResult {
+  const MvsepSeparationResult({
+    required super.data,
+    required this.vocalUrl,
+    required this.instrumentUrl,
+  });
+
+  final Uri vocalUrl, instrumentUrl;
+}
+
+class MvsepTranscriptionResult extends MvsepResult {
+  MvsepTranscriptionResult({required super.data, required this.lrc});
+  final String lrc;
+}
+
+sealed class MvsepJobStatus {
+  const MvsepJobStatus({this.message});
+  final String? message;
+}
+
+class MvsepJobStatusWaiting extends MvsepJobStatus {
+  const MvsepJobStatusWaiting({
+    required this.queueCount,
+    required this.currentOrder,
+    super.message,
+  });
+  final int queueCount, currentOrder;
+}
+
+class MvsepJobStatusProcessing extends MvsepJobStatus {
+  MvsepJobStatusProcessing({super.message});
+}
+
+class MvsepJobStatusDone extends MvsepJobStatus {
+  MvsepJobStatusDone({super.message});
+}
+
 /// See [https://mvsep.com/en/full_api]
 class MvsepService {
   static final _host = Uri.parse('https://mvsep.com');
@@ -55,8 +97,33 @@ class MvsepService {
   const MvsepService._();
   static MvsepService i = MvsepService._();
 
+  Future<MvsepJob> createTranscriptionJob(
+    String audioPath, {
+    ProgressCallback? onUploadProgress,
+  }) => _createJob(
+    audioPath: audioPath,
+    type: 39,
+    opt1: '0',
+    opt2: '0',
+    onUploadProgress: onUploadProgress,
+  );
+
   Future<MvsepJob> createSeparationJob(
     String audioPath, {
+    ProgressCallback? onUploadProgress,
+  }) => _createJob(
+    audioPath: audioPath,
+    type: 40,
+    opt1: '81',
+    onUploadProgress: onUploadProgress,
+  );
+
+  Future<MvsepJob> _createJob({
+    required String audioPath,
+    required int type,
+    String? opt1,
+    String? opt2,
+    String? opt3,
     ProgressCallback? onUploadProgress,
   }) async {
     final token = Pref.get<String?>(.mvsepKey);
@@ -76,10 +143,10 @@ class MvsepService {
 
     final formData = FormData.fromMap({
       'api_token': token,
-      'sep_type': '40',
-      'add_opt1': '81',
-      'output_format': '0',
-      'is_demo': '0',
+      'sep_type': type.toString(),
+      'add_opt1': ?opt1,
+      'add_opt2': ?opt2,
+      'add_opt3': ?opt3,
       'audiofile': await MultipartFile.fromFile(audioPath, filename: fileName),
     });
 
@@ -167,7 +234,9 @@ class MvsepService {
     final algorithm = resultData['algorithm'] as String;
     switch (algorithm.toLowerCase()) {
       case String s when s.contains('bs roformer'):
-        return MvsepSeparationResult(data: resultData);
+        return _processSeparationResult(resultData);
+      case String s when s.contains('whisper'):
+        return _processTranscriptionResult(resultData);
       default:
         throw MvsepUnknownJobResult(resultResponse);
     }
@@ -175,13 +244,33 @@ class MvsepService {
 
   Future<String> _buildUploadFilename(String filePath) async {
     final baseName = p.basename(filePath);
-    final normalizedBaseName = baseName.trim().isEmpty ? 'audio' : baseName;
-    if (p.extension(normalizedBaseName).isNotEmpty) {
-      return normalizedBaseName;
-    }
-
     final ext = await detectAudioExtension(filePath);
     if (ext == null) throw FormatException('Unsupported file format', filePath);
-    return '$normalizedBaseName$ext';
+    return '$baseName$ext';
+  }
+
+  MvsepSeparationResult _processSeparationResult(JsonMap data) {
+    final files = data['files'] as List;
+    Uri extractUriFromData(String containedType) {
+      final url =
+          files.firstWhere((file) {
+                final type = file['type'] as String;
+                return type.toLowerCase().contains(containedType);
+              })['url']
+              as String;
+      return Uri.parse(url);
+    }
+
+    return MvsepSeparationResult(
+      data: data,
+      vocalUrl: extractUriFromData('vocal'),
+      instrumentUrl: extractUriFromData('other'),
+    );
+  }
+
+  MvsepTranscriptionResult _processTranscriptionResult(JsonMap data) {
+    final srt = data['transcription']['srt'] as String;
+    final lrc = srtToLrc(srt);
+    return MvsepTranscriptionResult(data: data, lrc: lrc);
   }
 }

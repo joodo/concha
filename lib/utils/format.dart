@@ -30,3 +30,7 @@ extension SizedBoxExtension on double {
   SizedBox asWidth() => SizedBox(width: this);
   SizedBox asHeight() => SizedBox(height: this);
 }
+
+extension ToUint8Extension on double {
+  int get toUint8 => (clamp(0.0, 1.0) * 255).round();
+}

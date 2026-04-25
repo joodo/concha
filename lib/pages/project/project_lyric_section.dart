@@ -8,9 +8,12 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
+import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
+import '/icon_font/icon_font.dart';
 import '/llm/llm.dart';
 import '/lyric/lyric.dart' hide LyricController;
+import '/mvsep/mvsep.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
 import '/services/services.dart';
@@ -561,47 +564,173 @@ class _EmptyContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return [
-          _buildBigButton(
-            onTap: () => _openLocalLyric(context),
-            title: S.of(context).openLocal,
-            icon: Icons.folder_open,
-          ),
-          _buildBigButton(
-            onTap: onSearch,
-            title: S.of(context).searchOnline,
-            icon: Icons.search,
-          ),
-        ]
-        .toRow(mainAxisSize: .min, separator: const SizedBox(width: 32.0))
-        .center();
-  }
+    return HookConsumer(
+      builder: (context, ref, child) {
+        final progress = useState<double?>(null);
+        final isPending = useState<bool>(false);
 
-  Widget _buildBigButton({
-    VoidCallback? onTap,
-    required String title,
-    required IconData icon,
-  }) {
-    return Builder(
-      builder: (context) {
-        return Card(
-          clipBehavior: .hardEdge,
-          color: context.colors.primaryContainer,
-          child: InkWell(
-            onTap: onTap,
-            child:
-                [
-                      Icon(icon, size: 48.0, color: context.colors.secondary),
-                      Text(title, style: context.textStyles.bodyLarge),
-                    ]
-                    .toColumn(
-                      mainAxisSize: .min,
-                      separator: const SizedBox(height: 8.0),
-                    )
-                    .padding(all: 16.0),
-          ),
+        return AdaptiveLayoutBuilder(
+          builder: (context, layoutSize) {
+            final isLarge = layoutSize.breakPoint > .compact;
+
+            final buttons = [
+              _buildButton(
+                context,
+                isLarge: isLarge,
+                title: S.of(context).openLocal,
+                icon: Icons.folder_open,
+                onTap: () => _openLocalLyric(context),
+              ),
+              _buildButton(
+                context,
+                isLarge: isLarge,
+                title: S.of(context).searchOnline,
+                icon: Icons.search,
+                onTap: onSearch,
+              ),
+              _buildButton(
+                context,
+                isLarge: isLarge,
+                title: isPending.value
+                    ? S.of(context).transcribing
+                    : S.of(context).aiTranscribe,
+                icon: isPending.value ? null : UiIcons.sparkles,
+                progress: progress.value,
+                onTap: !isPending.value
+                    ? () async {
+                        final vocalIsolated = ref
+                            .read(separationPathProvider(ref.projectId!))
+                            .hasValue;
+                        if (!vocalIsolated) {
+                          context.showSnackBarText(
+                            S.of(context).vocalIsolationIsRequired,
+                          );
+                          return;
+                        }
+
+                        isPending.value = true;
+
+                        final provider = transcribedLyricProvider(
+                          ref.projectId!,
+                        );
+                        final subcription = ref.listenManual(provider, (
+                          previous,
+                          next,
+                        ) {
+                          if (next is AsyncLoading) {
+                            progress.value = next.progress as double?;
+                          }
+                        });
+
+                        try {
+                          final lrc = await ref.read(provider.future);
+                          _setProjectLyricAndGenerateSummary(ref, lrc);
+                        } finally {
+                          subcription.close();
+                          if (context.mounted) isPending.value = false;
+                        }
+                      }
+                    : null,
+              ),
+            ];
+
+            final content = isLarge
+                ? buttons.toRow(mainAxisSize: .min, separator: 32.0.asWidth())
+                : buttons.toColumn(
+                    mainAxisSize: .min,
+                    separator: 12.0.asHeight(),
+                  );
+            return content.center();
+          },
         );
       },
+    );
+  }
+
+  Widget _buildButton(
+    BuildContext context, {
+    required bool isLarge,
+    required String title,
+    IconData? icon,
+    double? progress,
+    VoidCallback? onTap,
+  }) {
+    final iconWidget = icon != null
+        ? Icon(icon)
+        : Builder(
+            builder: (context) {
+              final size = IconTheme.of(context).size!;
+              return CircularProgressIndicator(
+                value: progress,
+              ).constrained(width: size, height: size);
+            },
+          );
+
+    if (!isLarge) {
+      return FilledButton.icon(
+        onPressed: onTap,
+        label: title.asText(),
+        icon: ProgressIndicatorTheme(
+          data: ProgressIndicatorThemeData(
+            strokeWidth: 4.0,
+            circularTrackPadding: EdgeInsets.all(4.0),
+          ),
+          child: iconWidget,
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: context.colors.tertiaryContainer,
+          foregroundColor: context.colors.onTertiaryContainer,
+        ).large(context),
+      );
+    }
+
+    final enabled = onTap != null;
+    final card = Card(
+      child: InkWell(
+        onTap: onTap,
+        child:
+            [
+                  iconWidget,
+                  Text(
+                    title,
+                    style: context.textStyles.bodyLarge!.copyWith(
+                      color: enabled
+                          ? context.colors.onTertiaryContainer
+                          : context.colors.onSurface.withAlpha(0.38.toUint8),
+                    ),
+                  ),
+                ]
+                .toColumn(mainAxisSize: .min, separator: 8.0.asHeight())
+                .padding(all: 16.0),
+      ),
+    ).constrained(minWidth: 120.0);
+    return Theme(
+      data: context.theme.copyWith(
+        iconTheme: IconThemeData(
+          size: 48.0,
+          color: enabled
+              ? context.colors.onTertiaryContainer
+              : context.colors.onSurface.withAlpha(0.38.toUint8),
+        ),
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+          strokeWidth: 4.0,
+          circularTrackPadding: EdgeInsets.all(8.0),
+        ),
+        cardTheme: CardThemeData(
+          clipBehavior: .hardEdge,
+          color: enabled
+              ? context.colors.tertiaryContainer
+              : context.colors.onSurface.withAlpha(0.1.toUint8),
+        ),
+      ),
+      child: DefaultTextStyle(
+        style: context.textStyles.bodyLarge!.copyWith(
+          color: enabled
+              ? context.colors.onTertiaryContainer
+              : context.colors.onSurface.withAlpha(0.38.toUint8),
+        ),
+        child: card,
+      ),
     );
   }
 
@@ -762,5 +891,5 @@ Future<void> _setProjectLyricAndGenerateSummary(
   bool isTranslate = false,
 }) async {
   await ref.lyricNotifier(isTranslate: isTranslate)!.save(lrc);
-  await ref.projectNotifier!.generateSummary();
+  await ref.projectNotifier!.generateSummaryIfAbsent();
 }

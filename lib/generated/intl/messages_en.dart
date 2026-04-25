@@ -37,6 +37,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "adjustLyricOffset": MessageLookupByLibrary.simpleMessage(
       "Adjust Lyric Offset",
     ),
+    "aiTranscribe": MessageLookupByLibrary.simpleMessage("AI Transcribe"),
     "album": MessageLookupByLibrary.simpleMessage("Album"),
     "apply": MessageLookupByLibrary.simpleMessage("Apply"),
     "artist": MessageLookupByLibrary.simpleMessage("Artist"),
@@ -190,6 +191,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "theme": MessageLookupByLibrary.simpleMessage("Theme"),
     "title": MessageLookupByLibrary.simpleMessage("Title"),
     "tools": MessageLookupByLibrary.simpleMessage("Tools"),
+    "transcribing": MessageLookupByLibrary.simpleMessage("Transcribing"),
     "translate": MessageLookupByLibrary.simpleMessage("Translate"),
     "translateLyric": MessageLookupByLibrary.simpleMessage("Translate Lyrics"),
     "translateTo": MessageLookupByLibrary.simpleMessage("Translate to: "),
@@ -201,6 +203,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "upgrading": MessageLookupByLibrary.simpleMessage("Upgrading..."),
     "version": MessageLookupByLibrary.simpleMessage("version"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("Vocal Isolation"),
+    "vocalIsolationIsRequired": MessageLookupByLibrary.simpleMessage(
+      "Vocal isolation is required",
+    ),
     "voiceGeneration": MessageLookupByLibrary.simpleMessage("Voice Generation"),
     "voiceTest": MessageLookupByLibrary.simpleMessage("Voice Test"),
     "volume": MessageLookupByLibrary.simpleMessage("Volume"),

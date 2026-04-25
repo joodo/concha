@@ -9,41 +9,41 @@ part of 'riverpod.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(SeparateJob)
+@ProviderFor(MvsepJobNotifier)
 @JsonPersist()
-final separateJobProvider = SeparateJobFamily._();
+final mvsepJobProvider = MvsepJobNotifierFamily._();
 
 @JsonPersist()
-final class SeparateJobProvider
-    extends $AsyncNotifierProvider<SeparateJob, MvsepJob> {
-  SeparateJobProvider._({
-    required SeparateJobFamily super.from,
-    required String super.argument,
+final class MvsepJobNotifierProvider
+    extends $AsyncNotifierProvider<MvsepJobNotifier, MvsepJob> {
+  MvsepJobNotifierProvider._({
+    required MvsepJobNotifierFamily super.from,
+    required (String, MvsepOperation) super.argument,
   }) : super(
          retry: _separateJobCreatingRetry,
-         name: r'separateJobProvider',
+         name: r'mvsepJobProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$separateJobHash();
+  String debugGetCreateSourceHash() => _$mvsepJobNotifierHash();
 
   @override
   String toString() {
-    return r'separateJobProvider'
+    return r'mvsepJobProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
   @override
-  SeparateJob create() => SeparateJob();
+  MvsepJobNotifier create() => MvsepJobNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is SeparateJobProvider && other.argument == argument;
+    return other is MvsepJobNotifierProvider && other.argument == argument;
   }
 
   @override
@@ -52,41 +52,42 @@ final class SeparateJobProvider
   }
 }
 
-String _$separateJobHash() => r'0c944cd633e960b3855f0237bad9ddde74f1c653';
+String _$mvsepJobNotifierHash() => r'de423419ed83b9f1450082ae45fc1a0908a12a29';
 
 @JsonPersist()
-final class SeparateJobFamily extends $Family
+final class MvsepJobNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
-          SeparateJob,
+          MvsepJobNotifier,
           AsyncValue<MvsepJob>,
           MvsepJob,
           FutureOr<MvsepJob>,
-          String
+          (String, MvsepOperation)
         > {
-  SeparateJobFamily._()
+  MvsepJobNotifierFamily._()
     : super(
         retry: _separateJobCreatingRetry,
-        name: r'separateJobProvider',
+        name: r'mvsepJobProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
   @JsonPersist()
-  SeparateJobProvider call(String audioPath) =>
-      SeparateJobProvider._(argument: audioPath, from: this);
+  MvsepJobNotifierProvider call(String audioPath, MvsepOperation operation) =>
+      MvsepJobNotifierProvider._(argument: (audioPath, operation), from: this);
 
   @override
-  String toString() => r'separateJobProvider';
+  String toString() => r'mvsepJobProvider';
 }
 
 @JsonPersist()
-abstract class _$SeparateJobBase extends $AsyncNotifier<MvsepJob> {
-  late final _$args = ref.$arg as String;
-  String get audioPath => _$args;
+abstract class _$MvsepJobNotifierBase extends $AsyncNotifier<MvsepJob> {
+  late final _$args = ref.$arg as (String, MvsepOperation);
+  String get audioPath => _$args.$1;
+  MvsepOperation get operation => _$args.$2;
 
-  FutureOr<MvsepJob> build(String audioPath);
+  FutureOr<MvsepJob> build(String audioPath, MvsepOperation operation);
   @$mustCallSuper
   @override
   void runBuild() {
@@ -99,7 +100,7 @@ abstract class _$SeparateJobBase extends $AsyncNotifier<MvsepJob> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }
 
@@ -116,7 +117,7 @@ final class SeparationPathProvider
     required SeparationPathFamily super.from,
     required String super.argument,
   }) : super(
-         retry: _separatePathFetchingRetry,
+         retry: _autoRecreateJobRetry,
          name: r'separationPathProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -148,7 +149,7 @@ final class SeparationPathProvider
   }
 }
 
-String _$separationPathHash() => r'19c9d337540cd47ef5f7babd6494a99303ebc268';
+String _$separationPathHash() => r'e5908ea26dfd0a58e26572749e2671d3a0aa1181';
 
 final class SeparationPathFamily extends $Family
     with
@@ -161,7 +162,7 @@ final class SeparationPathFamily extends $Family
         > {
   SeparationPathFamily._()
     : super(
-        retry: _separatePathFetchingRetry,
+        retry: _autoRecreateJobRetry,
         name: r'separationPathProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
@@ -205,16 +206,105 @@ abstract class _$SeparationPath
   }
 }
 
+@ProviderFor(TranscribedLyric)
+final transcribedLyricProvider = TranscribedLyricFamily._();
+
+final class TranscribedLyricProvider
+    extends $AsyncNotifierProvider<TranscribedLyric, String> {
+  TranscribedLyricProvider._({
+    required TranscribedLyricFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _autoRecreateJobRetry,
+         name: r'transcribedLyricProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$transcribedLyricHash();
+
+  @override
+  String toString() {
+    return r'transcribedLyricProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  TranscribedLyric create() => TranscribedLyric();
+
+  @override
+  bool operator ==(Object other) {
+    return other is TranscribedLyricProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$transcribedLyricHash() => r'8767688b131a49c7fc4088aa8de5fafae0818f14';
+
+final class TranscribedLyricFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          TranscribedLyric,
+          AsyncValue<String>,
+          String,
+          FutureOr<String>,
+          String
+        > {
+  TranscribedLyricFamily._()
+    : super(
+        retry: _autoRecreateJobRetry,
+        name: r'transcribedLyricProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  TranscribedLyricProvider call(String id) =>
+      TranscribedLyricProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'transcribedLyricProvider';
+}
+
+abstract class _$TranscribedLyric extends $AsyncNotifier<String> {
+  late final _$args = ref.$arg as String;
+  String get id => _$args;
+
+  FutureOr<String> build(String id);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<String>, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<String>, String>,
+              AsyncValue<String>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
 // **************************************************************************
 // JsonGenerator
 // **************************************************************************
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
-abstract class _$SeparateJob extends _$SeparateJobBase {
+abstract class _$MvsepJobNotifier extends _$MvsepJobNotifierBase {
   /// The default key used by [persist].
   String get key {
-    late final args = audioPath;
-    late final resolvedKey = 'SeparateJob($args)';
+    late final args = (audioPath, operation);
+    late final resolvedKey = 'MvsepJobNotifier($args)';
 
     return resolvedKey;
   }

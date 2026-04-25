@@ -17,6 +17,8 @@ import 'service.dart';
 
 part 'riverpod.g.dart';
 
+enum MvsepOperation { separation, transcription }
+
 Duration? _separateJobCreatingRetry(int retryCount, Object error) {
   if (error is! MvsepMaxConcurrencyReachedException) return null;
   debugPrint('Mvsep max concurrency reached, retry after 2s...');
@@ -25,9 +27,9 @@ Duration? _separateJobCreatingRetry(int retryCount, Object error) {
 
 @Riverpod(retry: _separateJobCreatingRetry)
 @JsonPersist()
-class SeparateJob extends _$SeparateJob with LoadPersistOrFetch {
+class MvsepJobNotifier extends _$MvsepJobNotifier with LoadPersistOrFetch {
   @override
-  Future<MvsepJob> build(String audioPath) {
+  Future<MvsepJob> build(String audioPath, MvsepOperation operation) {
     return loadPersistOrFetch(
       persist: persist(
         ref.watch(persistStorageProvider.future),
@@ -41,12 +43,20 @@ class SeparateJob extends _$SeparateJob with LoadPersistOrFetch {
 
   Future<MvsepJob> _fetch() async {
     try {
-      final job = await MvsepService.i.createSeparationJob(
-        audioPath,
-        onUploadProgress: (count, total) {
-          state = AsyncLoading(progress: (count / total).clamp(0.0, 1.0));
-        },
-      );
+      void onUploadProgress(int count, int total) {
+        state = AsyncLoading(progress: (count / total).clamp(0.0, 1.0));
+      }
+
+      final job = await switch (operation) {
+        .separation => MvsepService.i.createSeparationJob(
+          audioPath,
+          onUploadProgress: onUploadProgress,
+        ),
+        .transcription => MvsepService.i.createTranscriptionJob(
+          audioPath,
+          onUploadProgress: onUploadProgress,
+        ),
+      };
       return job;
     } catch (e) {
       rethrow;
@@ -59,13 +69,13 @@ class SeparateJob extends _$SeparateJob with LoadPersistOrFetch {
   }
 }
 
-Duration? _separatePathFetchingRetry(int retryCount, Object error) {
+Duration? _autoRecreateJobRetry(int retryCount, Object error) {
   if (error is! MvsepJobNotFound) return null;
   debugPrint('Mvsep job concurrency staled, retry');
   return Duration.zero;
 }
 
-@Riverpod(retry: _separatePathFetchingRetry)
+@Riverpod(retry: _autoRecreateJobRetry)
 class SeparationPath extends _$SeparationPath {
   @override
   Future<({String vocal, String instrument})> build(String id) async {
@@ -93,7 +103,7 @@ class SeparationPath extends _$SeparationPath {
     final result = (vocal: path.audioVocals, instrument: path.audioInstru);
 
     // Create job
-    final jobProvider = separateJobProvider(path.audio);
+    final jobProvider = mvsepJobProvider(path.audio, .separation);
     ref.listen(jobProvider, (previous, next) {
       if (next is AsyncLoading && next.progress != null) {
         state = AsyncLoading(progress: 0.25 * next.progress!);
@@ -122,13 +132,11 @@ class SeparationPath extends _$SeparationPath {
           }
         },
       );
+      if (jobResult is! MvsepSeparationResult) throw TypeError();
     } catch (e) {
-      if (e is MvsepJobNotFound) {
-        ref.invalidate(jobProvider, asReload: true);
-      }
+      await ref.read(jobProvider.notifier)._deleteStorage();
       rethrow;
     }
-    if (jobResult is! MvsepSeparationResult) throw TypeError();
 
     // Download files to temp dir
     final tempDir = await getTemporaryDirectory();
@@ -176,5 +184,60 @@ class SeparationPath extends _$SeparationPath {
 
     // Delete mvsep job cache
     await ref.read(jobProvider.notifier)._deleteStorage();
+  }
+}
+
+@Riverpod(retry: _autoRecreateJobRetry)
+class TranscribedLyric extends _$TranscribedLyric {
+  @override
+  Future<String> build(String id) async {
+    final link = ref.keepAlive();
+    try {
+      return await _fetch();
+    } finally {
+      link.close();
+    }
+  }
+
+  Future<String> _fetch() async {
+    final vocalPath = ProjectPath(id).audioVocals;
+
+    // Create job
+    final jobProvider = mvsepJobProvider(vocalPath, .transcription);
+    ref.listen(jobProvider, (previous, next) {
+      if (next is AsyncLoading && next.progress != null) {
+        state = AsyncLoading(progress: 0.33 * next.progress!);
+      }
+    });
+
+    final job = await ref.watch(jobProvider.future);
+
+    // Wait job
+    int? initOrder;
+    late final MvsepResult jobResult;
+    try {
+      jobResult = await MvsepService.i.waitMvsepJob(
+        job,
+        onStatusChanged: (status) {
+          switch (status) {
+            case MvsepJobStatusWaiting(:final currentOrder):
+              initOrder ??= currentOrder;
+              double queueProgress = 1.0 - currentOrder / initOrder!;
+              queueProgress = queueProgress.clamp(0.0, 1.0);
+              state = AsyncLoading(progress: 0.33 + 0.25 * queueProgress);
+            case MvsepJobStatusProcessing():
+              state = AsyncLoading(progress: 0.33 * 2);
+            case MvsepJobStatusDone():
+              state = AsyncLoading(progress: 0.33 * 3);
+          }
+        },
+      );
+      if (jobResult is! MvsepTranscriptionResult) throw TypeError();
+    } finally {
+      // Delete mvsep job cache
+      await ref.read(jobProvider.notifier)._deleteStorage();
+    }
+
+    return jobResult.lrc;
   }
 }

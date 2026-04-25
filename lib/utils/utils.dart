@@ -16,3 +16,4 @@ export 'functional.dart';
 export 'list.dart';
 export 'comparable.dart';
 export 'hook_widget.dart';
+export 'button_style.dart';

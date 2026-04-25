@@ -131,5 +131,8 @@
   "pasteLyricsHere": "将歌词粘贴至此",
   "proofreading": "正在校对……",
   "failedToLoadSeparationAudio": "加载分离音轨失败",
-  "retry": "重试"
+  "retry": "重试",
+  "aiTranscribe": "AI 识词",
+  "vocalIsolationIsRequired": "需要分离出人声音轨",
+  "transcribing": "正在识别"
 }

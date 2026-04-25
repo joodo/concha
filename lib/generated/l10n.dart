@@ -933,6 +933,36 @@ class S {
   String get retry {
     return Intl.message('Retry', name: 'retry', desc: '', args: []);
   }
+
+  /// `AI Transcribe`
+  String get aiTranscribe {
+    return Intl.message(
+      'AI Transcribe',
+      name: 'aiTranscribe',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Vocal isolation is required`
+  String get vocalIsolationIsRequired {
+    return Intl.message(
+      'Vocal isolation is required',
+      name: 'vocalIsolationIsRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Transcribing`
+  String get transcribing {
+    return Intl.message(
+      'Transcribing',
+      name: 'transcribing',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -20,6 +20,7 @@ import '/services/services.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 
+import '../widgets/animated_linear_indicator.dart';
 import '../widgets/popup_widget.dart';
 
 import 'actions.dart';
@@ -386,7 +387,7 @@ class _WordForWordPanel extends ConsumerWidget {
 
     final content = [
       header.padding(horizontal: 16.0, vertical: 12.0),
-      if (dataAsync.isRefreshing) LinearProgressIndicator(),
+      AnimatedLinearIndicator(isRunning: dataAsync.isRefreshing),
       dataAsync
           .when(
             data: (data) => _buildContent(ref, data),

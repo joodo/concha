@@ -20,7 +20,7 @@ class TranslationResult {
   final String translate;
   final List<TranslationDetail> detail;
 
-  TranslationResult({
+  const TranslationResult({
     required this.sourceLang,
     required this.sentence,
     required this.translate,

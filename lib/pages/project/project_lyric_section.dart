@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/adaptive_widgets/adaptive_widgets.dart';
@@ -352,6 +353,20 @@ class _SearchPanel extends HookConsumerWidget {
 }
 
 class _WordForWordPanel extends ConsumerWidget {
+  static final _mockData = TranslationResult(
+    sourceLang: MockData.words(2),
+    sentence: MockData.sentence(),
+    translate: MockData.sentence(),
+    detail: List.generate(
+      5,
+      (index) => TranslationDetail(
+        word: MockData.word,
+        translate: MockData.words(2),
+        explanation: MockData.sentence(minWordsCount: 10),
+      ),
+    ),
+  );
+
   const _WordForWordPanel({required this.sentense, required this.onClose});
 
   final String sentense;
@@ -388,17 +403,13 @@ class _WordForWordPanel extends ConsumerWidget {
     final content = [
       header.padding(horizontal: 16.0, vertical: 12.0),
       AnimatedLinearIndicator(isRunning: dataAsync.isRefreshing),
-      dataAsync
-          .when(
-            data: (data) => _buildContent(ref, data),
-            error: (error, stackTrace) {
-              runAfterBuild(() => Error.throwWithStackTrace(error, stackTrace));
-              return SelectableText(error.toString()).center();
-            },
-            loading: () => CircularProgressIndicator().center(),
-          )
-          .padding(horizontal: 16.0, bottom: 12.0, top: 4.0)
-          .expanded(),
+      switch (dataAsync) {
+        AsyncError(:final error) => SelectableText(error.toString()).center(),
+        _ => Skeletonizer(
+          enabled: !dataAsync.hasValue,
+          child: _buildContent(ref, dataAsync.value ?? _mockData),
+        ),
+      }.padding(horizontal: 16.0, bottom: 12.0, top: 4.0).expanded(),
     ].toColumn(crossAxisAlignment: .stretch);
 
     return content.backgroundColor(context.colors.surface).clipRRect(all: 30.0);

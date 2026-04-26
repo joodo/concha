@@ -418,6 +418,7 @@ class _WordForWordPanel extends ConsumerWidget {
   Widget _buildContent(WidgetRef ref, TranslationResult data) {
     final words =
         ListView.separated(
+              shrinkWrap: true,
               padding: EdgeInsets.symmetric(vertical: 12.0),
               itemCount: data.detail.length,
               itemBuilder: (context, index) {
@@ -472,7 +473,7 @@ class _WordForWordPanel extends ConsumerWidget {
                     .wordByWordExplanation
                     .asText()
                     .textStyle(context.textStyles.titleMedium!),
-                words.expanded(),
+                words.flexible(),
               ]
               .toColumn(crossAxisAlignment: .start, separator: 8.0.asHeight())
               .expanded(),

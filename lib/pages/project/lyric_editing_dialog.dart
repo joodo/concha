@@ -21,7 +21,10 @@ class LyricEditingDialog extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textController = useTextEditingController(text: initValue);
+    final textController = useValue(
+      _LyricEditingController(text: initValue),
+      onDispose: (value) => value.dispose(),
+    );
     useEffect(() {
       textController.selection = const TextSelection.collapsed(offset: 0);
       return null;
@@ -110,7 +113,8 @@ class LyricEditingDialog extends HookWidget {
           undoController: undoController,
           maxLines: null,
           autofocus: true,
-          decoration: const InputDecoration(border: InputBorder.none),
+          style: context.textStyles.bodyLarge!.copyWith(height: 2.0),
+          decoration: InputDecoration(border: InputBorder.none),
         ),
       ).expanded(),
     ].toColumn();
@@ -170,5 +174,55 @@ class LyricEditingDialog extends HookWidget {
     );
 
     return showModal<String>(context: context, builder: (context) => dialog);
+  }
+}
+
+class _LyricEditingController extends TextEditingController {
+  _LyricEditingController({super.text}) {
+    addListener(() {
+      int? newLine;
+
+      final cursorPosition = selection.baseOffset;
+      if (cursorPosition >= 0) {
+        final textBeforeCursor = text.substring(0, cursorPosition);
+        newLine = textBeforeCursor.split('\n').length - 1;
+      }
+
+      if (_selectedLine != newLine) {
+        _selectedLine = newLine;
+        notifyListeners();
+      }
+    });
+  }
+
+  int? _selectedLine;
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final List<TextSpan> children = [];
+    final lines = text.split('\n');
+
+    for (int i = 0; i < lines.length; i++) {
+      String lineText = lines[i];
+      // Add newline character back for all lines except the last one
+      if (i < lines.length - 1) lineText += '\n';
+
+      if (i == _selectedLine) {
+        children.add(
+          TextSpan(
+            text: lineText,
+            style: style?.copyWith(color: context.colors.primary),
+          ),
+        );
+      } else {
+        children.add(TextSpan(text: lineText, style: style));
+      }
+    }
+
+    return TextSpan(style: style, children: children);
   }
 }

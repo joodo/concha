@@ -113,6 +113,7 @@ class ProjectPage extends HookConsumerWidget {
       extendBodyBehindAppBar: true,
       appBar: appBar,
       bottomNavigationBar: BottomAppBar(
+        color: context.colors.surfaceContainerLow,
         padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 0),
         child: ProjectToolbar(playController: playController),
       ),

@@ -54,6 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "clearLyric": MessageLookupByLibrary.simpleMessage("Clear Lyrics"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "continuePracticing": MessageLookupByLibrary.simpleMessage("Continue"),
+    "copy": MessageLookupByLibrary.simpleMessage("Copy"),
     "copyCurrentLyric": MessageLookupByLibrary.simpleMessage(
       "Copy Current Lyric",
     ),
@@ -71,6 +72,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discardChanges": MessageLookupByLibrary.simpleMessage("Discard changes?"),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "downloading": MessageLookupByLibrary.simpleMessage("Downloading..."),
+    "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editLyric": MessageLookupByLibrary.simpleMessage("Edit lyric"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("Edit metadata"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage(

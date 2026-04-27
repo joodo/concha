@@ -144,5 +144,7 @@
       }
     }
   },
-  "seekToTimepoint": "跳转到时间点"
+  "seekToTimepoint": "跳转到时间点",
+  "copy": "复制",
+  "edit": "编辑"
 }

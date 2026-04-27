@@ -119,7 +119,7 @@ class _Content extends HookConsumerWidget {
   }
 }
 
-class _LyricView extends StatelessWidget {
+class _LyricView extends ConsumerWidget {
   const _LyricView({
     required this.controller,
     required this.onWordForWord,
@@ -131,7 +131,7 @@ class _LyricView extends StatelessWidget {
   final ValueSetter<String> onWordForWord;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final lyricView = LyricView(
       // Avoid text layout not available on textStyle with shadow when ColorScheme changed
       key: ValueKey(context.colors),
@@ -162,46 +162,99 @@ class _LyricView extends StatelessWidget {
       height: double.infinity,
     );
 
-    return GestureDetector(
-      onSecondaryTapDown: (details) {
-        final total = controller.lyricText;
-        if (total == null) return;
-
-        final current = controller.currentText;
-
-        context.showPopupMenu(details.globalPosition, <PopupMenuEntry>[
-          if (!isPreview)
-            PopupMenuItem(
-              onTap: current == null ? null : () => onWordForWord(current),
-              child: S.of(context).wordByWordExplanation.asText(),
-            ),
-          if (!isPreview) const PopupMenuDivider(),
-          PopupMenuItem(
-            onTap: current == null
-                ? null
-                : () async {
-                    await current.copyToClipboard();
-                    if (context.mounted) {
-                      context.showSnackBarText(
-                        S.of(context).currentLyricCopyed,
-                      );
-                    }
-                  },
-            child: S.of(context).copyCurrentLyric.asText(),
-          ),
-          PopupMenuItem(
-            onTap: () async {
-              await total.copyToClipboard();
-              if (context.mounted) {
-                context.showSnackBarText(S.of(context).wholeLyricCopyed);
-              }
-            },
-            child: S.of(context).copyWholeLyric.asText(),
-          ),
-        ]);
+    final menuAnchor = MenuAnchor(
+      consumeOutsideTap: true,
+      builder: (context, menuController, child) {
+        return GestureDetector(
+          onSecondaryTapDown: (detail) {
+            menuController.isOpen
+                ? menuController.close()
+                : menuController.open(position: detail.localPosition);
+          },
+          child: child,
+        );
       },
-      child: lyricView,
+      menuChildren: [
+        if (!isPreview)
+          MenuItemButton(
+            onPressed: controller.currentText == null
+                ? null
+                : () => onWordForWord(controller.currentText!),
+            leadingIcon: Icon(Icons.search),
+            child: S.of(context).wordByWordExplanation.asText(),
+          ),
+        if (!isPreview) const Divider(),
+
+        SubmenuButton(
+          menuChildren: [
+            MenuItemButton(
+              onPressed: controller.currentText == null
+                  ? null
+                  : () async {
+                      await controller.currentText!.copyToClipboard();
+                      if (context.mounted) {
+                        context.showSnackBarText(
+                          S.of(context).currentLyricCopyed,
+                        );
+                      }
+                    },
+              child: S.of(context).copyCurrentLyric.asText(),
+            ),
+            MenuItemButton(
+              onPressed: () async {
+                await controller.lyricText!.copyToClipboard();
+                if (context.mounted) {
+                  context.showSnackBarText(S.of(context).wholeLyricCopyed);
+                }
+              },
+              child: S.of(context).copyWholeLyric.asText(),
+            ),
+          ],
+          leadingIcon: Icon(Icons.copy),
+          child: S.of(context).copy.asText(),
+        ),
+        const Divider(),
+
+        SubmenuButton(
+          menuChildren: [
+            MenuItemButton(
+              onPressed: () => _editLyric(ref, isTranslate: false),
+              child: S.of(context).editLyric.asText(),
+            ),
+            MenuItemButton(
+              onPressed: () => _editLyric(ref, isTranslate: true),
+              child: S.of(context).editTranslateLyric.asText(),
+            ),
+          ],
+          leadingIcon: const Icon(Icons.edit),
+          child: S.of(context).edit.asText(),
+        ),
+        MenuItemButton(
+          onPressed: ref.lyricNotifier(isTranslate: false)!.clearTemporarily,
+          leadingIcon: const Icon(Icons.subtitles_off),
+          child: S.of(context).clearLyric.asText(),
+        ),
+      ],
     );
+
+    return [lyricView, menuAnchor].toStack(fit: .expand);
+  }
+
+  Future<void> _editLyric(WidgetRef ref, {required bool isTranslate}) async {
+    final lrc = ref
+        .read(lyricProvider(ref.projectId!, isTranslate: isTranslate))
+        .value;
+
+    final s = S.of(ref.context);
+    final title =
+        '${isTranslate ? s.editTranslateLyric : s.editLyric}: ${ref.project?.metadata.title}';
+    final result = await Navigator.of(ref.context).pushNamed(
+      '/lyric',
+      arguments: {'id': ref.projectId, 'title': title, 'lrc': lrc ?? ''},
+    );
+    if (result is! String || result == lrc) return;
+
+    ref.lyricNotifier(isTranslate: isTranslate)!.save(result);
   }
 }
 

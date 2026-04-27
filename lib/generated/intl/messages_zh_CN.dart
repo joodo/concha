@@ -50,6 +50,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "clearLyric": MessageLookupByLibrary.simpleMessage("清除歌词"),
     "confirm": MessageLookupByLibrary.simpleMessage("确定"),
     "continuePracticing": MessageLookupByLibrary.simpleMessage("继续"),
+    "copy": MessageLookupByLibrary.simpleMessage("复制"),
     "copyCurrentLyric": MessageLookupByLibrary.simpleMessage("复制当前歌词"),
     "copyWholeLyric": MessageLookupByLibrary.simpleMessage("复制全部歌词"),
     "copyright2026": MessageLookupByLibrary.simpleMessage(
@@ -63,6 +64,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "discardChanges": MessageLookupByLibrary.simpleMessage("放弃更改？"),
     "download": MessageLookupByLibrary.simpleMessage("下载"),
     "downloading": MessageLookupByLibrary.simpleMessage("正在下载"),
+    "edit": MessageLookupByLibrary.simpleMessage("编辑"),
     "editLyric": MessageLookupByLibrary.simpleMessage("编辑歌词"),
     "editMetadata": MessageLookupByLibrary.simpleMessage("编辑媒体信息"),
     "editTranslateLyric": MessageLookupByLibrary.simpleMessage("编辑歌词翻译"),

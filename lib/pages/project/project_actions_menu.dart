@@ -11,7 +11,6 @@ import '/utils/utils.dart';
 
 import '../widgets/settings.dart';
 
-import 'lyric_editing_dialog.dart';
 import 'metadata_dialog.dart';
 
 class ProjectActionsMenu extends ConsumerWidget {
@@ -96,12 +95,11 @@ class ProjectActionsMenu extends ConsumerWidget {
     final s = S.of(ref.context);
     final title =
         '${isTranslate ? s.editTranslateLyric : s.editLyric}: ${ref.project?.metadata.title}';
-    final result = await showModal<String>(
-      context: ref.context,
-      builder: (context) =>
-          LyricEditingDialog(initValue: lrc ?? '', title: title),
+    final result = await Navigator.of(ref.context).pushNamed(
+      '/lyric',
+      arguments: {'id': ref.projectId, 'title': title, 'lrc': lrc ?? ''},
     );
-    if (result == null || result == lrc) return;
+    if (result is! String || result == lrc) return;
 
     ref.lyricNotifier(isTranslate: isTranslate)!.save(result);
   }

@@ -22,7 +22,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(project) => "已删除 ${project}";
 
-  static String m1(usingLocal, version) =>
+  static String m1(count) => "选中的 ${count} 个时间点：";
+
+  static String m2(usingLocal, version) =>
       "使用${Intl.select(usingLocal, {'true': '本地', 'false': '系统', 'other': '未知'})} yt-dlp，版本 ${version}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -129,8 +131,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchTitleArtistOrAlbum": MessageLookupByLibrary.simpleMessage(
       "搜索标题、艺术家或专辑……",
     ),
+    "seekToTimepoint": MessageLookupByLibrary.simpleMessage("跳转到时间点"),
     "selectAudioFile": MessageLookupByLibrary.simpleMessage("选择音频文件"),
     "selectService": MessageLookupByLibrary.simpleMessage("选择服务"),
+    "selectedTimepoints": m1,
     "separateWithSpace": MessageLookupByLibrary.simpleMessage("使用空格分隔"),
     "settings": MessageLookupByLibrary.simpleMessage("设置"),
     "showLicense": MessageLookupByLibrary.simpleMessage("显示许可"),
@@ -167,7 +171,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "volume": MessageLookupByLibrary.simpleMessage("音量"),
     "wholeLyricCopyed": MessageLookupByLibrary.simpleMessage("已复制全部歌词"),
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage("逐词解释"),
-    "ytDlpInfo": m1,
+    "ytDlpInfo": m2,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
       "如果 YouTube 音频下载失败，尝试更新到最新版本。",
     ),

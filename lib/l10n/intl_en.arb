@@ -134,5 +134,15 @@
   "retry": "Retry",
   "aiTranscribe": "AI Transcribe",
   "vocalIsolationIsRequired": "Vocal isolation is required",
-  "transcribing": "Transcribing"
+  "transcribing": "Transcribing",
+  "selectedTimepoints": "Selected {count} timepoints: ",
+  "@selectedTimepoints": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "compact"
+      }
+    }
+  },
+  "seekToTimepoint": "Seek to timepoint"
 }

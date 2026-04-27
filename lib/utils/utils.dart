@@ -18,3 +18,4 @@ export 'comparable.dart';
 export 'hook_widget.dart';
 export 'button_style.dart';
 export 'mock_data.dart';
+export 'string.dart';

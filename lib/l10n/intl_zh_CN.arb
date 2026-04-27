@@ -134,5 +134,15 @@
   "retry": "重试",
   "aiTranscribe": "AI 识词",
   "vocalIsolationIsRequired": "需要分离出人声音轨",
-  "transcribing": "正在识别"
+  "transcribing": "正在识别",
+  "selectedTimepoints": "选中的 {count} 个时间点：",
+  "@selectedTimepoints": {
+    "placeholders": {
+      "count": {
+        "type": "num",
+        "format": "compact"
+      }
+    }
+  },
+  "seekToTimepoint": "跳转到时间点"
 }

@@ -22,7 +22,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(project) => "Deleted ${project}";
 
-  static String m1(usingLocal, version) =>
+  static String m1(count) => "Selected ${count} timepoints: ";
+
+  static String m2(usingLocal, version) =>
       "Using ${Intl.select(usingLocal, {'true': 'local', 'false': 'system', 'other': 'unknown'})} yt-dlp, version ${version}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -167,10 +169,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchTitleArtistOrAlbum": MessageLookupByLibrary.simpleMessage(
       "Search Title, Artist or Album...",
     ),
+    "seekToTimepoint": MessageLookupByLibrary.simpleMessage(
+      "Seek to timepoint",
+    ),
     "selectAudioFile": MessageLookupByLibrary.simpleMessage(
       "Select Audio File",
     ),
     "selectService": MessageLookupByLibrary.simpleMessage("Select Service"),
+    "selectedTimepoints": m1,
     "separateWithSpace": MessageLookupByLibrary.simpleMessage(
       "Separate with space",
     ),
@@ -215,7 +221,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "wordByWordExplanation": MessageLookupByLibrary.simpleMessage(
       "Word-by-word Breakdown",
     ),
-    "ytDlpInfo": m1,
+    "ytDlpInfo": m2,
     "ytDlpUpgradingHint": MessageLookupByLibrary.simpleMessage(
       "Try updating your version if YouTube audio downloads fail.",
     ),

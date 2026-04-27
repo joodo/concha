@@ -7,6 +7,7 @@ import '/generated/l10n.dart';
 import '/preferences/preferences.dart';
 import '/utils/utils.dart';
 
+import 'lyric_editing/lyric_editing_page.dart';
 import 'project/project_page.dart';
 import 'start/start_page.dart';
 
@@ -42,8 +43,9 @@ class ConchaApp extends ConsumerWidget {
       // Routing
       initialRoute: '/',
       routes: {
-        '/': (context) => StartPage(),
-        '/project': (context) => ProjectPage(),
+        '/': (context) => const StartPage(),
+        '/project': (context) => const ProjectPage(),
+        '/lyric': (context) => const LyricEditingPage(),
       },
     );
   }

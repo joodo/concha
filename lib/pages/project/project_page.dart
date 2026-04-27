@@ -11,6 +11,7 @@ import '/projects/projects.dart';
 import '/utils/utils.dart';
 import '/waveform/waveform.dart';
 
+import '../widgets/play_progress_bar.dart';
 import '../widgets/theme_from_image.dart';
 
 import 'actions.dart';
@@ -78,7 +79,10 @@ class ProjectPage extends HookConsumerWidget {
       SafeArea(
             child: [
               ProjectLyricSection().expanded(),
-              if (!expertMode) _LinarBar().padding(bottom: 8.0),
+              if (!expertMode)
+                PlayProgressBar(
+                  controller: playController,
+                ).padding(bottom: 8.0),
             ].toColumn(separator: 12.0.asHeight()),
           )
           .backgroundBlur(10.0)
@@ -129,29 +133,6 @@ class ProjectPage extends HookConsumerWidget {
     );
 
     return ProjectActions(child: themeBuilder);
-  }
-}
-
-class _LinarBar extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final playControllerAsync = ref.watch(
-      playControllerProvider(ref.projectId!),
-    );
-    if (!playControllerAsync.hasValue) return const SizedBox.shrink();
-
-    final controller = playControllerAsync.requireValue;
-    return ValueListenableBuilder(
-      valueListenable: controller.positionNotifier,
-      builder: (context, position, child) {
-        return Slider(
-          year2023: false,
-          max: controller.duration.inMilliseconds.toDouble(),
-          value: position.inMilliseconds.toDouble(),
-          onChanged: (value) => controller.seekTo(value.round().milliseconds),
-        );
-      },
-    );
   }
 }
 

@@ -1,15 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter_lyric/core/lyric_controller.dart' as fl;
-import 'package:flutter_lyric/core/lyric_model.dart';
-import 'package:flutter_lyric/core/lyric_parse.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '/play_controller/play_controller.dart';
 import '/projects/projects.dart';
-import '/utils/utils.dart';
 
-import 'translate_lyric.dart';
+import 'extensions.dart';
 
 part 'riverpod.g.dart';
 
@@ -89,37 +86,4 @@ class Lyric extends _$Lyric {
 
   String get _filePath =>
       isTranslate ? ProjectPath(id).lyricT : ProjectPath(id).lyric;
-}
-
-extension on fl.LyricController {
-  void loadMultiLineLyric(String? lyric, {String? translationLyric}) {
-    if (lyric == null) {
-      lyricNotifier.clear();
-      return;
-    }
-
-    final lyricModel = LyricParse.parse(
-      lyric,
-      translationLyric: translationLyric,
-    );
-    final lines = lyricModel.lines
-        .map(
-          (e) => LyricLine(
-            start: e.start,
-            end: e.end,
-            text: e.text
-                .split(lyricLineSeparator)
-                .map((e) => e.trim())
-                .join('\n'),
-            translation: e.translation
-                ?.split(lyricLineSeparator)
-                .map((e) => e.trim())
-                .join('\n'),
-            words: e.words,
-          ),
-        )
-        .toList();
-    final newModel = lyricModel.copyWith(null, lines);
-    return loadLyricModel(newModel);
-  }
 }

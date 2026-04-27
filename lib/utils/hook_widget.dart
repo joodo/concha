@@ -1,18 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-extension CustomHooksExtension on HookWidget {
-  T useValue<T>(T value, {ValueSetter<T>? onDispose}) {
-    if (onDispose != null) {
-      useEffect(
-        () =>
-            () => onDispose(value),
-        const [],
-      );
-    }
-    return useMemoized(() => value);
+T useValue<T>(T value, {ValueSetter<T>? onDispose}) {
+  if (onDispose != null) {
+    useEffect(
+      () =>
+          () => onDispose(value),
+      const [],
+    );
   }
-
-  GlobalKey<T> useGlobalKey<T extends State<StatefulWidget>>() =>
-      useValue<GlobalKey<T>>(GlobalKey());
+  return useMemoized(() => value);
 }
+
+GlobalKey<T> useGlobalKey<T extends State<StatefulWidget>>() =>
+    useValue<GlobalKey<T>>(GlobalKey());

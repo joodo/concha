@@ -1,38 +1,69 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 import '/generated/l10n.dart';
 import '/lyric/lyric.dart';
+import '/pages/lyric_editing/lyric_field.dart';
+import '/pages/lyric_editing/playback_bar.dart';
+import '/pages/lyric_editing/tool_bar.dart';
+import '/play_controller/play_controller.dart';
 import '/utils/utils.dart';
 
 import '../widgets/animated_linear_indicator.dart';
 import '../widgets/confirm_pop_without_result.dart';
 
-class LyricEditingDialog extends HookWidget {
-  const LyricEditingDialog({
-    super.key,
-    required this.initValue,
-    required this.title,
-  });
-  final String initValue;
-  final String title;
+class LyricEditingPage extends HookConsumerWidget {
+  const LyricEditingPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final textController = useValue(
-      _LyricEditingController(text: initValue),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lyricEditingController = useValue(
+      LyricEditingController(text: context.routeArguments['lrc']),
       onDispose: (value) => value.dispose(),
     );
     useEffect(() {
-      textController.selection = const TextSelection.collapsed(offset: 0);
+      lyricEditingController.selection = const TextSelection.collapsed(
+        offset: 0,
+      );
       return null;
     }, []);
 
-    final undoController = useValue(UndoHistoryController());
-    useEffect(() => undoController.dispose, [undoController]);
-    final historyValue = useValueListenable(undoController);
+    final highlightController = useValue(
+      LineHighlightController(),
+      onDispose: (controller) => controller.dispose(),
+    );
+    useEffect(() {
+      void syncLrcModel() => highlightController.lrcModel =
+          lyricEditingController.lrcModelNotifier.value;
+
+      lyricEditingController.lrcModelNotifier.addListener(syncLrcModel);
+      syncLrcModel();
+
+      return null;
+    }, []);
+
+    final playController = ref.playController!;
+    useEffect(() {
+      void updateHighlight() {
+        highlightController.updateProgress(
+          playController.positionNotifier.value,
+        );
+      }
+
+      playController.positionNotifier.addListener(updateHighlight);
+      updateHighlight();
+
+      return () =>
+          playController.positionNotifier.removeListener(updateHighlight);
+    }, []);
+
+    final undoController = useValue(
+      UndoHistoryController(),
+      onDispose: (value) => value.dispose(),
+    );
 
     final modified = useState(false);
     undoController.addListener(
@@ -40,23 +71,17 @@ class LyricEditingDialog extends HookWidget {
     );
 
     final isProofreading = useState(false);
+    useEffect(() {
+      lyricEditingController.enabled = !isProofreading.value;
+      return null;
+    }, [isProofreading.value]);
 
     final appBar = AppBar(
-      leading: const CloseButton(),
       title: [
-        title,
+        context.routeArguments['title'],
         if (modified.value) S.of(context).modified,
       ].join(' ').asText(),
       actions: [
-        IconButton(
-          onPressed: historyValue.canUndo ? undoController.undo : null,
-          icon: Icon(Icons.undo),
-        ),
-        IconButton(
-          onPressed: historyValue.canRedo ? undoController.redo : null,
-          icon: Icon(Icons.redo),
-        ),
-        8.0.asWidth(),
         TextButton.icon(
           onPressed: isProofreading.value
               ? null
@@ -68,11 +93,11 @@ class LyricEditingDialog extends HookWidget {
                     isProofreading.value = true;
 
                     final proofreaded = await lyricProofread(
-                      textController.text,
+                      lyricEditingController.text,
                       original,
                     );
 
-                    textController.value = TextEditingValue(
+                    lyricEditingController.value = TextEditingValue(
                       text: proofreaded,
                       selection: const TextSelection.collapsed(offset: 0),
                     );
@@ -94,7 +119,8 @@ class LyricEditingDialog extends HookWidget {
         8.0.asWidth(),
         TextButton.icon(
           onPressed: modified.value
-              ? () => Navigator.of(context).maybePop(textController.text)
+              ? () =>
+                    Navigator.of(context).maybePop(lyricEditingController.text)
               : null,
           label: S.of(context).save.asText(),
           icon: const Icon(Icons.check),
@@ -106,20 +132,30 @@ class LyricEditingDialog extends HookWidget {
     final body = [
       AnimatedLinearIndicator(isRunning: isProofreading.value),
       SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: TextField(
+        padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 96.0),
+        child: LyricField(
           enabled: !isProofreading.value,
-          controller: textController,
-          undoController: undoController,
-          maxLines: null,
-          autofocus: true,
-          style: context.textStyles.bodyLarge!.copyWith(height: 2.0),
-          decoration: InputDecoration(border: InputBorder.none),
+          controller: lyricEditingController,
+          highlightController: highlightController,
+          historyController: undoController,
         ),
       ).expanded(),
     ].toColumn();
 
-    final scaffold = Scaffold(appBar: appBar, body: body);
+    final bottomBar = PlaybackBar(controller: playController);
+
+    final scaffold = Scaffold(
+      appBar: appBar,
+      body: [
+        body,
+        ToolBar(
+          lyricController: lyricEditingController,
+          historyController: undoController,
+          onSeekTo: (position) => playController.seekTo(position),
+        ).positioned(bottom: 16.0, left: 16.0, right: 16.0),
+      ].toStack(),
+      bottomNavigationBar: bottomBar,
+    );
 
     return ConfirmPopWithoutResult(when: () => modified.value, child: scaffold);
   }
@@ -174,55 +210,5 @@ class LyricEditingDialog extends HookWidget {
     );
 
     return showModal<String>(context: context, builder: (context) => dialog);
-  }
-}
-
-class _LyricEditingController extends TextEditingController {
-  _LyricEditingController({super.text}) {
-    addListener(() {
-      int? newLine;
-
-      final cursorPosition = selection.baseOffset;
-      if (cursorPosition >= 0) {
-        final textBeforeCursor = text.substring(0, cursorPosition);
-        newLine = textBeforeCursor.split('\n').length - 1;
-      }
-
-      if (_selectedLine != newLine) {
-        _selectedLine = newLine;
-        notifyListeners();
-      }
-    });
-  }
-
-  int? _selectedLine;
-
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    final List<TextSpan> children = [];
-    final lines = text.split('\n');
-
-    for (int i = 0; i < lines.length; i++) {
-      String lineText = lines[i];
-      // Add newline character back for all lines except the last one
-      if (i < lines.length - 1) lineText += '\n';
-
-      if (i == _selectedLine) {
-        children.add(
-          TextSpan(
-            text: lineText,
-            style: style?.copyWith(color: context.colors.primary),
-          ),
-        );
-      } else {
-        children.add(TextSpan(text: lineText, style: style));
-      }
-    }
-
-    return TextSpan(style: style, children: children);
   }
 }

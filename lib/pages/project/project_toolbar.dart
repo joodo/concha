@@ -13,6 +13,7 @@ import '/projects/projects.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 
+import '../widgets/play_progress_label.dart';
 import '../widgets/popup_widget.dart';
 
 import 'actions.dart';
@@ -176,36 +177,8 @@ class ProjectToolbar extends ConsumerWidget {
       stopButton,
       8.0.asWidth(),
       tunings.flexible(),
-      _createDurationLabel(),
+      PlayProgressLabel(controller: playController),
     ].toRow(separator: 8.0.asWidth());
-  }
-
-  Widget _createDurationLabel() {
-    String formatDuration(Duration duration) {
-      final minutes = duration.inMinutes
-          .remainder(60)
-          .toString()
-          .padLeft(2, '0');
-      final seconds = duration.inSeconds
-          .remainder(60)
-          .toString()
-          .padLeft(2, '0');
-      final hours = duration.inHours;
-
-      if (hours > 0) {
-        return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
-      }
-
-      return '$minutes:$seconds';
-    }
-
-    return ListenableBuilder(
-      listenable: playController.positionNotifier,
-      builder: (context, child) => Text(
-        '${formatDuration(playController.positionNotifier.value)} / ${formatDuration(playController.duration)}',
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-    );
   }
 }
 

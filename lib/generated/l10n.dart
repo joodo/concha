@@ -963,6 +963,31 @@ class S {
       args: [],
     );
   }
+
+  /// `Selected {count} timepoints: `
+  String selectedTimepoints(num count) {
+    final NumberFormat countNumberFormat = NumberFormat.compact(
+      locale: Intl.getCurrentLocale(),
+    );
+    final String countString = countNumberFormat.format(count);
+
+    return Intl.message(
+      'Selected $countString timepoints: ',
+      name: 'selectedTimepoints',
+      desc: '',
+      args: [countString],
+    );
+  }
+
+  /// `Seek to timepoint`
+  String get seekToTimepoint {
+    return Intl.message(
+      'Seek to timepoint',
+      name: 'seekToTimepoint',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

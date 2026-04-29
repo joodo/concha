@@ -51,6 +51,7 @@ class ToolBar extends HookWidget {
             TextButton.icon(
               onPressed: () {
                 lyricController.offsetSelectedTimestamps(-500.milliseconds);
+                onSeekTo?.call(lyricController.selectedPositions.first);
                 _refocusTextField();
               },
               label: '- 0.5s'.asText(),
@@ -60,6 +61,7 @@ class ToolBar extends HookWidget {
             TextButton.icon(
               onPressed: () {
                 lyricController.offsetSelectedTimestamps(500.milliseconds);
+                onSeekTo?.call(lyricController.selectedPositions.first);
                 _refocusTextField();
               },
               label: '+ 0.5s'.asText(),

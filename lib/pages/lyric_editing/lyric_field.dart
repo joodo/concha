@@ -166,10 +166,9 @@ class LyricEditingController extends TextEditingController {
     _updateModel(text);
   }
 
-  bool _isDisposed = false;
   @override
   void dispose() {
-    _isDisposed = true;
+    _lrcModelNotifier.dispose();
     super.dispose();
   }
 
@@ -224,7 +223,7 @@ class LyricEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
-    if (!_enabled || _waitingEdit) {
+    if (!_enabled) {
       return super.buildTextSpan(
         context: context,
         style: style,
@@ -364,7 +363,6 @@ class LyricEditingController extends TextEditingController {
         })
         .join('\n');
 
-    _updateModel(newText);
     value = value.copyWith(text: newText);
   }
 
@@ -380,22 +378,9 @@ class LyricEditingController extends TextEditingController {
 
   @override
   set value(TextEditingValue newValue) {
-    if (newValue.text != value.text) _onTextChanged();
+    if (newValue.text != value.text) _updateModel(newValue.text);
     if (newValue != value) _updateSelectedRanges(newValue);
     super.value = newValue;
-  }
-
-  bool _waitingEdit = false;
-  void _onTextChanged() async {
-    if (_waitingEdit) return;
-
-    _waitingEdit = true;
-    await Future.delayed(1.seconds);
-    if (_isDisposed) return;
-
-    _updateModel(text);
-
-    _waitingEdit = false;
   }
 }
 

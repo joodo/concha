@@ -1,13 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '/shortcuts/riverpod.dart';
-
-import 'models.dart';
 
 extension SingleActivatorFriendlyNameExtension on SingleActivator {
   List<String> get friendlyNameParts {
@@ -46,20 +41,5 @@ extension SingleActivatorFriendlyNameExtension on SingleActivator {
 
       _ => key.keyLabel,
     };
-  }
-}
-
-extension TooltipWithShortcutsExtension on WidgetRef {
-  String tooltipWithShortcuts(String tooltip, List<Shortcut> shortcuts) {
-    final activators = shortcuts
-        .map((e) => watch(shortcutsProvider)[e])
-        .where((e) => e != null)
-        .cast<SingleActivator>();
-    if (activators.isEmpty) return tooltip;
-
-    final shortcutsHint = activators
-        .map((e) => e.friendlyNameParts.join('+'))
-        .join(' / ');
-    return '$tooltip ( $shortcutsHint )';
   }
 }

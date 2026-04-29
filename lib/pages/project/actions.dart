@@ -139,6 +139,32 @@ class ProjectActions extends HookConsumerWidget {
       await playController.seekTo(position);
     });
 
+    final focusScope = FocusScope(
+      node: scopeNode,
+      child: Focus(focusNode: rootFocusNode, child: child),
+    );
+
+    final shortcuts = ConchaShortcuts(
+      intentMapping: {
+        .togglePlay: TogglePlayIntent(),
+        .volumeUp: DeltaVolumeIntent(0.1),
+        .volumeDown: DeltaVolumeIntent(-0.1),
+        .seekBackward: DeltaPositionIntent(-1),
+        .seekForward: DeltaPositionIntent(1),
+        .speedDown: DeltaSpeedIntent(-0.25),
+        .speedUp: DeltaSpeedIntent(0.25),
+        .pitchDown: DeltaPitchIntent(-1),
+        .pitchUp: DeltaPitchIntent(1),
+        .mixPreset1: SetMixIntent(vocalVolume: 1.0, instruVolume: 1.0),
+        .mixPreset2: SetMixIntent(vocalVolume: 0.4, instruVolume: 1.0),
+        .mixPreset3: SetMixIntent(vocalVolume: 0, instruVolume: 1.0),
+        .mixPreset4: SetMixIntent(vocalVolume: 1.0, instruVolume: 0.1),
+        .markStart: MarkStartPoint(),
+        .readLyric: ReadAloudIntent.currentLyric(),
+      },
+      child: focusScope,
+    );
+
     return Actions(
       actions: {
         TogglePlayIntent: CallbackAction<TogglePlayIntent>(
@@ -251,13 +277,7 @@ class ProjectActions extends HookConsumerWidget {
           },
         ),
       },
-      child: Shortcuts(
-        shortcuts: ref.watch(shortcutsIntentMapProvider),
-        child: FocusScope(
-          node: scopeNode,
-          child: Focus(focusNode: rootFocusNode, child: child),
-        ),
-      ),
+      child: shortcuts,
     );
   }
 

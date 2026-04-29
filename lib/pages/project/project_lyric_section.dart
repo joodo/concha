@@ -262,7 +262,6 @@ class _LyricToolbar extends ConsumerWidget {
       if (!isPreview)
         _LoadingButton(
           icon: Icon(Icons.translate),
-          tooltip: S.of(context).translateLyric,
           onPressed: () async {
             final lrc = await File(ref.project!.path.lyric).readAsString();
 
@@ -280,7 +279,7 @@ class _LyricToolbar extends ConsumerWidget {
 
             await ref.lyricNotifier(isTranslate: true)!.save(tlrc);
           },
-        ),
+        ).tooltip(S.of(context).translateLyric),
       _OffsetButton(onChanged: (value) => lyricController.lyricOffset = value),
       if (!isPreview)
         Consumer(
@@ -289,14 +288,13 @@ class _LyricToolbar extends ConsumerWidget {
             return _BusyButton(
               icon: Icon(Icons.record_voice_over),
               isBusy: readAloudState.isPending,
-              tooltip: ref.tooltipWithShortcuts(
-                S.of(context).readAloudCurrentLyric,
-                [.readLyric],
-              ),
               onPressed: Actions.handler(
                 context,
                 ReadAloudIntent.currentLyric(),
               ),
+            ).tooltipWithShortcuts(
+              S.of(context).readAloudCurrentLyric,
+              shortcuts: [.readLyric],
             );
           },
         ),
@@ -348,7 +346,7 @@ class _SearchPanel extends HookConsumerWidget {
     final snapshot = useFuture(searchTask.value);
     final isLoading = snapshot.connectionState == .waiting;
 
-    final searchBar = SearchBar(
+    final searchField = SearchBar(
       controller: textController,
       onSubmitted: (value) => doSearch(),
       trailing: [
@@ -360,6 +358,7 @@ class _SearchPanel extends HookConsumerWidget {
             : IconButton(onPressed: doSearch, icon: Icon(Icons.search)),
       ],
     );
+    final searchBar = IgnoreConchaShortcuts(child: searchField);
 
     final data = snapshot.data ?? _mockData;
     final listView = ListView(
@@ -841,9 +840,8 @@ class _EmptyContent extends StatelessWidget {
 class _LoadingButton extends HookWidget {
   final Future<void> Function()? onPressed;
   final Widget icon;
-  final String? tooltip;
 
-  const _LoadingButton({this.onPressed, required this.icon, this.tooltip});
+  const _LoadingButton({this.onPressed, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -855,7 +853,6 @@ class _LoadingButton extends HookWidget {
         return _BusyButton(
           isBusy: isBusy,
           icon: icon,
-          tooltip: tooltip,
           onPressed: () async {
             isBusyNotifier.value = true;
             try {
@@ -878,20 +875,13 @@ class _BusyButton extends StatelessWidget {
   final bool isBusy;
   final VoidCallback? onPressed;
   final Widget icon;
-  final String? tooltip;
 
-  const _BusyButton({
-    required this.isBusy,
-    this.onPressed,
-    required this.icon,
-    this.tooltip,
-  });
+  const _BusyButton({required this.isBusy, this.onPressed, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return IconButton.filledTonal(
       onPressed: isBusy ? null : onPressed,
-      tooltip: tooltip,
       icon: isBusy
           ? const SizedBox.square(
               dimension: 16.0,

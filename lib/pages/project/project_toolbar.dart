@@ -49,8 +49,7 @@ class ProjectToolbar extends ConsumerWidget {
                   : Icons.play_arrow,
               size: 32,
             ),
-            tooltip: ref.tooltipWithShortcuts(tooltipText, [.togglePlay]),
-          ),
+          ).tooltipWithShortcuts(tooltipText, shortcuts: [.togglePlay]),
         );
       },
     );
@@ -113,11 +112,9 @@ class ProjectToolbar extends ConsumerWidget {
               divisions: 100,
               onChanged: playController.setVolume,
             ),
-          ).tooltip(
-            ref.tooltipWithShortcuts(S.of(context).volume, [
-              .volumeDown,
-              .volumeUp,
-            ]),
+          ).tooltipWithShortcuts(
+            S.of(context).volume,
+            shortcuts: [.volumeDown, .volumeUp],
           ),
           ValueListenableBuilder(
             valueListenable: playController.speedNotifier,
@@ -131,11 +128,9 @@ class ProjectToolbar extends ConsumerWidget {
               divisions: 7,
               onChanged: playController.setSpeed,
             ),
-          ).tooltip(
-            ref.tooltipWithShortcuts(S.of(context).playbackRate, [
-              .speedDown,
-              .speedUp,
-            ]),
+          ).tooltipWithShortcuts(
+            S.of(context).playbackRate,
+            shortcuts: [.speedDown, .speedUp],
           ),
           ValueListenableBuilder(
             valueListenable: playController.pitchNotifier,
@@ -158,11 +153,9 @@ class ProjectToolbar extends ConsumerWidget {
                   },
                   divisions: 14,
                   onChanged: (value) => playController.setPitch(value.round()),
-                ).tooltip(
-                  ref.tooltipWithShortcuts(S.of(context).pitch, [
-                    .pitchDown,
-                    .pitchUp,
-                  ]),
+                ).tooltipWithShortcuts(
+                  S.of(context).pitch,
+                  shortcuts: [.pitchDown, .pitchUp],
                 ),
           ),
           _MixTableButton(playController: playController),
@@ -221,13 +214,9 @@ class _MixTableButton extends HookWidget {
           valueListenable: playController.separateModeNotifier,
           builder: (context, isSep, child) => Consumer(
             builder: (context, ref, child) {
-              return child!.tooltip(
-                ref.tooltipWithShortcuts(S.of(context).mixTable, [
-                  .mixPreset1,
-                  .mixPreset2,
-                  .mixPreset3,
-                  .mixPreset4,
-                ]),
+              return child!.tooltipWithShortcuts(
+                S.of(context).mixTable,
+                shortcuts: [.mixPreset1, .mixPreset2, .mixPreset3, .mixPreset4],
               );
             },
             child: IconButton.outlined(

@@ -25,10 +25,3 @@ Map<Shortcut, SingleActivator?> shortcuts(Ref ref) {
     .readLyric: SingleActivator(.keyS),
   };
 }
-
-@riverpod
-Map<SingleActivator, Intent> shortcutsIntentMap(Ref ref) => {
-  for (final MapEntry(key: s, value: a)
-      in ref.watch(shortcutsProvider).entries.where((e) => e.value != null))
-    a!: s.intent,
-};

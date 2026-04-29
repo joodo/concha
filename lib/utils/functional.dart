@@ -22,3 +22,21 @@ extension AsyncWhereExtension<T> on Stream<T> {
     (event) async => (event, await test(event)),
   ).where((event) => event.$2).map((event) => event.$1);
 }
+
+extension MapWhereExtension<K, V> on Map<K, V> {
+  Map<K, V> where(bool Function(K key, V value) test) {
+    final mapEntries = entries.where((entry) => test(entry.key, entry.value));
+    return Map.fromEntries(mapEntries);
+  }
+}
+
+extension IntersperseIterable<T> on Iterable<T> {
+  Iterable<T> intersperse(T element) sync* {
+    var first = true;
+    for (final item in this) {
+      if (!first) yield element;
+      yield item;
+      first = false;
+    }
+  }
+}

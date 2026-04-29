@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:styled_widget/styled_widget.dart';
@@ -8,17 +9,18 @@ import 'extensions.dart';
 import 'models.dart';
 import 'riverpod.dart';
 
-class _ShortcutsIntent extends InheritedWidget {
-  static _ShortcutsIntent of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_ShortcutsIntent>()!;
+class _Shortcuts extends InheritedWidget {
+  static _Shortcuts of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<_Shortcuts>()!;
   }
 
-  const _ShortcutsIntent({required super.child, required this.mapping});
+  const _Shortcuts({required super.child, required this.mapping});
 
   final Map<Shortcut, Intent> mapping;
 
   @override
-  bool updateShouldNotify(covariant InheritedWidget oldWidget) => false;
+  bool updateShouldNotify(covariant _Shortcuts oldWidget) =>
+      !mapEquals(oldWidget.mapping, mapping);
 }
 
 class ConchaShortcuts extends ConsumerWidget {
@@ -33,15 +35,19 @@ class ConchaShortcuts extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _ShortcutsIntent(
+    final availibleRouter = ref.watch(
+      shortcutsRouterProvider.select(
+        (router) => router.where(
+          (key, value) => value != null && intentMapping.containsKey(key),
+        ),
+      ),
+    );
+    return _Shortcuts(
       mapping: Map.unmodifiable(intentMapping),
       child: Shortcuts(
-        shortcuts: ref
-            .watch(shortcutsProvider)
-            .where(
-              (key, value) => value != null && intentMapping.containsKey(key),
-            )
-            .map((key, value) => MapEntry(value!, intentMapping[key]!)),
+        shortcuts: availibleRouter.map(
+          (key, value) => MapEntry(value!, intentMapping[key]!),
+        ),
         child: child,
       ),
     );
@@ -55,7 +61,7 @@ class IgnoreConchaShortcuts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mapping = _ShortcutsIntent.of(context).mapping;
+    final mapping = _Shortcuts.of(context).mapping;
 
     return Actions(
       actions: mapping.map(
@@ -81,7 +87,7 @@ class TooltipWithShortcuts extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final keyMapping = ref.watch(shortcutsProvider);
+    final keyMapping = ref.watch(shortcutsRouterProvider);
 
     final availibleShortcuts = shortcuts.where(
       (shortcut) => keyMapping.containsKey(shortcut),

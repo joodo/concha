@@ -6,7 +6,7 @@ import 'models.dart';
 part 'riverpod.g.dart';
 
 @riverpod
-Map<Shortcut, SingleActivator?> shortcuts(Ref ref) {
+Map<Shortcut, SingleActivator?> shortcutsRouter(Ref ref) {
   return const {
     .togglePlay: SingleActivator(.space),
     .volumeUp: SingleActivator(.arrowUp),

@@ -9,10 +9,10 @@ part of 'riverpod.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(shortcuts)
-final shortcutsProvider = ShortcutsProvider._();
+@ProviderFor(shortcutsRouter)
+final shortcutsRouterProvider = ShortcutsRouterProvider._();
 
-final class ShortcutsProvider
+final class ShortcutsRouterProvider
     extends
         $FunctionalProvider<
           Map<Shortcut, SingleActivator?>,
@@ -20,19 +20,19 @@ final class ShortcutsProvider
           Map<Shortcut, SingleActivator?>
         >
     with $Provider<Map<Shortcut, SingleActivator?>> {
-  ShortcutsProvider._()
+  ShortcutsRouterProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'shortcutsProvider',
+        name: r'shortcutsRouterProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$shortcutsHash();
+  String debugGetCreateSourceHash() => _$shortcutsRouterHash();
 
   @$internal
   @override
@@ -42,7 +42,7 @@ final class ShortcutsProvider
 
   @override
   Map<Shortcut, SingleActivator?> create(Ref ref) {
-    return shortcuts(ref);
+    return shortcutsRouter(ref);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -56,4 +56,4 @@ final class ShortcutsProvider
   }
 }
 
-String _$shortcutsHash() => r'5f877bc7476c0530a137eb9ddea2dfff0dcea712';
+String _$shortcutsRouterHash() => r'87543c38956707077b10959bf7e3140d87d4d8c4';

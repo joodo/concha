@@ -1,8 +1,11 @@
 import 'package:animations/animations.dart';
-import '/generated/l10n.dart';
-import '/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:styled_widget/styled_widget.dart';
+
+import '/generated/l10n.dart';
+import '/utils/utils.dart';
+
+import 'cancel_text_button.dart';
 
 class ConfirmPopWithoutResult extends StatelessWidget {
   const ConfirmPopWithoutResult({super.key, this.when, required this.child});
@@ -29,10 +32,7 @@ class ConfirmPopWithoutResult extends StatelessWidget {
               .asText()
               .constrained(maxWidth: 400.0),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: S.of(context).cancel.asText(),
-            ),
+            const CancelTextButton(),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: S.of(context).discard.asText(),

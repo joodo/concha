@@ -12,11 +12,13 @@ class ToolBar extends HookWidget {
     super.key,
     required this.lyricController,
     required this.historyController,
+    required this.textFieldFocusNode,
     this.onSeekTo,
   });
 
   final LyricEditingController lyricController;
   final UndoHistoryController historyController;
+  final FocusNode textFieldFocusNode;
 
   final ValueSetter<Duration>? onSeekTo;
 
@@ -33,6 +35,7 @@ class ToolBar extends HookWidget {
               tooltip: S.of(context).seekToTimepoint,
               onPressed: () {
                 onSeekTo?.call(lyricController.selectedPositions.first);
+                _refocusTextField();
               },
             ),
 
@@ -46,15 +49,19 @@ class ToolBar extends HookWidget {
 
           if (positions.isNotEmpty)
             TextButton.icon(
-              onPressed: () =>
-                  lyricController.offsetSelectedTimestamps(-500.milliseconds),
+              onPressed: () {
+                lyricController.offsetSelectedTimestamps(-500.milliseconds);
+                _refocusTextField();
+              },
               label: '- 0.5s'.asText(),
               icon: Icon(Icons.replay_5),
             ),
           if (positions.isNotEmpty)
             TextButton.icon(
-              onPressed: () =>
-                  lyricController.offsetSelectedTimestamps(500.milliseconds),
+              onPressed: () {
+                lyricController.offsetSelectedTimestamps(500.milliseconds);
+                _refocusTextField();
+              },
               label: '+ 0.5s'.asText(),
               icon: Icon(Icons.forward_5),
             ),
@@ -69,11 +76,21 @@ class ToolBar extends HookWidget {
       builder: (context, history, child) {
         return _buildToolbar(context, [
           IconButton(
-            onPressed: history.canUndo ? historyController.undo : null,
+            onPressed: history.canUndo
+                ? () {
+                    historyController.undo();
+                    _refocusTextField();
+                  }
+                : null,
             icon: Icon(Icons.undo),
           ),
           IconButton(
-            onPressed: history.canRedo ? historyController.redo : null,
+            onPressed: history.canRedo
+                ? () {
+                    historyController.redo();
+                    _refocusTextField();
+                  }
+                : null,
             icon: Icon(Icons.redo),
           ),
         ]);
@@ -96,5 +113,11 @@ class ToolBar extends HookWidget {
         child: children.toRow(mainAxisSize: .min).padding(all: 8.0),
       ),
     ).constrained(height: 54.0);
+  }
+
+  void _refocusTextField() {
+    runAfterBuild(() {
+      if (!textFieldFocusNode.hasFocus) textFieldFocusNode.requestFocus();
+    });
   }
 }

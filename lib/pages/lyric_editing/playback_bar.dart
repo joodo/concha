@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:styled_widget/styled_widget.dart';
 
-import '/generated/l10n.dart';
 import '/pages/widgets/play_progress_bar.dart';
 import '/pages/widgets/play_progress_label.dart';
 import '/play_controller/play_controller.dart';
 import '/utils/utils.dart';
+
+import '../widgets/expansible_button.dart';
 
 class PlaybackBar extends HookWidget {
   const PlaybackBar({super.key, required this.controller});
@@ -44,27 +45,22 @@ class PlaybackBar extends HookWidget {
           padding: const EdgeInsets.all(8.0),
           onPressed: controller.togglePlayPause,
         ),
-        8.0.asWidth(),
-        IconButton(
-          tooltip: S.of(context).stop,
-          icon: const Icon(Icons.stop_rounded),
-          onPressed: controller.stop,
-        ),
         12.0.asWidth(),
 
         ValueListenableBuilder(
           valueListenable: controller.volumeNotifier,
-          builder: (context, value, child) => [
-            Icon(switch (value) {
+          builder: (context, volume, child) => ExpansibleButton(
+            isExpanded: false,
+            icon: Icon(switch (volume) {
               > 0.5 => Icons.volume_up,
-              != 0 => Icons.volume_down,
+              > 0 => Icons.volume_down,
               _ => Icons.volume_mute,
-            }, color: context.colors.onSurfaceVariant),
-            Slider(
-              value: value,
-              onChanged: controller.setVolume,
-            ).constrained(width: 140.0),
-          ].toRow(),
+            }, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            value: volume,
+            labelStringBuilder: (value) => '${(value * 100).round()} %',
+            divisions: 100,
+            onChanged: controller.setVolume,
+          ),
         ),
         PlayProgressBar(controller: controller).flexible(),
         PlayProgressLabel(controller: controller),

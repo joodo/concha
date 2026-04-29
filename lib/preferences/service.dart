@@ -1,6 +1,8 @@
 part of 'riverpod.dart';
 
 enum PrefKey {
+  userName,
+
   brightness(defaultValue: 'system'),
   language,
 

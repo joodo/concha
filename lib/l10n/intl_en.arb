@@ -146,5 +146,13 @@
   },
   "seekToTimepoint": "Seek to timepoint",
   "copy": "Copy",
-  "edit": "Edit"
+  "edit": "Edit",
+  "contribute": "Contribute!",
+  "next": "Next",
+  "previous": "Previous",
+  "upload": "Upload",
+  "oneForAllAllForOne": "One for all, all for one!",
+  "uploadLyricsHint": "Upload lyrics to lrclib.net and share your contributions with the world.",
+  "confirmTrackInfo": "Confirm track info",
+  "leaveYourNameOptional": "Leave your name (optional)"
 }

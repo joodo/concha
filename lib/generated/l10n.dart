@@ -998,6 +998,66 @@ class S {
   String get edit {
     return Intl.message('Edit', name: 'edit', desc: '', args: []);
   }
+
+  /// `Contribute!`
+  String get contribute {
+    return Intl.message('Contribute!', name: 'contribute', desc: '', args: []);
+  }
+
+  /// `Next`
+  String get next {
+    return Intl.message('Next', name: 'next', desc: '', args: []);
+  }
+
+  /// `Previous`
+  String get previous {
+    return Intl.message('Previous', name: 'previous', desc: '', args: []);
+  }
+
+  /// `Upload`
+  String get upload {
+    return Intl.message('Upload', name: 'upload', desc: '', args: []);
+  }
+
+  /// `One for all, all for one!`
+  String get oneForAllAllForOne {
+    return Intl.message(
+      'One for all, all for one!',
+      name: 'oneForAllAllForOne',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upload lyrics to lrclib.net and share your contributions with the world.`
+  String get uploadLyricsHint {
+    return Intl.message(
+      'Upload lyrics to lrclib.net and share your contributions with the world.',
+      name: 'uploadLyricsHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm track info`
+  String get confirmTrackInfo {
+    return Intl.message(
+      'Confirm track info',
+      name: 'confirmTrackInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Leave your name (optional)`
+  String get leaveYourNameOptional {
+    return Intl.message(
+      'Leave your name (optional)',
+      name: 'leaveYourNameOptional',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

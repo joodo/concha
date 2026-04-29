@@ -53,7 +53,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "clearLyric": MessageLookupByLibrary.simpleMessage("Clear Lyrics"),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
+    "confirmTrackInfo": MessageLookupByLibrary.simpleMessage(
+      "Confirm track info",
+    ),
     "continuePracticing": MessageLookupByLibrary.simpleMessage("Continue"),
+    "contribute": MessageLookupByLibrary.simpleMessage("Contribute!"),
     "copy": MessageLookupByLibrary.simpleMessage("Copy"),
     "copyCurrentLyric": MessageLookupByLibrary.simpleMessage(
       "Copy Current Lyric",
@@ -106,6 +110,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "imageFile": MessageLookupByLibrary.simpleMessage("Image file"),
     "interface": MessageLookupByLibrary.simpleMessage("Interface"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
+    "leaveYourNameOptional": MessageLookupByLibrary.simpleMessage(
+      "Leave your name (optional)",
+    ),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
     "llmModelExample": MessageLookupByLibrary.simpleMessage(
       "e.g., \"gemini-3-flash-preview\"",
@@ -124,6 +131,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "myLibrary": MessageLookupByLibrary.simpleMessage("My Library"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
     "networkProxy": MessageLookupByLibrary.simpleMessage("Network Proxy"),
+    "next": MessageLookupByLibrary.simpleMessage("Next"),
     "noExecutableFound": MessageLookupByLibrary.simpleMessage(
       "No executable found.",
     ),
@@ -131,6 +139,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "No media information found",
     ),
     "noProject": MessageLookupByLibrary.simpleMessage("No projects"),
+    "oneForAllAllForOne": MessageLookupByLibrary.simpleMessage(
+      "One for all, all for one!",
+    ),
     "openLocal": MessageLookupByLibrary.simpleMessage("Open Local"),
     "openProjectDirectory": MessageLookupByLibrary.simpleMessage(
       "Open project directory",
@@ -148,6 +159,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Play from Start",
     ),
     "playbackRate": MessageLookupByLibrary.simpleMessage("Speed"),
+    "previous": MessageLookupByLibrary.simpleMessage("Previous"),
     "processing": MessageLookupByLibrary.simpleMessage("Processing"),
     "projectDeletedHint": m0,
     "proofread": MessageLookupByLibrary.simpleMessage("Proofread"),
@@ -209,6 +221,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
     "upgrade": MessageLookupByLibrary.simpleMessage("Upgrade"),
     "upgrading": MessageLookupByLibrary.simpleMessage("Upgrading..."),
+    "upload": MessageLookupByLibrary.simpleMessage("Upload"),
+    "uploadLyricsHint": MessageLookupByLibrary.simpleMessage(
+      "Upload lyrics to lrclib.net and share your contributions with the world.",
+    ),
     "version": MessageLookupByLibrary.simpleMessage("version"),
     "vocalIsolation": MessageLookupByLibrary.simpleMessage("Vocal Isolation"),
     "vocalIsolationIsRequired": MessageLookupByLibrary.simpleMessage(

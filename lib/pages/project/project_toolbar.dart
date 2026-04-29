@@ -13,11 +13,11 @@ import '/projects/projects.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 
+import '../widgets/expansible_button.dart';
 import '../widgets/play_progress_label.dart';
 import '../widgets/popup_widget.dart';
 
 import 'actions.dart';
-import 'expansible_button.dart';
 
 class ProjectToolbar extends ConsumerWidget {
   const ProjectToolbar({super.key, required this.playController});
@@ -101,13 +101,14 @@ class ProjectToolbar extends ConsumerWidget {
         return [
           ValueListenableBuilder(
             valueListenable: playController.volumeNotifier,
-            builder: (context, volumn, child) => ExpansibleButton(
+            builder: (context, volume, child) => ExpansibleButton(
               isExpanded: isExpanded,
-              icon: Icon(
-                Icons.volume_up,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              value: volumn,
+              icon: Icon(switch (volume) {
+                > 0.5 => Icons.volume_up,
+                > 0 => Icons.volume_down,
+                _ => Icons.volume_mute,
+              }, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              value: volume,
               labelStringBuilder: (value) => '${(value * 100).round()} %',
               divisions: 100,
               onChanged: playController.setVolume,

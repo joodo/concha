@@ -13,11 +13,11 @@ import '/adaptive_widgets/adaptive_widgets.dart';
 import '/generated/l10n.dart';
 import '/icon_font/icon_font.dart';
 import '/llm/llm.dart';
+import '/lrclib/lrclib.dart';
 import '/lyric/lyric.dart' hide LyricController;
 import '/mvsep/mvsep.dart';
 import '/preferences/preferences.dart';
 import '/projects/projects.dart';
-import '/services/services.dart';
 import '/shortcuts/shortcuts.dart';
 import '/utils/utils.dart';
 
@@ -241,20 +241,10 @@ class _LyricView extends ConsumerWidget {
   }
 
   Future<void> _editLyric(WidgetRef ref, {required bool isTranslate}) async {
-    final lrc = ref
-        .read(lyricProvider(ref.projectId!, isTranslate: isTranslate))
-        .value;
-
-    final s = S.of(ref.context);
-    final title =
-        '${isTranslate ? s.editTranslateLyric : s.editLyric}: ${ref.project?.metadata.title}';
-    final result = await Navigator.of(ref.context).pushNamed(
+    Navigator.of(ref.context).pushNamed(
       '/lyric',
-      arguments: {'id': ref.projectId, 'title': title, 'lrc': lrc ?? ''},
+      arguments: {'id': ref.projectId, 'isTranslate': isTranslate},
     );
-    if (result is! String || result == lrc) return;
-
-    ref.lyricNotifier(isTranslate: isTranslate)!.save(result);
   }
 }
 

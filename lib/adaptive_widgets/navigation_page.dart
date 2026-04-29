@@ -48,14 +48,13 @@ class AdaptiveNavigationPage extends HookWidget {
     final page = PageTransitionSwitcher(
       key: switcherKey,
       reverse: reverse,
-      transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
-        return SharedAxisTransition(
-          animation: primaryAnimation,
-          secondaryAnimation: secondaryAnimation,
-          transitionType: expanded ? .vertical : .horizontal,
-          child: child,
-        );
-      },
+      transitionBuilder: (child, primaryAnimation, secondaryAnimation) =>
+          SharedAxisTransition(
+            animation: primaryAnimation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: expanded ? .vertical : .horizontal,
+            child: child,
+          ),
       child: KeyedSubtree(
         key: ValueKey(displayIndex),
         child: displayIndex == -1

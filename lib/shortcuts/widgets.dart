@@ -82,31 +82,40 @@ class TooltipWithShortcuts extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final keyMapping = ref.watch(shortcutsProvider);
+
+    final availibleShortcuts = shortcuts.where(
+      (shortcut) => keyMapping.containsKey(shortcut),
+    );
+    if (availibleShortcuts.isEmpty) {
+      return Tooltip(message: message, child: child);
+    }
+
+    Widget createLabel(String name) => name
+        .asText()
+        .textColor(context.colors.onSurface)
+        .padding(vertical: 2.0, horizontal: 4.0)
+        .decorated(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(4.0),
+        );
+
+    final shortcutSpans = availibleShortcuts
+        .map<InlineSpan>(
+          (shortcut) => WidgetSpan(
+            alignment: .middle,
+            child: keyMapping[shortcut]!.friendlyNameParts
+                .map(createLabel)
+                .toList()
+                .toRow(mainAxisSize: .min),
+          ),
+        )
+        .intersperse(const TextSpan(text: ' / '));
+
     return Tooltip(
       richMessage: TextSpan(
         children: [
           TextSpan(text: '$message  '),
-          ...shortcuts
-              .where((shortcut) => keyMapping.containsKey(shortcut))
-              .map<InlineSpan>(
-                (shortcut) => WidgetSpan(
-                  alignment: .middle,
-                  child: keyMapping[shortcut]!.friendlyNameParts
-                      .map(
-                        (name) => name
-                            .asText()
-                            .textColor(context.colors.onSurface)
-                            .padding(vertical: 2.0, horizontal: 4.0)
-                            .decorated(
-                              color: context.colors.surface,
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                      )
-                      .toList()
-                      .toRow(mainAxisSize: .min),
-                ),
-              )
-              .intersperse(const TextSpan(text: ' / ')),
+          ...shortcutSpans,
         ],
       ),
       child: child,

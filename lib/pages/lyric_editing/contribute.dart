@@ -35,7 +35,7 @@ class ContributeButton extends ConsumerWidget {
 
     final userNameProvider = preferenceProvider<String>(.userName);
 
-    return FilledButton.tonalIcon(
+    return TextButton.icon(
       label: S.of(context).contribute.asText(),
       onPressed: () async {
         final userName = await showModal<String>(

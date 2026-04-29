@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -28,7 +29,10 @@ class LyricField extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = context.textStyles.bodyLarge!.copyWith(height: 2.0);
+    final textStyle = context.textStyles.bodyLarge!.copyWith(
+      fontFamily: _monospaceFontName,
+      height: 2.0,
+    );
     final contentPadding = EdgeInsets.only(left: 24.0);
 
     return [
@@ -62,6 +66,15 @@ class LyricField extends HookWidget {
       ),
     ].toStack();
   }
+
+  String get _monospaceFontName => switch (true) {
+    _ when Platform.isWindows => 'Consolas',
+    _ when Platform.isMacOS => 'Menlo',
+    _ when Platform.isLinux => 'Ubuntu Mono',
+    _ when Platform.isIOS => 'Courier',
+    _ when Platform.isAndroid => 'monospace',
+    _ => 'monospace',
+  };
 }
 
 class LineHighlightPainter extends CustomPainter {

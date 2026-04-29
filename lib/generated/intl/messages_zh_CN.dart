@@ -109,6 +109,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "networkProxy": MessageLookupByLibrary.simpleMessage("网络代理"),
     "next": MessageLookupByLibrary.simpleMessage("下一步"),
     "noExecutableFound": MessageLookupByLibrary.simpleMessage("未找到工具。"),
+    "noMatchingLyricsFound": MessageLookupByLibrary.simpleMessage("未找到相关歌词"),
     "noMediaInformationFound": MessageLookupByLibrary.simpleMessage("未搜索到媒体信息"),
     "noProject": MessageLookupByLibrary.simpleMessage("暂无项目"),
     "oneForAllAllForOne": MessageLookupByLibrary.simpleMessage("人人为我，我为人人！"),

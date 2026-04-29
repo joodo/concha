@@ -14,3 +14,8 @@ T useValue<T>(T value, {ValueSetter<T>? onDispose}) {
 
 GlobalKey<T> useGlobalKey<T extends State<StatefulWidget>>() =>
     useValue<GlobalKey<T>>(GlobalKey());
+
+void useInitiate(VoidCallback init) => useEffect(() {
+  init();
+  return null;
+}, []);

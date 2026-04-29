@@ -135,6 +135,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noExecutableFound": MessageLookupByLibrary.simpleMessage(
       "No executable found.",
     ),
+    "noMatchingLyricsFound": MessageLookupByLibrary.simpleMessage(
+      "No matching lyrics found",
+    ),
     "noMediaInformationFound": MessageLookupByLibrary.simpleMessage(
       "No media information found",
     ),

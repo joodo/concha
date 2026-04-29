@@ -154,5 +154,6 @@
   "oneForAllAllForOne": "One for all, all for one!",
   "uploadLyricsHint": "Upload lyrics to lrclib.net and share your contributions with the world.",
   "confirmTrackInfo": "Confirm track info",
-  "leaveYourNameOptional": "Leave your name (optional)"
+  "leaveYourNameOptional": "Leave your name (optional)",
+  "noMatchingLyricsFound": "No matching lyrics found"
 }

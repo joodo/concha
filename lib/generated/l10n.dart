@@ -1058,6 +1058,16 @@ class S {
       args: [],
     );
   }
+
+  /// `No matching lyrics found`
+  String get noMatchingLyricsFound {
+    return Intl.message(
+      'No matching lyrics found',
+      name: 'noMatchingLyricsFound',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

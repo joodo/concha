@@ -105,6 +105,7 @@ class _Content extends HookConsumerWidget {
         builder: (context, isSearching, child) {
           if (!isSearching) return const SizedBox.shrink();
           return _SearchPanel(
+            metadata: ref.project!.metadata,
             onLyricSelected: ref.lyricNotifier(isTranslate: false)!.preview,
             onConfirm: (lrc) async {
               if (lrc != null) {
@@ -304,15 +305,35 @@ class _LyricToolbar extends ConsumerWidget {
 }
 
 class _SearchPanel extends HookConsumerWidget {
-  const _SearchPanel({required this.onLyricSelected, required this.onConfirm});
+  static final _mockData = List.filled(
+    7,
+    LrcLibLyric(
+      trackName: MockData.words(4),
+      artistName: MockData.words(4),
+      albumName: MockData.words(4),
+      duration: Duration.zero,
+      plainLyrics: '',
+      syncedLyrics: '',
+    ),
+  );
 
+  const _SearchPanel({
+    required this.onLyricSelected,
+    required this.onConfirm,
+    required this.metadata,
+  });
+
+  final Metadata metadata;
   final ValueSetter<String> onLyricSelected;
   final ValueSetter<String?> onConfirm;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final m = ref.project!.metadata;
-    final initKeyword = '${m.title} ${m.artist ?? ""}'.trim();
+    final initKeyword = [
+      metadata.title,
+      metadata.album,
+      metadata.artist,
+    ].map((s) => s?.trim()).where((s) => s != null && s.isNotEmpty).join(' ');
     final textController = useTextEditingController(text: initKeyword);
 
     final searchTask = useState<Future<List<LrcLibLyric>>?>(null);
@@ -320,30 +341,50 @@ class _SearchPanel extends HookConsumerWidget {
       searchTask.value = LrcLibService.i.search(textController.text);
     }
 
+    useInitiate(doSearch);
+
     final selected = useState<int?>(null);
 
-    useEffect(() {
-      doSearch();
-      return null;
-    }, []);
-
     final snapshot = useFuture(searchTask.value);
+    final isLoading = snapshot.connectionState == .waiting;
 
-    final data = snapshot.data ?? [];
-    return [
-          SearchBar(
-            controller: textController,
-            onSubmitted: (value) => doSearch(),
-            trailing: [
-              snapshot.connectionState == .waiting
-                  ? const SizedBox.square(
-                      dimension: 16.0,
-                      child: CircularProgressIndicator(strokeWidth: 2.0),
-                    ).padding(right: 12.0)
-                  : IconButton(onPressed: doSearch, icon: Icon(Icons.search)),
-            ],
-          ),
-          Material(
+    final searchBar = SearchBar(
+      controller: textController,
+      onSubmitted: (value) => doSearch(),
+      trailing: [
+        isLoading
+            ? const SizedBox.square(
+                dimension: 16.0,
+                child: CircularProgressIndicator(strokeWidth: 2.0),
+              ).padding(right: 12.0)
+            : IconButton(onPressed: doSearch, icon: Icon(Icons.search)),
+      ],
+    );
+
+    final data = snapshot.data ?? _mockData;
+    final listView = ListView(
+      padding: EdgeInsets.only(top: 8.0),
+      children: data.indexed.map((e) {
+        final subtitleText = [e.$2.albumName, e.$2.artistName]
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .join(' - ')
+            .nullIfEmpty;
+        return RadioListTile(
+          value: e.$1,
+          title: '[${e.$1}] ${e.$2.trackName}'.asText(),
+          subtitle: subtitleText?.asText(),
+        );
+      }).toList(),
+    );
+    final body = data.isEmpty
+        ? S
+              .of(context)
+              .noMatchingLyricsFound
+              .asText()
+              .textColor(context.colors.onSurfaceVariant)
+              .center()
+        : Material(
             color: Colors.transparent,
             child: RadioGroup(
               groupValue: selected.value,
@@ -359,36 +400,23 @@ class _SearchPanel extends HookConsumerWidget {
                 // For parent Scaffold use extendBodyBehindAppBar: true
                 context: context,
                 removeTop: true,
-                child: ListView(
-                  padding: EdgeInsets.only(top: 8.0),
-                  children: data.indexed
-                      .map(
-                        (e) => RadioListTile(
-                          value: e.$1,
-                          title: Text(
-                            '[${e.$1}] ${e.$2.trackName} - ${e.$2.artistName}',
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
+                child: Skeletonizer(enabled: isLoading, child: listView),
               ),
             ),
-          ).expanded(),
-          Material(
-            color: Colors.transparent,
-            child: ListTile(
-              onTap: () => onConfirm(
-                selected.value.mapOrNull((v) => data[v].syncedLyrics),
-              ),
-              title: Text(
-                selected.value == null
-                    ? S.of(context).cancel
-                    : S.of(context).confirm,
-              ).textColor(context.colors.primary).center(),
-            ),
-          ),
-        ]
+          );
+
+    final action = Material(
+      color: Colors.transparent,
+      child: ListTile(
+        onTap: () =>
+            onConfirm(selected.value.mapOrNull((v) => data[v].syncedLyrics)),
+        title: Text(
+          selected.value == null ? S.of(context).cancel : S.of(context).confirm,
+        ).textColor(context.colors.primary).center(),
+      ),
+    );
+
+    return [searchBar, body.expanded(), action]
         .toColumn()
         .backgroundColor(context.colors.surfaceContainerHigh.withAlpha(220))
         .clipRRect(all: 30.0);

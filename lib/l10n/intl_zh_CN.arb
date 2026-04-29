@@ -154,5 +154,6 @@
   "oneForAllAllForOne": "人人为我，我为人人！",
   "uploadLyricsHint": "将歌词上传至 lrclib.net，和全世界分享你整理的歌词。",
   "confirmTrackInfo": "确认音乐信息",
-  "leaveYourNameOptional": "留下名字（可选）"
+  "leaveYourNameOptional": "留下名字（可选）",
+  "noMatchingLyricsFound": "未找到相关歌词"
 }
